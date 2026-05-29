@@ -38,6 +38,9 @@ class Project(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    tracking_frequency: Mapped[str] = mapped_column(
+        String(20), default="daily", nullable=False
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -69,6 +72,9 @@ class Keyword(Base):
         ForeignKey("projects.id"), nullable=False, index=True
     )
     keyword: Mapped[str] = mapped_column(String(255), nullable=False)
+    keyword_type: Mapped[str] = mapped_column(
+        String(50), default="topic", nullable=False
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -83,7 +89,7 @@ class Source(Base):
     project_id: Mapped[int] = mapped_column(
         ForeignKey("projects.id"), nullable=False, index=True
     )
-    source_type: Mapped[str] = mapped_column(
+    source_name: Mapped[str] = mapped_column(
         String(50), nullable=False
     )  # reddit, youtube, gdelt
     is_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, text
 
-from app.api.routes import auth, health
+from app.api.routes import auth, health, keywords, projects, sources
 from app.core.config import get_settings
 from app.db import models  # noqa: F401 — register models with metadata
 from app.db.database import Base, engine
@@ -58,6 +58,9 @@ app.add_middleware(
 
 app.include_router(health.router)
 app.include_router(auth.router)
+app.include_router(projects.router)
+app.include_router(keywords.router)
+app.include_router(sources.router)
 
 
 @app.get("/")

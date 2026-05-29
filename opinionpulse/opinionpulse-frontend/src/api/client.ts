@@ -42,7 +42,12 @@ export async function apiRequest<T>(
     body: body !== undefined ? JSON.stringify(body) : undefined,
   })
 
-  const data = await response.json().catch(() => ({}))
+  if (response.status === 204) {
+    return undefined as T
+  }
+
+  const text = await response.text()
+  const data = text ? JSON.parse(text) : {}
 
   if (!response.ok) {
     const detail =

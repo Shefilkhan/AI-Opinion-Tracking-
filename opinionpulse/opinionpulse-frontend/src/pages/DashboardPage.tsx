@@ -1,10 +1,13 @@
-import { Link, useNavigate } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
-import { Loader2, LogOut } from "lucide-react"
+import { FolderKanban, Loader2 } from "lucide-react"
 import { apiRequest } from "@/api/client"
-import { getCurrentUser, logoutUser, type User } from "@/api/auth"
+import { getCurrentUser } from "@/api/auth"
+import { getProjects } from "@/api/projects"
+import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 type HealthResponse = {
   status: string
@@ -16,12 +19,14 @@ async function fetchHealth(): Promise<HealthResponse> {
 }
 
 export function DashboardPage() {
-  const navigate = useNavigate()
-
   const userQuery = useQuery({
     queryKey: ["current-user"],
     queryFn: getCurrentUser,
-    retry: false,
+  })
+
+  const projectsQuery = useQuery({
+    queryKey: ["projects"],
+    queryFn: getProjects,
   })
 
   const healthQuery = useQuery({
@@ -30,65 +35,54 @@ export function DashboardPage() {
     retry: 1,
   })
 
-  function handleLogout() {
-    logoutUser()
-    navigate("/")
-  }
-
-  if (userQuery.isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-        <Loader2 className="size-8 animate-spin text-blue-400" />
-      </div>
-    )
-  }
-
-  if (userQuery.isError) {
-    logoutUser()
-    navigate("/login", { replace: true })
-    return null
-  }
-
-  const user = userQuery.data as User
   const connected = healthQuery.data?.status === "ok"
+  const user = userQuery.data
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4">
-      <div className="w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-900/60 p-8 shadow-xl">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-            <p className="mt-1 text-slate-400">Welcome back, {user.name}</p>
-          </div>
-          <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
-            <LogOut className="size-4" />
-            Logout
-          </Button>
-        </div>
+    <DashboardLayout
+      title="Dashboard"
+      subtitle={user ? `Welcome back, ${user.name}` : "Overview"}
+    >
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <Card className="border-slate-800/60 bg-slate-900/50">
+          <CardHeader>
+            <CardTitle className="text-white">Your projects</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {projectsQuery.isLoading ? (
+              <Loader2 className="size-6 animate-spin text-blue-400" />
+            ) : (
+              <p className="text-4xl font-bold text-white">
+                {projectsQuery.data?.total ?? 0}
+              </p>
+            )}
+            <p className="mt-2 text-sm text-slate-400">Active tracking projects</p>
+            <Button
+              render={<Link to="/projects" />}
+              className="mt-4 w-full gap-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+            >
+              <FolderKanban className="size-4" />
+              View projects
+            </Button>
+          </CardContent>
+        </Card>
 
-        <div className="mt-6 space-y-4">
-          <div className="rounded-lg border border-slate-800 bg-slate-950/80 p-4">
-            <p className="text-sm font-medium text-slate-300">Logged in as</p>
-            <p className="mt-1 text-white">{user.name}</p>
-            <p className="text-sm text-slate-400">{user.email}</p>
-            <Badge className="mt-2 bg-blue-500/15 text-blue-300">{user.role}</Badge>
-          </div>
-
-          <div className="rounded-lg border border-slate-800 bg-slate-950/80 p-4">
-            <p className="text-sm text-slate-500">Backend Status</p>
+        <Card className="border-slate-800/60 bg-slate-900/50">
+          <CardHeader>
+            <CardTitle className="text-white">Backend status</CardTitle>
+          </CardHeader>
+          <CardContent>
             {healthQuery.isLoading && (
-              <div className="mt-2 flex items-center gap-2 text-slate-300">
+              <div className="flex items-center gap-2 text-slate-300">
                 <Loader2 className="size-4 animate-spin" />
                 Checking…
               </div>
             )}
             {healthQuery.isError && (
-              <Badge variant="destructive" className="mt-2">
-                Disconnected
-              </Badge>
+              <Badge variant="destructive">Disconnected</Badge>
             )}
             {healthQuery.isSuccess && (
-              <div className="mt-2">
+              <>
                 <Badge
                   className={
                     connected
@@ -99,21 +93,31 @@ export function DashboardPage() {
                   {connected ? "Connected" : "Unknown"}
                 </Badge>
                 {healthQuery.data?.message && (
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="mt-2 text-xs text-slate-400">
                     {healthQuery.data.message}
                   </p>
                 )}
-              </div>
+              </>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="mt-6">
-          <Button render={<Link to="/" />} variant="outline" className="w-full">
-            Back to Home
-          </Button>
-        </div>
+        <Card className="border-slate-800/60 bg-slate-900/50 md:col-span-2 lg:col-span-1">
+          <CardHeader>
+            <CardTitle className="text-white">Quick start</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-slate-400">
+            <p>Create a project, add keywords, and enable Reddit, YouTube, or GDELT sources.</p>
+            <Button
+              render={<Link to="/projects/new" />}
+              variant="outline"
+              className="w-full"
+            >
+              Create new project
+            </Button>
+          </CardContent>
+        </Card>
       </div>
-    </div>
+    </DashboardLayout>
   )
 }
