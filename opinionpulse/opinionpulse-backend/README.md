@@ -43,6 +43,17 @@ uvicorn app.main:app --reload
 | `GET /api/health` | API running |
 | `GET /api/health/db` | MySQL connection test |
 
+## Authentication (Part 4)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/auth/register` | Create account, returns JWT |
+| `POST` | `/api/auth/login` | Login, returns JWT |
+| `GET` | `/api/auth/me` | Current user (Bearer token) |
+| `POST` | `/api/auth/logout` | Optional logout message |
+
+If you upgraded from an older `users` table schema, run [`scripts/migrate_users_auth.sql`](scripts/migrate_users_auth.sql) in phpMyAdmin, then restart the API.
+
 ## Project layout
 
 ```
