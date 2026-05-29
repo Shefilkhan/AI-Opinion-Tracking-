@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.db.models import Keyword, Project, User
+from app.db.models import Keyword, Mention, Project, User
 
 
 def get_owned_project(project_id: int, current_user: User, db: Session) -> Project:
@@ -31,3 +31,18 @@ def get_owned_keyword(keyword_id: int, current_user: User, db: Session) -> Keywo
             detail="Keyword not found",
         )
     return keyword
+
+
+def get_owned_mention(mention_id: int, current_user: User, db: Session) -> Mention:
+    mention = (
+        db.query(Mention)
+        .join(Project)
+        .filter(Mention.id == mention_id, Project.user_id == current_user.id)
+        .first()
+    )
+    if mention is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Mention not found",
+        )
+    return mention

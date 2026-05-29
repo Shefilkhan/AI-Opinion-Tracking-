@@ -6,6 +6,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Integer,
     String,
     Text,
     func,
@@ -98,7 +99,6 @@ class Source(Base):
     )
 
     project: Mapped["Project"] = relationship(back_populates="sources")
-    mentions: Mapped[list["Mention"]] = relationship(back_populates="source")
 
 
 class Mention(Base):
@@ -108,22 +108,23 @@ class Mention(Base):
     project_id: Mapped[int] = mapped_column(
         ForeignKey("projects.id"), nullable=False, index=True
     )
-    source_id: Mapped[int] = mapped_column(
-        ForeignKey("sources.id"), nullable=False, index=True
-    )
-    external_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    content: Mapped[str] = mapped_column(Text, nullable=False)
+    source: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    source_item_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    source_parent_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     author: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    cleaned_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     published_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    engagement_score: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    raw_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
     project: Mapped["Project"] = relationship(back_populates="mentions")
-    source: Mapped["Source"] = relationship(back_populates="mentions")
     sentiment_result: Mapped[Optional["SentimentResult"]] = relationship(
         back_populates="mention", uselist=False, cascade="all, delete-orphan"
     )

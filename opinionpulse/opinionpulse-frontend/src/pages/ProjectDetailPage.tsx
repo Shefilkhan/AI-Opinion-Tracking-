@@ -1,10 +1,15 @@
 import { useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { ArrowLeft, BarChart3, Trash2 } from "lucide-react"
+import { ArrowLeft, Database, Trash2 } from "lucide-react"
 import { ApiError } from "@/api/client"
 import { deleteProject, getProject, updateProject } from "@/api/projects"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { seedMentions } from "@/api/mentions"
+import { MentionFeed } from "@/components/mentions/MentionFeed"
+import { MentionFilters, type MentionFilterValues } from "@/components/mentions/MentionFilters"
+import { MentionForm } from "@/components/mentions/MentionForm"
+import { MentionStats } from "@/components/mentions/MentionStats"
 import { KeywordManager } from "@/components/projects/KeywordManager"
 import { SourceSelector } from "@/components/projects/SourceSelector"
 import {
@@ -22,6 +27,10 @@ export function ProjectDetailPage() {
   const queryClient = useQueryClient()
   const [editing, setEditing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [mentionFilters, setMentionFilters] = useState<MentionFilterValues>({
+    source: "all",
+    search: "",
+  })
 
   const { data: project, isLoading, isError } = useQuery({
     queryKey: ["project", projectId],
@@ -58,6 +67,14 @@ export function ProjectDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] })
       navigate("/projects")
+    },
+  })
+
+  const seedMutation = useMutation({
+    mutationFn: () => seedMentions(projectId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["mentions", projectId] })
+      queryClient.invalidateQueries({ queryKey: ["mention-stats", projectId] })
     },
   })
 
@@ -178,37 +195,40 @@ export function ProjectDetailPage() {
 
         <div className="space-y-6">
           <KeywordManager projectId={projectId} />
-
-          <Card className="border-slate-800/60 bg-slate-900/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-white">
-                <BarChart3 className="size-5 text-blue-400" />
-                Analytics preview
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-slate-400">
-                Mock summary — real sentiment data will appear here after API
-                integrations are enabled.
-              </p>
-              <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-                <div className="rounded-lg bg-slate-950/80 p-3">
-                  <p className="text-lg font-bold text-emerald-400">—</p>
-                  <p className="text-xs text-slate-500">Positive</p>
-                </div>
-                <div className="rounded-lg bg-slate-950/80 p-3">
-                  <p className="text-lg font-bold text-slate-400">—</p>
-                  <p className="text-xs text-slate-500">Neutral</p>
-                </div>
-                <div className="rounded-lg bg-slate-950/80 p-3">
-                  <p className="text-lg font-bold text-rose-400">—</p>
-                  <p className="text-xs text-slate-500">Negative</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
+
+      <section className="mt-10 space-y-6 border-t border-slate-800 pt-10">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-white">Mentions</h2>
+            <p className="text-sm text-slate-400">
+              Collect and review public opinion text before API integrations.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => seedMutation.mutate()}
+            disabled={seedMutation.isPending}
+          >
+            <Database className="size-4" />
+            {seedMutation.isPending ? "Adding samples…" : "Add sample mentions"}
+          </Button>
+        </div>
+
+        <MentionStats projectId={projectId} />
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-1">
+            <MentionForm projectId={projectId} />
+          </div>
+          <div className="space-y-4 lg:col-span-2">
+            <MentionFilters values={mentionFilters} onChange={setMentionFilters} />
+            <MentionFeed projectId={projectId} filters={mentionFilters} />
+          </div>
+        </div>
+      </section>
     </DashboardLayout>
   )
 }
