@@ -1,28 +1,54 @@
-# OpinionPulse — AI Opinion Tracking
+# OpinionPulse
 
-Final-year project: **OpinionPulse** — AI-powered opinion tracking SaaS with sentiment analysis and a public opinion chatbot.
+AI-powered opinion tracking with sentiment analysis and a public opinion chatbot.
 
-## Frontend (landing page)
+## Project structure
 
-The React frontend lives in [`opinionpulse-frontend/`](opinionpulse-frontend/).
+```
+opinionpulse/
+  opinionpulse-frontend/   # React + Vite (Part 1 ✅)
+  opinionpulse-backend/    # FastAPI + MySQL (Part 2–3 ✅)
+```
 
-### Run locally
+> If you still have `opinionpulse-frontend/` at the repo root (from an earlier setup), use `opinionpulse/opinionpulse-frontend/` instead and remove the root copy after stopping `npm run dev`.
+
+## Quick start
+
+### Database (XAMPP)
+
+1. Start **MySQL** in XAMPP Control Panel.
+2. Open http://localhost/phpmyadmin
+3. Create database: **opinionpulse_db**
+
+### Backend
 
 ```bash
-cd opinionpulse-frontend
+cd opinionpulse/opinionpulse-backend
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+Test: http://localhost:8000/api/health and http://localhost:8000/docs
+
+### Frontend
+
+```bash
+cd opinionpulse/opinionpulse-frontend
 npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173).
+Open http://localhost:5173/dashboard to see **Backend Status: Connected** when the API is running.
 
-### Routes
+## Progress
 
-| Path | Page |
-|------|------|
-| `/` | Landing page |
-| `/login` | Placeholder |
-| `/signup` | Placeholder |
-| `/dashboard` | Placeholder |
+| Part | Module | Status |
+|------|--------|--------|
+| 1 | Landing page + frontend template | ✅ |
+| 2 | FastAPI backend setup | ✅ |
+| 3 | XAMPP MySQL + models | ✅ |
+| 4+ | Auth, CRUD, APIs, sentiment, chatbot | Later |
 
-Backend, APIs, and auth are not implemented yet — mock data only.
+See [opinionpulse/README.md](opinionpulse/README.md) for more detail.
