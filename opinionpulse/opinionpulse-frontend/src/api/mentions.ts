@@ -37,8 +37,16 @@ export type MentionCreateData = {
   engagement_score?: number
 }
 
+export type MentionSentimentFilter =
+  | "all"
+  | "positive"
+  | "neutral"
+  | "negative"
+  | "unanalyzed"
+
 export type MentionQueryParams = {
   source?: string
+  sentiment?: MentionSentimentFilter
   search?: string
   limit?: number
   offset?: number
@@ -48,6 +56,9 @@ export function getProjectMentions(projectId: number, params: MentionQueryParams
   const searchParams = new URLSearchParams()
   if (params.source && params.source !== "all") {
     searchParams.set("source", params.source)
+  }
+  if (params.sentiment && params.sentiment !== "all") {
+    searchParams.set("sentiment", params.sentiment)
   }
   if (params.search?.trim()) {
     searchParams.set("search", params.search.trim())

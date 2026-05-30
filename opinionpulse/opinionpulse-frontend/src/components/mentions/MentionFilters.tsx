@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 
 export type MentionFilterValues = {
   source: string
+  sentiment: string
   search: string
 }
 
@@ -17,9 +18,22 @@ export function MentionFilters({ values, onChange }: MentionFiltersProps) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
       <select
+        value={values.sentiment}
+        onChange={(e) => onChange({ ...values, sentiment: e.target.value })}
+        className={cn(selectSurface, "sm:w-44")}
+        aria-label="Filter by sentiment"
+      >
+        <option value="all">All sentiments</option>
+        <option value="positive">Positive</option>
+        <option value="neutral">Neutral</option>
+        <option value="negative">Negative</option>
+        <option value="unanalyzed">Unanalyzed</option>
+      </select>
+      <select
         value={values.source}
         onChange={(e) => onChange({ ...values, source: e.target.value })}
         className={cn(selectSurface, "sm:w-40")}
+        aria-label="Filter by source"
       >
         <option value="all">All sources</option>
         <option value="manual">Manual</option>

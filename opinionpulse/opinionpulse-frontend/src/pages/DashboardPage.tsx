@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { FolderKanban, Loader2, Sparkles } from "lucide-react"
-import { getProjectSentimentSummary } from "@/api/sentiment"
+import { getAnalyticsOverview } from "@/api/analytics"
 import { apiRequest } from "@/api/client"
 import { getCurrentUser } from "@/api/auth"
 import { getProjects } from "@/api/projects"
@@ -40,11 +40,12 @@ export function DashboardPage() {
 
   const connected = healthQuery.data?.status === "ok"
   const user = userQuery.data
-  const latestProject = projectsQuery.data?.projects?.[0]
+  const projects = projectsQuery.data?.projects ?? []
+  const latestProject = projects[0]
 
-  const sentimentQuery = useQuery({
-    queryKey: ["sentiment-summary", latestProject?.id],
-    queryFn: () => getProjectSentimentSummary(latestProject!.id),
+  const analyticsQuery = useQuery({
+    queryKey: ["analytics-overview", latestProject?.id],
+    queryFn: () => getAnalyticsOverview(latestProject!.id),
     enabled: !!latestProject?.id,
   })
 
@@ -117,7 +118,10 @@ export function DashboardPage() {
             <CardTitle className="text-white">Quick start</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-slate-400">
-            <p>Create a project, add keywords, and enable Reddit, YouTube, or GDELT sources.</p>
+            <p>
+              Create a project, seed mentions, run Analyze Sentiment, then explore
+              analytics on the project page.
+            </p>
             <Button
               render={<Link to="/projects/new" />}
               variant="outline"
@@ -133,44 +137,42 @@ export function DashboardPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-white">
                 <Sparkles className="size-4 text-violet-400" />
-                Sentiment — {latestProject.name}
+                Latest project — {latestProject.name}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {sentimentQuery.isLoading && (
+              {analyticsQuery.isLoading && (
                 <Loader2 className="size-5 animate-spin text-blue-400" />
               )}
-              {sentimentQuery.isSuccess && sentimentQuery.data.total_analyzed === 0 && (
-                <p className="text-sm text-slate-400">
-                  No analyzed mentions yet. Open the project and click Analyze Sentiment.
-                </p>
-              )}
-              {sentimentQuery.isSuccess && sentimentQuery.data.total_analyzed > 0 && (
-                <div className="grid grid-cols-3 gap-4 text-center sm:grid-cols-4">
+              {analyticsQuery.isSuccess && (
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                  <div>
+                    <p className="text-2xl font-bold text-white">
+                      {analyticsQuery.data.total_mentions}
+                    </p>
+                    <p className="text-xs text-slate-500">Mentions</p>
+                  </div>
                   <div>
                     <p className="text-2xl font-bold text-emerald-400">
-                      {sentimentQuery.data.positive}
+                      {analyticsQuery.data.total_analyzed > 0
+                        ? `${analyticsQuery.data.positive_percentage}%`
+                        : "—"}
                     </p>
                     <p className="text-xs text-slate-500">Positive</p>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-slate-300">
-                      {sentimentQuery.data.neutral}
-                    </p>
-                    <p className="text-xs text-slate-500">Neutral</p>
-                  </div>
-                  <div>
                     <p className="text-2xl font-bold text-rose-400">
-                      {sentimentQuery.data.negative}
+                      {analyticsQuery.data.total_analyzed > 0
+                        ? `${analyticsQuery.data.negative_percentage}%`
+                        : "—"}
                     </p>
                     <p className="text-xs text-slate-500">Negative</p>
                   </div>
-                  <div className="col-span-3 sm:col-span-1">
-                    <p className="text-2xl font-bold text-white">
-                      {sentimentQuery.data.average_score >= 0 ? "+" : ""}
-                      {sentimentQuery.data.average_score.toFixed(2)}
+                  <div>
+                    <p className="text-2xl font-bold text-slate-300">
+                      {analyticsQuery.data.total_analyzed}
                     </p>
-                    <p className="text-xs text-slate-500">Avg score</p>
+                    <p className="text-xs text-slate-500">Analyzed</p>
                   </div>
                 </div>
               )}
@@ -179,8 +181,38 @@ export function DashboardPage() {
                 variant="outline"
                 className="mt-4 w-full"
               >
-                View project
+                Open analytics dashboard
               </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {projects.length > 0 && (
+          <Card className={cn(cardInteractive, "md:col-span-2 lg:col-span-3")}>
+            <CardHeader>
+              <CardTitle className="text-white">Recent projects</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="divide-y divide-slate-800/80">
+                {projects.slice(0, 5).map((p) => (
+                  <li key={p.id} className="flex items-center justify-between py-3">
+                    <div>
+                      <p className="font-medium text-white">{p.name}</p>
+                      <p className="text-xs text-slate-500 capitalize">
+                        {p.tracking_frequency} ·{" "}
+                        {new Date(p.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Button
+                      render={<Link to={`/projects/${p.id}`} />}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Open
+                    </Button>
+                  </li>
+                ))}
+              </ul>
             </CardContent>
           </Card>
         )}

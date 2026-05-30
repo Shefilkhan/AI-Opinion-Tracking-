@@ -1,17 +1,20 @@
 import { useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { ArrowLeft, Database, Trash2 } from "lucide-react"
+import { ArrowLeft, BarChart3, Database, Trash2 } from "lucide-react"
 import { ApiError } from "@/api/client"
 import { deleteProject, getProject, updateProject } from "@/api/projects"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { seedMentions } from "@/api/mentions"
+import { AnalyticsOverviewCards } from "@/components/analytics/AnalyticsOverviewCards"
+import { SentimentDistributionChart } from "@/components/analytics/SentimentDistributionChart"
+import { SourceSentimentChart } from "@/components/analytics/SourceSentimentChart"
+import { TopMentionsPanel } from "@/components/analytics/TopMentionsPanel"
 import { MentionFeed } from "@/components/mentions/MentionFeed"
 import { MentionFilters, type MentionFilterValues } from "@/components/mentions/MentionFilters"
 import { MentionForm } from "@/components/mentions/MentionForm"
 import { MentionStats } from "@/components/mentions/MentionStats"
 import { AnalyzeSentimentButton } from "@/components/sentiment/AnalyzeSentimentButton"
-import { SentimentSummaryCards } from "@/components/sentiment/SentimentSummaryCards"
 import { SentimentTrendChart } from "@/components/sentiment/SentimentTrendChart"
 import { KeywordManager } from "@/components/projects/KeywordManager"
 import { SourceSelector } from "@/components/projects/SourceSelector"
@@ -34,6 +37,7 @@ export function ProjectDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [mentionFilters, setMentionFilters] = useState<MentionFilterValues>({
     source: "all",
+    sentiment: "all",
     search: "",
   })
 
@@ -80,6 +84,8 @@ export function ProjectDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["mentions", projectId] })
       queryClient.invalidateQueries({ queryKey: ["mention-stats", projectId] })
+      queryClient.invalidateQueries({ queryKey: ["analytics-overview", projectId] })
+      queryClient.invalidateQueries({ queryKey: ["analytics-source-sentiment", projectId] })
     },
   })
 
@@ -121,7 +127,10 @@ export function ProjectDetailPage() {
   }
 
   return (
-    <DashboardLayout title={project.name} subtitle="Project details and tracking setup">
+    <DashboardLayout
+      title={project.name}
+      subtitle="Project analytics and opinion tracking"
+    >
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <Button render={<Link to="/projects" />} variant="outline" size="sm" className="gap-2">
           <ArrowLeft className="size-4" />
@@ -188,28 +197,25 @@ export function ProjectDetailPage() {
                 ) : (
                   <p className="italic">No description</p>
                 )}
-                <p>
-                  Created: {new Date(project.created_at).toLocaleString()}
-                </p>
+                <p>Created: {new Date(project.created_at).toLocaleString()}</p>
               </CardContent>
             </Card>
           )}
-
           <SourceSelector projectId={projectId} />
         </div>
-
-        <div className="space-y-6">
-          <KeywordManager projectId={projectId} />
-        </div>
+        <KeywordManager projectId={projectId} />
       </div>
 
       <section className="mt-10 space-y-6 border-t border-slate-800/80 pt-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-white">Mentions</h2>
-            <p className="text-sm text-slate-400">
-              Collect and review public opinion text before API integrations.
-            </p>
+          <div className="flex items-center gap-2">
+            <BarChart3 className="size-5 text-violet-400" />
+            <div>
+              <h2 className="text-xl font-bold text-white">Analytics dashboard</h2>
+              <p className="text-sm text-slate-400">
+                Real metrics from stored mentions and VADER sentiment.
+              </p>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Button
@@ -226,13 +232,19 @@ export function ProjectDetailPage() {
         </div>
 
         <MentionStats projectId={projectId} />
+        <AnalyticsOverviewCards projectId={projectId} />
 
-        <section className="space-y-4">
-          <h3 className="text-lg font-semibold text-white">Sentiment analysis</h3>
-          <SentimentSummaryCards projectId={projectId} />
-          <SentimentTrendChart projectId={projectId} />
-        </section>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <SentimentDistributionChart projectId={projectId} />
+          <SourceSentimentChart projectId={projectId} />
+        </div>
 
+        <SentimentTrendChart projectId={projectId} />
+        <TopMentionsPanel projectId={projectId} />
+      </section>
+
+      <section className="mt-10 space-y-4 border-t border-slate-800/80 pt-10">
+        <h2 className="text-xl font-bold text-white">Mention feed</h2>
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-1">
             <MentionForm projectId={projectId} />

@@ -4,7 +4,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, text
 
-from app.api.routes import auth, health, keywords, mentions, projects, sentiment, sources
+from app.api.routes import (
+    analytics,
+    auth,
+    health,
+    keywords,
+    mentions,
+    projects,
+    sentiment,
+    sources,
+)
 from app.core.config import get_settings
 from app.db import models  # noqa: F401 — register models with metadata
 from app.db.database import Base, engine
@@ -63,6 +72,7 @@ app.include_router(keywords.router)
 app.include_router(sources.router)
 app.include_router(mentions.router)
 app.include_router(sentiment.router)
+app.include_router(analytics.router)
 
 
 @app.get("/")

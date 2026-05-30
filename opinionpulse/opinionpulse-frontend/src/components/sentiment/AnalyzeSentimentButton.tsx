@@ -26,6 +26,10 @@ export function AnalyzeSentimentButton({ projectId }: AnalyzeSentimentButtonProp
       queryClient.invalidateQueries({ queryKey: ["mentions", projectId] })
       queryClient.invalidateQueries({ queryKey: ["sentiment-summary", projectId] })
       queryClient.invalidateQueries({ queryKey: ["sentiment-trends", projectId] })
+      queryClient.invalidateQueries({ queryKey: ["analytics-overview", projectId] })
+      queryClient.invalidateQueries({ queryKey: ["analytics-distribution", projectId] })
+      queryClient.invalidateQueries({ queryKey: ["analytics-source-sentiment", projectId] })
+      queryClient.invalidateQueries({ queryKey: ["analytics-top-mentions", projectId] })
     },
     onError: (err) => {
       setMessage(null)

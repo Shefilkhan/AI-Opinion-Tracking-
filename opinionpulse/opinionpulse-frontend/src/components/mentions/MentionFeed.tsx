@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
-import { deleteMention, getProjectMentions } from "@/api/mentions"
+import {
+  deleteMention,
+  getProjectMentions,
+  type MentionSentimentFilter,
+} from "@/api/mentions"
 import { MentionCard } from "@/components/mentions/MentionCard"
 import type { MentionFilterValues } from "@/components/mentions/MentionFilters"
 
@@ -13,10 +17,11 @@ export function MentionFeed({ projectId, filters }: MentionFeedProps) {
   const queryClient = useQueryClient()
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ["mentions", projectId, filters.source, filters.search],
+    queryKey: ["mentions", projectId, filters.source, filters.sentiment, filters.search],
     queryFn: () =>
       getProjectMentions(projectId, {
         source: filters.source,
+        sentiment: filters.sentiment as MentionSentimentFilter,
         search: filters.search,
         limit: 50,
         offset: 0,
@@ -30,6 +35,10 @@ export function MentionFeed({ projectId, filters }: MentionFeedProps) {
       queryClient.invalidateQueries({ queryKey: ["mention-stats", projectId] })
       queryClient.invalidateQueries({ queryKey: ["sentiment-summary", projectId] })
       queryClient.invalidateQueries({ queryKey: ["sentiment-trends", projectId] })
+      queryClient.invalidateQueries({ queryKey: ["analytics-overview", projectId] })
+      queryClient.invalidateQueries({ queryKey: ["analytics-distribution", projectId] })
+      queryClient.invalidateQueries({ queryKey: ["analytics-source-sentiment", projectId] })
+      queryClient.invalidateQueries({ queryKey: ["analytics-top-mentions", projectId] })
     },
   })
 

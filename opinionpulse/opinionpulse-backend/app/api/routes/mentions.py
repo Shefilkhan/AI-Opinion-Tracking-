@@ -9,7 +9,8 @@ from sqlalchemy.orm import Session, joinedload
 from app.api.deps import get_current_user
 from app.api.project_deps import get_owned_mention, get_owned_project
 from app.db.database import get_db
-from app.db.models import Mention, Project, User
+from app.db.models import Mention, Project, SentimentResult, User
+from app.services.analytics_service import ALLOWED_SENTIMENT_FILTERS
 from app.schemas.mention import (
     ALLOWED_SOURCES,
     MentionCreate,
@@ -119,10 +120,29 @@ def _validate_source(source: str) -> None:
         )
 
 
+def _validate_sentiment(sentiment: str) -> None:
+    if sentiment not in ALLOWED_SENTIMENT_FILTERS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid sentiment. Allowed: {', '.join(ALLOWED_SENTIMENT_FILTERS)}",
+        )
+
+
+def _apply_sentiment_filter(query, sentiment: str):
+    if sentiment == "unanalyzed":
+        return query.outerjoin(
+            SentimentResult, Mention.id == SentimentResult.mention_id
+        ).filter(SentimentResult.id.is_(None))
+    return query.join(
+        SentimentResult, Mention.id == SentimentResult.mention_id
+    ).filter(SentimentResult.sentiment_label == sentiment)
+
+
 @router.get("/projects/{project_id}/mentions", response_model=MentionListResponse)
 def list_mentions(
     project_id: int,
     source: Optional[str] = Query(default=None),
+    sentiment: Optional[str] = Query(default=None),
     search: Optional[str] = Query(default=None),
     limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
@@ -136,6 +156,10 @@ def list_mentions(
         if source != "all":
             _validate_source(source)
             query = query.filter(Mention.source == source)
+
+    if sentiment and sentiment != "all":
+        _validate_sentiment(sentiment)
+        query = _apply_sentiment_filter(query, sentiment)
 
     if search and search.strip():
         term = f"%{search.strip()}%"
