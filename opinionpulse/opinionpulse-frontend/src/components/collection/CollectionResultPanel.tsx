@@ -32,10 +32,28 @@ function SourceStats({ data }: { data: CollectionSourceResult }) {
         <dt className="text-slate-500">Inserted</dt>
         <dd className="font-medium text-emerald-400">{data.inserted}</dd>
       </div>
+      {data.videos_checked !== undefined && data.videos_checked > 0 && (
+        <div>
+          <dt className="text-slate-500">Videos checked</dt>
+          <dd className="font-medium text-white">{data.videos_checked}</dd>
+        </div>
+      )}
       <div className="col-span-2 sm:col-span-4">
         <dt className="text-slate-500">Duplicates skipped</dt>
         <dd className="font-medium text-slate-300">{data.duplicates_skipped}</dd>
       </div>
+      {data.warning && (
+        <div className="col-span-2 sm:col-span-4">
+          <dt className="text-slate-500">Warning</dt>
+          <dd className="text-amber-300">{data.warning}</dd>
+        </div>
+      )}
+      {data.quota_note && (
+        <div className="col-span-2 sm:col-span-4">
+          <dt className="text-slate-500">Quota note</dt>
+          <dd className="text-xs text-slate-400">{data.quota_note}</dd>
+        </div>
+      )}
       {data.message && (
         <div className="col-span-2 sm:col-span-4">
           <dt className="text-slate-500">Message</dt>
@@ -76,12 +94,21 @@ export function CollectionResultPanel({
             {typeof result.results.gdelt === "object" && result.results.gdelt !== null && (
               <SourceStats data={result.results.gdelt as CollectionSourceResult} />
             )}
-            {typeof result.results.youtube === "string" && (
-              <p className="text-xs text-amber-300/90">YouTube: {result.results.youtube}</p>
-            )}
-            {typeof result.results.reddit === "string" && (
-              <p className="text-xs text-amber-300/90">Reddit: {result.results.reddit}</p>
-            )}
+            {typeof result.results.youtube === "object" &&
+              result.results.youtube !== null && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-white">YouTube</p>
+                  <SourceStats data={result.results.youtube as CollectionSourceResult} />
+                </div>
+              )}
+            {typeof result.results.reddit === "object" &&
+              result.results.reddit !== null && (
+                <p className="text-xs text-amber-300/90">
+                  Reddit:{" "}
+                  {(result.results.reddit as CollectionSourceResult).message ??
+                    "not implemented yet"}
+                </p>
+              )}
           </>
         ) : (
           <SourceStats data={result} />

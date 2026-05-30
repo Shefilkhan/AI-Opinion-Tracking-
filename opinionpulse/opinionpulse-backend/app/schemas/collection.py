@@ -10,6 +10,9 @@ class CollectionSourceResult(BaseModel):
     inserted: int
     duplicates_skipped: int
     message: Optional[str] = None
+    videos_checked: Optional[int] = None
+    quota_note: Optional[str] = None
+    warning: Optional[str] = None
 
 
 class CollectionResponse(BaseModel):
@@ -19,6 +22,9 @@ class CollectionResponse(BaseModel):
     inserted: int = 0
     duplicates_skipped: int = 0
     message: str = ""
+    videos_checked: Optional[int] = None
+    quota_note: Optional[str] = None
+    warning: Optional[str] = None
 
 
 class CollectAllResponse(BaseModel):

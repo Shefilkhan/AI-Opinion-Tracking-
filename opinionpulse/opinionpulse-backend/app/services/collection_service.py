@@ -4,17 +4,20 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.db.models import Keyword, Mention, Source
 from app.services.gdelt_service import search_gdelt_articles
+from app.services.youtube_service import YouTubeApiError, collect_youtube_for_keyword
 
 GDELT_SOURCE = "gdelt"
+YOUTUBE_SOURCE = "youtube"
 RECORDS_PER_KEYWORD = 10
 
 
-def _is_gdelt_enabled(db: Session, project_id: int) -> bool:
+def _is_source_enabled(db: Session, project_id: int, source_name: str) -> bool:
     row = (
         db.query(Source)
-        .filter(Source.project_id == project_id, Source.source_name == GDELT_SOURCE)
+        .filter(Source.project_id == project_id, Source.source_name == source_name)
         .first()
     )
     return row.is_enabled if row else False
@@ -35,16 +38,19 @@ def _mention_exists(
     )
 
 
-def _insert_mention(db: Session, project_id: int, item: Dict[str, Any]) -> bool:
+def _insert_mention(
+    db: Session, project_id: int, source: str, item: Dict[str, Any]
+) -> bool:
     """Insert mention if not duplicate. Returns True if inserted."""
     source_item_id = item["source_item_id"]
-    if _mention_exists(db, project_id, GDELT_SOURCE, source_item_id):
+    if _mention_exists(db, project_id, source, source_item_id):
         return False
 
     mention = Mention(
         project_id=project_id,
-        source=GDELT_SOURCE,
+        source=source,
         source_item_id=source_item_id,
+        source_parent_id=item.get("source_parent_id"),
         author=item.get("author"),
         text=item["text"],
         cleaned_text=item["text"],
@@ -63,10 +69,7 @@ def collect_gdelt_for_project(
     *,
     force: bool = False,
 ) -> Dict[str, Any]:
-    """
-    Collect GDELT articles for all project keywords.
-    force=True allows collection even when GDELT source is disabled (with warning).
-    """
+    """Collect GDELT articles for all project keywords."""
     keywords: List[Keyword] = (
         db.query(Keyword).filter(Keyword.project_id == project_id).all()
     )
@@ -80,12 +83,12 @@ def collect_gdelt_for_project(
             "message": "No keywords configured. Add keywords before collecting data.",
         }
 
-    gdelt_enabled = _is_gdelt_enabled(db, project_id)
+    gdelt_enabled = _is_source_enabled(db, project_id, GDELT_SOURCE)
     warning = None
-    if not gdelt_enabled and not force:
-        warning = "GDELT source is disabled for this project."
-    elif not gdelt_enabled and force:
+    if not gdelt_enabled and force:
         warning = "GDELT source is disabled; collection ran anyway."
+    elif not gdelt_enabled and not force:
+        warning = "GDELT source is disabled for this project."
 
     fetched = 0
     inserted = 0
@@ -94,7 +97,7 @@ def collect_gdelt_for_project(
 
     for i, kw in enumerate(keywords):
         if i > 0:
-            time.sleep(1.0)  # reduce GDELT rate-limit (429) risk between keywords
+            time.sleep(1.0)
         articles = search_gdelt_articles(kw.keyword, max_records=RECORDS_PER_KEYWORD)
         fetched += len(articles)
         for item in articles:
@@ -108,7 +111,7 @@ def collect_gdelt_for_project(
                 duplicates_skipped += 1
                 continue
 
-            if _insert_mention(db, project_id, item):
+            if _insert_mention(db, project_id, GDELT_SOURCE, item):
                 inserted += 1
             else:
                 duplicates_skipped += 1
@@ -129,14 +132,141 @@ def collect_gdelt_for_project(
         "inserted": inserted,
         "duplicates_skipped": duplicates_skipped,
         "message": message,
+        "warning": warning,
+    }
+
+
+def collect_youtube_for_project(
+    db: Session,
+    project_id: int,
+    *,
+    force: bool = False,
+) -> Dict[str, Any]:
+    """Collect YouTube comments for all project keywords."""
+    settings = get_settings()
+    keywords: List[Keyword] = (
+        db.query(Keyword).filter(Keyword.project_id == project_id).all()
+    )
+
+    empty = {
+        "source": YOUTUBE_SOURCE,
+        "keywords_checked": 0,
+        "videos_checked": 0,
+        "fetched": 0,
+        "inserted": 0,
+        "duplicates_skipped": 0,
+        "message": "",
+    }
+
+    if not settings.youtube_api_key.strip():
+        return {
+            **empty,
+            "message": (
+                "YouTube API key is not configured. Set YOUTUBE_API_KEY in backend .env."
+            ),
+        }
+
+    if not keywords:
+        return {
+            **empty,
+            "message": "No keywords configured. Add keywords before collecting data.",
+        }
+
+    youtube_enabled = _is_source_enabled(db, project_id, YOUTUBE_SOURCE)
+    warning = None
+    if not youtube_enabled and force:
+        warning = "YouTube source is disabled; collection ran anyway."
+    elif not youtube_enabled and not force:
+        warning = "YouTube source is disabled for this project."
+
+    max_videos = settings.youtube_max_videos_per_keyword
+    max_comments = settings.youtube_max_comments_per_video
+    units_per_keyword = 100 + max_videos * 1
+    quota_note = (
+        f"Approx. {units_per_keyword} quota units per keyword "
+        f"(search.list=100 + up to {max_videos} commentThreads.list=1 each). "
+        f"Defaults: {max_videos} videos, {max_comments} comments per video."
+    )
+
+    fetched = 0
+    inserted = 0
+    duplicates_skipped = 0
+    videos_checked = 0
+    seen_global: set[str] = set()
+    quota_hit = False
+    errors: List[str] = []
+
+    for kw in keywords:
+        try:
+            batch = collect_youtube_for_keyword(
+                kw.keyword,
+                max_videos=max_videos,
+                max_comments=max_comments,
+            )
+        except YouTubeApiError as exc:
+            errors.append(str(exc))
+            if exc.quota_exceeded:
+                quota_hit = True
+                break
+            continue
+
+        if batch.get("quota_exceeded"):
+            quota_hit = True
+            if batch.get("error"):
+                errors.append(batch["error"])
+            break
+
+        if batch.get("error"):
+            errors.append(batch["error"])
+
+        videos_checked += len(batch.get("videos", []))
+        for comment in batch.get("comments", []):
+            fetched += 1
+            sid = comment["source_item_id"]
+            if sid in seen_global:
+                duplicates_skipped += 1
+                continue
+            seen_global.add(sid)
+
+            if _mention_exists(db, project_id, YOUTUBE_SOURCE, sid):
+                duplicates_skipped += 1
+                continue
+
+            if _insert_mention(db, project_id, YOUTUBE_SOURCE, comment):
+                inserted += 1
+            else:
+                duplicates_skipped += 1
+
+    db.commit()
+
+    message = (
+        f"YouTube collection complete: {inserted} new comment(s) from "
+        f"{len(keywords)} keyword(s), {videos_checked} video(s) checked."
+    )
+    if quota_hit:
+        message = (
+            f"YouTube quota limit reached. Partial results: {inserted} inserted. "
+            + (errors[-1] if errors else "")
+        )
+    if warning:
+        message = f"{warning} {message}"
+
+    return {
+        "source": YOUTUBE_SOURCE,
+        "keywords_checked": len(keywords),
+        "videos_checked": videos_checked,
+        "fetched": fetched,
+        "inserted": inserted,
+        "duplicates_skipped": duplicates_skipped,
+        "message": message.strip(),
+        "warning": warning,
+        "quota_note": quota_note,
     }
 
 
 def collect_all_enabled_sources(db: Session, project_id: int) -> Dict[str, Any]:
-    """Collect from enabled sources. Only GDELT is implemented in Part 9A."""
-    sources = (
-        db.query(Source).filter(Source.project_id == project_id).all()
-    )
+    """Collect from all enabled sources (GDELT + YouTube)."""
+    sources = db.query(Source).filter(Source.project_id == project_id).all()
     enabled = {s.source_name: s.is_enabled for s in sources}
 
     results: Dict[str, Any] = {}
@@ -153,22 +283,42 @@ def collect_all_enabled_sources(db: Session, project_id: int) -> Dict[str, Any]:
             "fetched": 0,
             "inserted": 0,
             "duplicates_skipped": 0,
-            "message": "GDELT source is not enabled. Enable it in source settings or use Collect GDELT News.",
+            "message": "GDELT source is not enabled.",
         }
 
-    if enabled.get("youtube", False):
-        results["youtube"] = "not implemented yet"
-        messages.append("YouTube: not implemented yet.")
+    if enabled.get(YOUTUBE_SOURCE, False):
+        youtube_result = collect_youtube_for_project(db, project_id, force=False)
+        results[YOUTUBE_SOURCE] = youtube_result
+        messages.append(youtube_result.get("message", ""))
+    else:
+        results[YOUTUBE_SOURCE] = {
+            "source": YOUTUBE_SOURCE,
+            "keywords_checked": 0,
+            "videos_checked": 0,
+            "fetched": 0,
+            "inserted": 0,
+            "duplicates_skipped": 0,
+            "message": "YouTube source is not enabled.",
+        }
 
     if enabled.get("reddit", False):
-        results["reddit"] = "not implemented yet"
+        results["reddit"] = {
+            "source": "reddit",
+            "keywords_checked": 0,
+            "fetched": 0,
+            "inserted": 0,
+            "duplicates_skipped": 0,
+            "message": "not implemented yet",
+        }
         messages.append("Reddit: not implemented yet.")
 
     total_inserted = 0
     total_fetched = 0
-    if isinstance(results.get(GDELT_SOURCE), dict):
-        total_inserted += results[GDELT_SOURCE].get("inserted", 0)
-        total_fetched += results[GDELT_SOURCE].get("fetched", 0)
+    for key in (GDELT_SOURCE, YOUTUBE_SOURCE):
+        val = results.get(key)
+        if isinstance(val, dict):
+            total_inserted += val.get("inserted", 0)
+            total_fetched += val.get("fetched", 0)
 
     return {
         "results": results,

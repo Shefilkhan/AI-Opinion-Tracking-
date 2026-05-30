@@ -10,9 +10,11 @@ from app.schemas.collection import (
     CollectionResponse,
     CollectionSourceResult,
 )
+from app.core.config import get_settings
 from app.services.collection_service import (
     collect_all_enabled_sources,
     collect_gdelt_for_project,
+    collect_youtube_for_project,
 )
 
 router = APIRouter(prefix="/api", tags=["collection"])
@@ -39,6 +41,31 @@ def collect_gdelt(
     project = get_owned_project(project_id, current_user, db)
     _require_keywords(db, project.id)
     result = collect_gdelt_for_project(db, project.id, force=True)
+    return CollectionResponse(**result)
+
+
+@router.post(
+    "/projects/{project_id}/collect/youtube",
+    response_model=CollectionResponse,
+)
+def collect_youtube(
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    project = get_owned_project(project_id, current_user, db)
+    _require_keywords(db, project.id)
+
+    if not get_settings().youtube_api_key.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "YouTube API key is not configured. "
+                "Set YOUTUBE_API_KEY in the backend .env file."
+            ),
+        )
+
+    result = collect_youtube_for_project(db, project.id, force=True)
     return CollectionResponse(**result)
 
 

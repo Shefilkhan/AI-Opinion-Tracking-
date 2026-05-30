@@ -1,10 +1,11 @@
 import { useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Download, Layers } from "lucide-react"
+import { Download, Layers, Video } from "lucide-react"
 import { ApiError } from "@/api/client"
 import {
   collectAllSources,
   collectGdelt,
+  collectYoutube,
   type CollectionSourceResult,
   type CollectAllResponse,
 } from "@/api/collection"
@@ -51,6 +52,19 @@ export function CollectDataButton({ projectId }: CollectDataButtonProps) {
     },
   })
 
+  const youtubeMutation = useMutation({
+    mutationFn: () => collectYoutube(projectId),
+    onSuccess: (data) => {
+      setError(null)
+      setLastResult(data)
+      invalidateAfterCollection(queryClient, projectId)
+    },
+    onError: (err) => {
+      setLastResult(null)
+      setError(err instanceof ApiError ? err.detail : "YouTube collection failed.")
+    },
+  })
+
   const allMutation = useMutation({
     mutationFn: () => collectAllSources(projectId),
     onSuccess: (data) => {
@@ -64,7 +78,10 @@ export function CollectDataButton({ projectId }: CollectDataButtonProps) {
     },
   })
 
-  const busy = gdeltMutation.isPending || allMutation.isPending
+  const busy =
+    gdeltMutation.isPending ||
+    youtubeMutation.isPending ||
+    allMutation.isPending
 
   return (
     <div className="space-y-4">
@@ -79,6 +96,17 @@ export function CollectDataButton({ projectId }: CollectDataButtonProps) {
         </Button>
         <Button
           variant="outline"
+          onClick={() => youtubeMutation.mutate()}
+          disabled={busy}
+          className="gap-2"
+        >
+          <Video className="size-4" />
+          {youtubeMutation.isPending
+            ? "Collecting YouTube…"
+            : "Collect YouTube Comments"}
+        </Button>
+        <Button
+          variant="outline"
           onClick={() => allMutation.mutate()}
           disabled={busy}
           className="gap-2"
@@ -88,8 +116,8 @@ export function CollectDataButton({ projectId }: CollectDataButtonProps) {
         </Button>
       </div>
       <p className="text-xs text-slate-500">
-        After collecting new mentions, click Analyze Sentiment to update sentiment
-        analytics.
+        YouTube search uses API quota — keep keywords limited while testing. After
+        collecting new mentions, click Analyze Sentiment to update analytics.
       </p>
       {error && (
         <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">

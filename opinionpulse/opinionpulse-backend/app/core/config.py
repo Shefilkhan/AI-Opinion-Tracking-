@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
 
+    youtube_api_key: str = ""
+    youtube_max_videos_per_keyword: int = 3
+    youtube_max_comments_per_video: int = 20
+
     @property
     def database_url(self) -> str:
         password = self.db_password

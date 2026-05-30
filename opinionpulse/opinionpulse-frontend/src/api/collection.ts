@@ -7,6 +7,9 @@ export type CollectionSourceResult = {
   inserted: number
   duplicates_skipped: number
   message?: string
+  videos_checked?: number
+  quota_note?: string
+  warning?: string
 }
 
 export type CollectionResponse = CollectionSourceResult
@@ -21,6 +24,13 @@ export type CollectAllResponse = {
 export function collectGdelt(projectId: number) {
   return apiRequest<CollectionResponse>(
     `/api/projects/${projectId}/collect/gdelt`,
+    { method: "POST", auth: true }
+  )
+}
+
+export function collectYoutube(projectId: number) {
+  return apiRequest<CollectionResponse>(
+    `/api/projects/${projectId}/collect/youtube`,
     { method: "POST", auth: true }
   )
 }
