@@ -2,6 +2,8 @@ import { Bot, User } from "lucide-react"
 import { chatbotMock } from "@/data/landingData"
 import { SectionHeader } from "@/components/landing/SectionHeader"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { cardSurface } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 export function ChatbotPreview() {
   return (
@@ -12,7 +14,7 @@ export function ChatbotPreview() {
           title="Ask questions in plain language"
           description="Get instant summaries of what people are saying — powered by your tracked data and NLP insights."
         />
-        <Card className="mx-auto max-w-2xl border-slate-800/60 bg-slate-900/70 shadow-2xl">
+        <Card className={cn("mx-auto max-w-2xl bg-slate-900/70 shadow-2xl", cardSurface)}>
           <CardHeader className="flex flex-row items-center gap-3 border-b border-slate-800">
             <div className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-violet-600">
               <Bot className="size-5 text-white" />

@@ -4,6 +4,8 @@ import { heroPreviewStats } from "@/data/landingData"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { btnPrimary, cardSurface } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 export function HeroSection() {
   return (
@@ -25,7 +27,7 @@ export function HeroSection() {
             <Button
               render={<Link to="/signup" />}
               size="lg"
-              className="gap-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white hover:opacity-90"
+              className={cn("gap-2", btnPrimary)}
             >
               Start Tracking
               <ArrowRight className="size-4" />
@@ -37,7 +39,7 @@ export function HeroSection() {
           </div>
         </div>
 
-        <Card className="border-slate-800/60 bg-slate-900/70 shadow-2xl shadow-blue-900/10">
+        <Card className={cn(cardSurface, "bg-slate-900/70 shadow-2xl shadow-blue-900/10")}>
           <CardHeader className="border-b border-slate-800 pb-4">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base text-white">Sentiment Overview</CardTitle>

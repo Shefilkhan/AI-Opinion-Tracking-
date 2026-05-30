@@ -1,4 +1,5 @@
 import { apiRequest } from "@/api/client"
+import type { SentimentBrief } from "@/api/sentiment"
 
 export type Mention = {
   id: number
@@ -13,6 +14,7 @@ export type Mention = {
   published_at: string | null
   engagement_score: number
   created_at: string
+  sentiment: SentimentBrief | null
 }
 
 export type MentionListResponse = {

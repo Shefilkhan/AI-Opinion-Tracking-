@@ -4,7 +4,7 @@ import { footerLinks } from "@/data/landingData"
 
 export function Footer() {
   return (
-    <footer className="border-t border-slate-800 bg-slate-950 py-12">
+    <footer className="border-t border-slate-800/80 bg-slate-950/90 py-12">
       <div className="mx-auto max-w-6xl px-4 md:px-6">
         <div className="grid gap-10 md:grid-cols-4">
           <div className="md:col-span-2">
@@ -26,7 +26,7 @@ export function Footer() {
                 <li key={link.label}>
                   <a
                     href={link.href}
-                    className="text-sm text-slate-400 transition-colors hover:text-white"
+                    className="text-sm text-slate-400 transition-colors duration-200 hover:text-white"
                   >
                     {link.label}
                   </a>
@@ -42,14 +42,14 @@ export function Footer() {
                   {link.href.startsWith("/") ? (
                     <Link
                       to={link.href}
-                      className="text-sm text-slate-400 transition-colors hover:text-white"
+                      className="text-sm text-slate-400 transition-colors duration-200 hover:text-white"
                     >
                       {link.label}
                     </Link>
                   ) : (
                     <a
                       href={link.href}
-                      className="text-sm text-slate-400 transition-colors hover:text-white"
+                      className="text-sm text-slate-400 transition-colors duration-200 hover:text-white"
                     >
                       {link.label}
                     </a>

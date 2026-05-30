@@ -10,6 +10,9 @@ import { MentionFeed } from "@/components/mentions/MentionFeed"
 import { MentionFilters, type MentionFilterValues } from "@/components/mentions/MentionFilters"
 import { MentionForm } from "@/components/mentions/MentionForm"
 import { MentionStats } from "@/components/mentions/MentionStats"
+import { AnalyzeSentimentButton } from "@/components/sentiment/AnalyzeSentimentButton"
+import { SentimentSummaryCards } from "@/components/sentiment/SentimentSummaryCards"
+import { SentimentTrendChart } from "@/components/sentiment/SentimentTrendChart"
 import { KeywordManager } from "@/components/projects/KeywordManager"
 import { SourceSelector } from "@/components/projects/SourceSelector"
 import {
@@ -19,6 +22,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { LoadingState } from "@/components/ui/LoadingState"
+import { cardSurface } from "@/lib/ui-classes"
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -99,7 +104,7 @@ export function ProjectDetailPage() {
   if (isLoading) {
     return (
       <DashboardLayout title="Loading…">
-        <p className="text-slate-400">Loading project…</p>
+        <LoadingState label="Loading project…" />
       </DashboardLayout>
     )
   }
@@ -147,7 +152,7 @@ export function ProjectDetailPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-6">
           {editing ? (
-            <Card className="border-slate-800/60 bg-slate-900/50">
+            <Card className={cardSurface}>
               <CardHeader>
                 <CardTitle className="text-white">Edit project</CardTitle>
               </CardHeader>
@@ -173,7 +178,7 @@ export function ProjectDetailPage() {
               </CardContent>
             </Card>
           ) : (
-            <Card className="border-slate-800/60 bg-slate-900/50">
+            <Card className={cardSurface}>
               <CardHeader>
                 <CardTitle className="text-white">Overview</CardTitle>
               </CardHeader>
@@ -198,7 +203,7 @@ export function ProjectDetailPage() {
         </div>
       </div>
 
-      <section className="mt-10 space-y-6 border-t border-slate-800 pt-10">
+      <section className="mt-10 space-y-6 border-t border-slate-800/80 pt-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold text-white">Mentions</h2>
@@ -206,18 +211,27 @@ export function ProjectDetailPage() {
               Collect and review public opinion text before API integrations.
             </p>
           </div>
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => seedMutation.mutate()}
-            disabled={seedMutation.isPending}
-          >
-            <Database className="size-4" />
-            {seedMutation.isPending ? "Adding samples…" : "Add sample mentions"}
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => seedMutation.mutate()}
+              disabled={seedMutation.isPending}
+            >
+              <Database className="size-4" />
+              {seedMutation.isPending ? "Adding samples…" : "Add sample mentions"}
+            </Button>
+            <AnalyzeSentimentButton projectId={projectId} />
+          </div>
         </div>
 
         <MentionStats projectId={projectId} />
+
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold text-white">Sentiment analysis</h3>
+          <SentimentSummaryCards projectId={projectId} />
+          <SentimentTrendChart projectId={projectId} />
+        </section>
 
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-1">

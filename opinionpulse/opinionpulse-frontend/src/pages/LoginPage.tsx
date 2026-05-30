@@ -5,6 +5,8 @@ import { loginUser } from "@/api/auth"
 import { AuthLayout } from "@/components/auth/AuthLayout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { btnPrimary, inputSurface } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -52,7 +54,7 @@ export function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="border-slate-700 bg-slate-950"
+            className={inputSurface}
             required
           />
         </div>
@@ -66,7 +68,7 @@ export function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="border-slate-700 bg-slate-950"
+            className={inputSurface}
             required
           />
         </div>
@@ -78,7 +80,7 @@ export function LoginPage() {
         <Button
           type="submit"
           disabled={loading}
-          className="w-full bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+          className={cn("w-full", btnPrimary)}
         >
           {loading ? "Logging in…" : "Log in"}
         </Button>

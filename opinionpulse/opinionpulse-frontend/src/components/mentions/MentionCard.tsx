@@ -3,6 +3,8 @@ import type { Mention } from "@/api/mentions"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { SentimentBadge } from "@/components/sentiment/SentimentBadge"
+import { cardSurface } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 const SOURCE_STYLES: Record<string, string> = {
@@ -25,7 +27,12 @@ export function MentionCard({ mention, onDelete, deleting }: MentionCardProps) {
     : new Date(mention.created_at).toLocaleString()
 
   return (
-    <Card className="border-slate-800/60 bg-slate-950/50">
+    <Card
+      className={cn(
+        cardSurface,
+        "bg-slate-950/60 transition-all duration-200 hover:border-slate-700/70"
+      )}
+    >
       <CardContent className="pt-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -40,6 +47,7 @@ export function MentionCard({ mention, onDelete, deleting }: MentionCardProps) {
             {mention.author && (
               <span className="text-sm text-slate-400">{mention.author}</span>
             )}
+            <SentimentBadge sentiment={mention.sentiment} showDetails />
           </div>
           <Button
             variant="ghost"

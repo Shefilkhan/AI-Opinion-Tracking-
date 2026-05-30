@@ -4,6 +4,8 @@ import type { Project } from "@/api/projects"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { cardInteractive, btnPrimary } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 type ProjectCardProps = {
   project: Project
@@ -15,10 +17,12 @@ export function ProjectCard({ project, onDelete, deleting }: ProjectCardProps) {
   const created = new Date(project.created_at).toLocaleDateString()
 
   return (
-    <Card className="border-slate-800/60 bg-slate-900/50">
+    <Card className={cn(cardInteractive, "group overflow-hidden")}>
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-lg text-white">{project.name}</CardTitle>
+          <CardTitle className="text-lg text-white transition-colors group-hover:text-blue-100">
+            {project.name}
+          </CardTitle>
           <Badge variant="secondary" className="shrink-0 capitalize">
             {project.tracking_frequency}
           </Badge>
@@ -36,7 +40,7 @@ export function ProjectCard({ project, onDelete, deleting }: ProjectCardProps) {
       <CardFooter className="gap-2">
         <Button
           render={<Link to={`/projects/${project.id}`} />}
-          className="flex-1 bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+          className={cn("flex-1", btnPrimary)}
         >
           View
         </Button>

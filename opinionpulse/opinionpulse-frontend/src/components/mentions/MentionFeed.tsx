@@ -28,6 +28,8 @@ export function MentionFeed({ projectId, filters }: MentionFeedProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["mentions", projectId] })
       queryClient.invalidateQueries({ queryKey: ["mention-stats", projectId] })
+      queryClient.invalidateQueries({ queryKey: ["sentiment-summary", projectId] })
+      queryClient.invalidateQueries({ queryKey: ["sentiment-trends", projectId] })
     },
   })
 

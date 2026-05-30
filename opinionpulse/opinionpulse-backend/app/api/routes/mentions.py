@@ -4,7 +4,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.api.deps import get_current_user
 from app.api.project_deps import get_owned_mention, get_owned_project
@@ -18,6 +18,7 @@ from app.schemas.mention import (
     MentionSeedResponse,
     MentionStatsResponse,
 )
+from app.schemas.mention_helpers import build_mention_response
 
 router = APIRouter(prefix="/api", tags=["mentions"])
 
@@ -142,14 +143,15 @@ def list_mentions(
 
     total = query.count()
     mentions = (
-        query.order_by(Mention.created_at.desc())
+        query.options(joinedload(Mention.sentiment_result))
+        .order_by(Mention.created_at.desc())
         .offset(offset)
         .limit(limit)
         .all()
     )
 
     return MentionListResponse(
-        mentions=[MentionResponse.model_validate(m) for m in mentions],
+        mentions=[build_mention_response(m) for m in mentions],
         total=total,
         limit=limit,
         offset=offset,
@@ -190,7 +192,7 @@ def create_mention(
     db.add(mention)
     db.commit()
     db.refresh(mention)
-    return MentionResponse.model_validate(mention)
+    return build_mention_response(mention)
 
 
 @router.get(

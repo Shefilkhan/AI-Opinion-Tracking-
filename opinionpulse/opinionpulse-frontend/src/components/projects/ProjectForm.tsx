@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { btnPrimary, inputSurface } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 export type ProjectFormValues = {
   name: string
@@ -35,7 +37,7 @@ export function ProjectForm({
           value={values.name}
           onChange={(e) => onChange({ ...values, name: e.target.value })}
           placeholder="Netflix pricing tracker"
-          className="border-slate-700 bg-slate-950"
+          className={inputSurface}
           required
         />
       </div>
@@ -49,7 +51,10 @@ export function ProjectForm({
           onChange={(e) => onChange({ ...values, description: e.target.value })}
           placeholder="What are you tracking?"
           rows={3}
-          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className={cn(
+            "w-full rounded-lg border px-3 py-2 text-sm text-white outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+            inputSurface
+          )}
         />
       </div>
       <div>
@@ -65,7 +70,10 @@ export function ProjectForm({
               tracking_frequency: e.target.value as ProjectFormValues["tracking_frequency"],
             })
           }
-          className="h-8 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 text-sm text-white"
+          className={cn(
+            "h-8 w-full rounded-lg border px-2.5 text-sm text-white",
+            inputSurface
+          )}
         >
           <option value="manual">Manual</option>
           <option value="daily">Daily</option>
@@ -80,7 +88,7 @@ export function ProjectForm({
       <Button
         type="submit"
         disabled={loading}
-        className="w-full bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+        className={cn("w-full", btnPrimary)}
       >
         {loading ? "Saving…" : submitLabel}
       </Button>

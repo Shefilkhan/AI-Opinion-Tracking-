@@ -24,11 +24,11 @@ export function SectionHeader({
       )}
     >
       {badge && (
-        <span className="mb-3 inline-block rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-300">
+        <span className="mb-4 inline-block rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-300">
           {badge}
         </span>
       )}
-      <h2 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
+      <h2 className="bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-3xl font-bold tracking-tight text-transparent md:text-4xl">
         {title}
       </h2>
       <p className="mt-4 text-base leading-relaxed text-slate-400 md:text-lg">

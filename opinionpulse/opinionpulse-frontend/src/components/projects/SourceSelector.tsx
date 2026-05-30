@@ -8,6 +8,8 @@ import {
   type SourceUpdateItem,
 } from "@/api/sources"
 import { Button } from "@/components/ui/button"
+import { btnPrimary, panelSurface } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 const SOURCE_LABELS: Record<string, string> = {
   reddit: "Reddit",
@@ -69,7 +71,7 @@ export function SourceSelector({ projectId }: SourceSelectorProps) {
   }
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
+    <div className={cn(panelSurface, "p-5")}>
       <h3 className="font-semibold text-white">Data sources</h3>
       <p className="mt-1 text-sm text-slate-400">
         Choose where to collect opinions (API integration coming later).
@@ -78,7 +80,7 @@ export function SourceSelector({ projectId }: SourceSelectorProps) {
         {localSources.map((source) => (
           <label
             key={source.source_name}
-            className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-800 bg-slate-950/80 px-4 py-3"
+            className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-800/80 bg-slate-950/60 px-4 py-3 transition-colors duration-200 hover:border-slate-700/80 hover:bg-slate-950/90"
           >
             <span className="text-sm text-white">
               {SOURCE_LABELS[source.source_name] ?? source.source_name}
@@ -94,7 +96,7 @@ export function SourceSelector({ projectId }: SourceSelectorProps) {
       </div>
       {error && <p className="mt-2 text-sm text-rose-300">{error}</p>}
       <Button
-        className="mt-4 bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+        className={cn("mt-4", btnPrimary)}
         onClick={() => saveMutation.mutate()}
         disabled={saveMutation.isPending}
       >

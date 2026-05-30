@@ -10,10 +10,12 @@ import { TechStackSection } from "@/components/landing/TechStackSection"
 import { PricingSection } from "@/components/landing/PricingSection"
 import { CTASection } from "@/components/landing/CTASection"
 import { Footer } from "@/components/landing/Footer"
+import { pageMesh } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-foreground">
+    <div className={cn("min-h-screen text-foreground", pageMesh)}>
       <Navbar />
       <main>
         <HeroSection />

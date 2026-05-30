@@ -137,10 +137,12 @@ class SentimentResult(Base):
     mention_id: Mapped[int] = mapped_column(
         ForeignKey("mentions.id"), unique=True, nullable=False, index=True
     )
-    label: Mapped[str] = mapped_column(
+    sentiment_label: Mapped[str] = mapped_column(
         String(20), nullable=False
     )  # positive, negative, neutral
-    score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    sentiment_score: Mapped[float] = mapped_column(Float, nullable=False)
+    confidence: Mapped[float] = mapped_column(Float, nullable=False)
+    model_name: Mapped[str] = mapped_column(String(50), default="vader", nullable=False)
     analyzed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

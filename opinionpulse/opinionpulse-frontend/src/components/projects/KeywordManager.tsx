@@ -11,6 +11,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { inputSurface, panelSurface, selectSurface } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 const KEYWORD_TYPES: KeywordCreateData["keyword_type"][] = [
   "brand",
@@ -66,7 +68,7 @@ export function KeywordManager({ projectId }: KeywordManagerProps) {
   }
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
+    <div className={cn(panelSurface, "p-5")}>
       <h3 className="font-semibold text-white">Keywords</h3>
       <p className="mt-1 text-sm text-slate-400">Track brands, topics, and competitors.</p>
 
@@ -75,14 +77,14 @@ export function KeywordManager({ projectId }: KeywordManagerProps) {
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
           placeholder="e.g. Netflix pricing"
-          className="flex-1 border-slate-700 bg-slate-950"
+          className={cn("flex-1", inputSurface)}
         />
         <select
           value={keywordType}
           onChange={(e) =>
             setKeywordType(e.target.value as KeywordCreateData["keyword_type"])
           }
-          className="h-8 rounded-lg border border-slate-700 bg-slate-950 px-2.5 text-sm text-white sm:w-36"
+          className={cn(selectSurface, "sm:w-36")}
         >
           {KEYWORD_TYPES.map((t) => (
             <option key={t} value={t}>

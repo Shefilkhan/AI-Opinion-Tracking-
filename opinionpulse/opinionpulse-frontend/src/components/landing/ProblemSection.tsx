@@ -1,6 +1,7 @@
 import { problemCards } from "@/data/landingData"
 import { SectionHeader } from "@/components/landing/SectionHeader"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { cardInteractive } from "@/lib/ui-classes"
 
 export function ProblemSection() {
   return (
@@ -17,7 +18,7 @@ export function ProblemSection() {
             return (
               <Card
                 key={card.title}
-                className="border-slate-800/60 bg-slate-900/50 shadow-lg transition-colors hover:border-slate-700"
+                className={cardInteractive}
               >
                 <CardHeader>
                   <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-rose-500/10 text-rose-400">

@@ -3,6 +3,8 @@ from typing import Dict, List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.sentiment import SentimentBrief
+
 MentionSource = Literal["reddit", "youtube", "gdelt", "hackernews", "manual"]
 ALLOWED_SOURCES = ("reddit", "youtube", "gdelt", "hackernews", "manual")
 
@@ -31,6 +33,7 @@ class MentionResponse(BaseModel):
     published_at: Optional[datetime]
     engagement_score: int
     created_at: datetime
+    sentiment: Optional[SentimentBrief] = None
 
 
 class MentionListResponse(BaseModel):

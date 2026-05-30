@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query"
 import { getMentionStats } from "@/api/mentions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { cardInteractive } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 const SOURCE_LABELS: { key: string; label: string; color: string }[] = [
   { key: "total", label: "Total", color: "text-white" },
@@ -34,7 +36,7 @@ export function MentionStats({ projectId }: MentionStatsProps) {
         const value =
           item.key === "total" ? total : bySource[item.key] ?? 0
         return (
-          <Card key={item.key} className="border-slate-800/60 bg-slate-900/50">
+          <Card key={item.key} className={cn(cardInteractive, "text-center")}>
             <CardHeader className="pb-1">
               <CardTitle className="text-xs font-medium text-slate-500">
                 {item.label}

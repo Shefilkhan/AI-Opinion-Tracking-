@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import { Menu, Activity } from "lucide-react"
 import { navLinks } from "@/data/landingData"
 import { Button } from "@/components/ui/button"
+import { btnPrimary } from "@/lib/ui-classes"
 import {
   Sheet,
   SheetContent,
@@ -15,7 +16,7 @@ export function Navbar() {
   const [open, setOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-xl supports-[backdrop-filter]:bg-slate-950/60">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-6">
         <Link to="/" className="flex items-center gap-2 font-semibold text-white">
           <span className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-violet-600">
@@ -29,7 +30,7 @@ export function Navbar() {
             <a
               key={link.href}
               href={link.href}
-              className="text-sm text-slate-400 transition-colors hover:text-white"
+              className="text-sm text-slate-400 transition-colors duration-200 hover:text-white"
             >
               {link.label}
             </a>
@@ -43,7 +44,7 @@ export function Navbar() {
           <Button
             render={<Link to="/signup" />}
             size="sm"
-            className="bg-gradient-to-r from-blue-600 to-violet-600 text-white hover:opacity-90"
+            className={btnPrimary}
           >
             Get Started
           </Button>
@@ -80,7 +81,7 @@ export function Navbar() {
                 </Button>
                 <Button
                   render={<Link to="/signup" onClick={() => setOpen(false)} />}
-                  className="bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+                  className={btnPrimary}
                 >
                   Get Started
                 </Button>

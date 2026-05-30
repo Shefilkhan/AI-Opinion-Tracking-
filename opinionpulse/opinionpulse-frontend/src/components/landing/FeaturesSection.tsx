@@ -1,6 +1,8 @@
 import { features } from "@/data/landingData"
 import { SectionHeader } from "@/components/landing/SectionHeader"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { cardInteractive } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 export function FeaturesSection() {
   return (
@@ -17,7 +19,7 @@ export function FeaturesSection() {
             return (
               <Card
                 key={feature.title}
-                className="border-slate-800/60 bg-slate-900/50 shadow-md hover:border-blue-500/20"
+                className={cn(cardInteractive, "hover:border-blue-500/20")}
               >
                 <CardHeader className="pb-2">
                   <div className="mb-3 flex size-9 items-center justify-center rounded-md bg-blue-500/10 text-blue-400">

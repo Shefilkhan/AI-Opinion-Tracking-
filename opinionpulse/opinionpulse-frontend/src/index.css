@@ -65,3 +65,46 @@ body {
 #root {
   min-height: 100vh;
 }
+
+::selection {
+  background: oklch(0.45 0.15 265 / 0.45);
+  color: oklch(0.98 0.01 260);
+}
+
+*:focus-visible {
+  outline: 2px solid oklch(0.55 0.19 265 / 0.6);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Subtle scrollbar for dark UI */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.35 0.03 260) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: oklch(0.32 0.03 260);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.4 0.05 265);
+}

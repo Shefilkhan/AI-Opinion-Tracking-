@@ -4,6 +4,7 @@ import { pricingPlans } from "@/data/landingData"
 import { SectionHeader } from "@/components/landing/SectionHeader"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { btnPrimary, cardInteractive } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 export function PricingSection() {
@@ -20,7 +21,8 @@ export function PricingSection() {
             <Card
               key={plan.name}
               className={cn(
-                "flex flex-col border-slate-800/60 bg-slate-950/50 shadow-lg",
+                "flex flex-col bg-slate-950/50",
+                cardInteractive,
                 plan.highlighted &&
                   "border-blue-500/40 ring-1 ring-blue-500/30 shadow-blue-900/20"
               )}
@@ -51,8 +53,7 @@ export function PricingSection() {
                   variant={plan.highlighted ? "default" : "outline"}
                   className={cn(
                     "w-full",
-                    plan.highlighted &&
-                      "bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+                    plan.highlighted && btnPrimary
                   )}
                 >
                   Get Started

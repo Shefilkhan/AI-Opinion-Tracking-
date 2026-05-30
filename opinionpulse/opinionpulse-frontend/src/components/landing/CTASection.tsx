@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom"
 import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { btnPrimary } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 export function CTASection() {
   return (
@@ -17,7 +19,7 @@ export function CTASection() {
           <Button
             render={<Link to="/signup" />}
             size="lg"
-            className="mt-8 gap-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white hover:opacity-90"
+            className={cn("mt-8 gap-2", btnPrimary)}
           >
             Create Your First Tracking Project
             <ArrowRight className="size-4" />

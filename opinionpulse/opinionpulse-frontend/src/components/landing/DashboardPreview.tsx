@@ -11,6 +11,8 @@ import {
 import { dashboardStats, sentimentChartData } from "@/data/landingData"
 import { SectionHeader } from "@/components/landing/SectionHeader"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { cardSurface } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 const statItems = [
   { label: "Total Mentions", value: dashboardStats.totalMentions },
@@ -34,7 +36,7 @@ export function DashboardPreview() {
           {statItems.map((stat) => (
             <Card
               key={stat.label}
-              className="border-slate-800/60 bg-slate-950/50 shadow-md"
+              className={cn(cardSurface, "bg-slate-950/50")}
             >
               <CardContent className="pt-6">
                 <p className="text-sm text-slate-500">{stat.label}</p>
@@ -43,7 +45,7 @@ export function DashboardPreview() {
             </Card>
           ))}
         </div>
-        <Card className="border-slate-800/60 bg-slate-950/50 shadow-xl">
+        <Card className={cn(cardSurface, "bg-slate-950/50 shadow-xl")}>
           <CardHeader>
             <CardTitle className="text-white">Sentiment Over Time</CardTitle>
           </CardHeader>

@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.db.models import Keyword, Mention, Project, User
 
@@ -36,6 +36,7 @@ def get_owned_keyword(keyword_id: int, current_user: User, db: Session) -> Keywo
 def get_owned_mention(mention_id: int, current_user: User, db: Session) -> Mention:
     mention = (
         db.query(Mention)
+        .options(joinedload(Mention.sentiment_result))
         .join(Project)
         .filter(Mention.id == mention_id, Project.user_id == current_user.id)
         .first()

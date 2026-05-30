@@ -1,6 +1,8 @@
 import { techStack } from "@/data/landingData"
 import { SectionHeader } from "@/components/landing/SectionHeader"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { cardSurface } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 export function TechStackSection() {
   return (
@@ -17,7 +19,7 @@ export function TechStackSection() {
             return (
               <Card
                 key={item.name}
-                className="border-slate-800/60 bg-slate-900/50 text-center shadow-md"
+                className={cn(cardSurface, "text-center")}
               >
                 <CardHeader className="items-center">
                   <div className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600/20 to-violet-600/20 text-blue-400">

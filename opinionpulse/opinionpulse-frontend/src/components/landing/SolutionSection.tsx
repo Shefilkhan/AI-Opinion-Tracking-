@@ -1,6 +1,8 @@
 import { solutionCards } from "@/data/landingData"
 import { SectionHeader } from "@/components/landing/SectionHeader"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { cardInteractive } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 export function SolutionSection() {
   return (
@@ -17,7 +19,7 @@ export function SolutionSection() {
             return (
               <Card
                 key={card.title}
-                className="border-slate-800/60 bg-slate-950/50 shadow-lg transition-colors hover:border-blue-500/30"
+                className={cn(cardInteractive, "bg-slate-950/50 hover:border-blue-500/30")}
               >
                 <CardHeader>
                   <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600/20 to-violet-600/20 text-blue-400">

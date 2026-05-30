@@ -1,5 +1,7 @@
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { inputSurface, selectSurface } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 export type MentionFilterValues = {
   source: string
@@ -17,7 +19,7 @@ export function MentionFilters({ values, onChange }: MentionFiltersProps) {
       <select
         value={values.source}
         onChange={(e) => onChange({ ...values, source: e.target.value })}
-        className="h-8 rounded-lg border border-slate-700 bg-slate-950 px-2.5 text-sm text-white sm:w-40"
+        className={cn(selectSurface, "sm:w-40")}
       >
         <option value="all">All sources</option>
         <option value="manual">Manual</option>
@@ -32,7 +34,7 @@ export function MentionFilters({ values, onChange }: MentionFiltersProps) {
           placeholder="Search mention text…"
           value={values.search}
           onChange={(e) => onChange({ ...values, search: e.target.value })}
-          className="border-slate-700 bg-slate-950 pl-9"
+          className={cn(inputSurface, "pl-9")}
         />
       </div>
     </div>

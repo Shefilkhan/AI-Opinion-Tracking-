@@ -9,6 +9,7 @@ import {
 } from "@/components/projects/ProjectForm"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { cardSurface } from "@/lib/ui-classes"
 
 export function CreateProjectPage() {
   const navigate = useNavigate()
@@ -41,7 +42,7 @@ export function CreateProjectPage() {
   return (
     <DashboardLayout title="Create project" subtitle="Set up a new tracking workspace">
       <div className="mx-auto max-w-lg">
-        <Card className="border-slate-800/60 bg-slate-900/50">
+        <Card className={cardSurface}>
           <CardHeader>
             <CardTitle className="text-white">Project details</CardTitle>
           </CardHeader>

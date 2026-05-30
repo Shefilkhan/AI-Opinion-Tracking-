@@ -5,6 +5,9 @@ import { deleteProject, getProjects } from "@/api/projects"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { ProjectCard } from "@/components/projects/ProjectCard"
 import { Button } from "@/components/ui/button"
+import { ProjectCardSkeleton } from "@/components/ui/Skeleton"
+import { btnPrimary, panelSurface } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 export function ProjectsPage() {
   const queryClient = useQueryClient()
@@ -32,7 +35,7 @@ export function ProjectsPage() {
         </p>
         <Button
           render={<Link to="/projects/new" />}
-          className="gap-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+          className={cn("gap-2", btnPrimary)}
         >
           <Plus className="size-4" />
           Create Project
@@ -40,11 +43,20 @@ export function ProjectsPage() {
       </div>
 
       {isLoading && (
-        <p className="text-slate-400">Loading projects…</p>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <ProjectCardSkeleton key={i} />
+          ))}
+        </div>
       )}
 
       {!isLoading && data?.projects.length === 0 && (
-        <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/30 py-16 text-center">
+        <div
+          className={cn(
+            panelSurface,
+            "border-dashed border-slate-700/80 py-20 text-center"
+          )}
+        >
           <FolderKanban className="mx-auto size-12 text-slate-600" />
           <h3 className="mt-4 text-lg font-semibold text-white">No projects yet</h3>
           <p className="mt-2 text-sm text-slate-400">
@@ -52,7 +64,7 @@ export function ProjectsPage() {
           </p>
           <Button
             render={<Link to="/projects/new" />}
-            className="mt-6 bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+            className={cn("mt-6", btnPrimary)}
           >
             Create Project
           </Button>

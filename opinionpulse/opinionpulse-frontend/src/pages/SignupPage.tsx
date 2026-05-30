@@ -5,6 +5,8 @@ import { registerUser } from "@/api/auth"
 import { AuthLayout } from "@/components/auth/AuthLayout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { btnPrimary, inputSurface } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 export function SignupPage() {
   const navigate = useNavigate()
@@ -61,7 +63,7 @@ export function SignupPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Your name"
-            className="border-slate-700 bg-slate-950"
+            className={inputSurface}
             required
           />
         </div>
@@ -75,7 +77,7 @@ export function SignupPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="border-slate-700 bg-slate-950"
+            className={inputSurface}
             required
           />
         </div>
@@ -89,7 +91,7 @@ export function SignupPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="border-slate-700 bg-slate-950"
+            className={inputSurface}
             required
           />
         </div>
@@ -106,7 +108,7 @@ export function SignupPage() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="••••••••"
-            className="border-slate-700 bg-slate-950"
+            className={inputSurface}
             required
           />
         </div>
@@ -118,7 +120,7 @@ export function SignupPage() {
         <Button
           type="submit"
           disabled={loading}
-          className="w-full bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+          className={cn("w-full", btnPrimary)}
         >
           {loading ? "Creating account…" : "Sign up"}
         </Button>
