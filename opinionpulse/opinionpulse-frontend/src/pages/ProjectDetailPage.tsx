@@ -1,7 +1,8 @@
 import { useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { ArrowLeft, BarChart3, Database, Trash2 } from "lucide-react"
+import { ArrowLeft, BarChart3, Database, Newspaper, Trash2 } from "lucide-react"
+import { CollectDataButton } from "@/components/collection/CollectDataButton"
 import { ApiError } from "@/api/client"
 import { deleteProject, getProject, updateProject } from "@/api/projects"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
@@ -205,6 +206,19 @@ export function ProjectDetailPage() {
         </div>
         <KeywordManager projectId={projectId} />
       </div>
+
+      <section className="mt-10 space-y-4 border-t border-slate-800/80 pt-10">
+        <div className="flex items-center gap-2">
+          <Newspaper className="size-5 text-blue-400" />
+          <div>
+            <h2 className="text-xl font-bold text-white">Data collection</h2>
+            <p className="text-sm text-slate-400">
+              Pull real news articles from GDELT using your project keywords.
+            </p>
+          </div>
+        </div>
+        <CollectDataButton projectId={projectId} />
+      </section>
 
       <section className="mt-10 space-y-6 border-t border-slate-800/80 pt-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
