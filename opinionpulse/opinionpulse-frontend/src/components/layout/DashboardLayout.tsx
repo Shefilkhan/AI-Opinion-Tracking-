@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom"
 import {
   Activity,
   Bot,
+  Bell,
   FileText,
   LayoutDashboard,
   LogOut,
@@ -30,6 +31,7 @@ const navItems = [
   { label: "Mentions", href: "#", icon: MessageSquare, active: false },
   { label: "AI Assistant", href: "/projects", icon: Bot, active: true },
   { label: "Reports", href: "/projects", icon: FileText, active: true },
+  { label: "Alerts", href: "/projects", icon: Bell, active: true },
   { label: "Settings", href: "#", icon: Settings, active: false },
 ]
 

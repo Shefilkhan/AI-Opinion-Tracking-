@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, text
 
 from app.api.routes import (
+    alerts,
     analytics,
     auth,
     chat,
@@ -79,6 +80,7 @@ app.include_router(analytics.router)
 app.include_router(collection.router)
 app.include_router(chat.router)
 app.include_router(reports.router)
+app.include_router(alerts.router)
 
 
 @app.get("/")

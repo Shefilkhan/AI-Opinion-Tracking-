@@ -9,6 +9,7 @@ import { CreateProjectPage } from "@/pages/CreateProjectPage"
 import { ProjectDetailPage } from "@/pages/ProjectDetailPage"
 import { ProjectChatPage } from "@/pages/ProjectChatPage"
 import { ProjectReportsPage } from "@/pages/ProjectReportsPage"
+import { ProjectAlertsPage } from "@/pages/ProjectAlertsPage"
 
 function App() {
   return (
@@ -53,6 +54,14 @@ function App() {
         element={
           <ProtectedRoute>
             <ProjectReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/projects/:id/alerts"
+        element={
+          <ProtectedRoute>
+            <ProjectAlertsPage />
           </ProtectedRoute>
         }
       />

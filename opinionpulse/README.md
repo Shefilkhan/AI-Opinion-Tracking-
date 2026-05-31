@@ -1,48 +1,29 @@
-# OpinionPulse
+# OpinionPulse monorepo
 
-AI-powered opinion tracking SaaS — final-year project.
+Full-stack opinion tracking application.
 
-## Structure
-
-```
-opinionpulse/
-  opinionpulse-frontend/   # React + Vite + TypeScript
-  opinionpulse-backend/    # FastAPI + SQLAlchemy + MySQL
-```
+| Package | Path | Role |
+|---------|------|------|
+| Frontend | `opinionpulse-frontend/` | React + Vite dashboard |
+| Backend | `opinionpulse-backend/` | FastAPI REST API |
 
 ## Quick start
 
-### 1. Database (XAMPP)
+See the [root README](../README.md) for XAMPP, backend, frontend, migrations, and demo flow.
 
-1. Start **MySQL** in XAMPP.
-2. Create database `opinionpulse_db` in phpMyAdmin.
+## Completed modules
 
-### 2. Backend
+- Landing & marketing site  
+- JWT authentication  
+- Projects, keywords, sources  
+- Mentions (manual + collection)  
+- GDELT, YouTube, Reddit collectors  
+- VADER sentiment & analytics  
+- AI Opinion Assistant (rule-based)  
+- Reports & CSV export  
+- Alerts (rule-based, in-app)  
 
-```bash
-cd opinionpulse-backend
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
+## Documentation
 
-### 3. Frontend
-
-```bash
-cd opinionpulse-frontend
-npm install
-npm run dev
-```
-
-- Frontend: http://localhost:5173
-- Backend: http://localhost:8000
-- API docs: http://localhost:8000/docs
-
-## Progress
-
-| Part | Status |
-|------|--------|
-| Landing page + frontend template | Done |
-| FastAPI + MySQL foundation | Done |
-| Auth, CRUD, APIs, sentiment, chatbot | Planned |
+- [../docs/demo-script.md](../docs/demo-script.md)  
+- [../docs/final-testing-checklist.md](../docs/final-testing-checklist.md)  

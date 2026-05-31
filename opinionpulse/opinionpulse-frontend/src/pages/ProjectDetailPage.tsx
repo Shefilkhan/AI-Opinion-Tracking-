@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { ArrowLeft, BarChart3, Bot, Database, FileBarChart, Newspaper, Trash2 } from "lucide-react"
+import { ArrowLeft, BarChart3, Bell, Bot, Database, FileBarChart, Newspaper, Trash2 } from "lucide-react"
 import { CollectDataButton } from "@/components/collection/CollectDataButton"
 import { ApiError } from "@/api/client"
 import { deleteProject, getProject, updateProject } from "@/api/projects"
@@ -155,6 +155,15 @@ export function ProjectDetailPage() {
           >
             <FileBarChart className="size-4" />
             View Reports
+          </Button>
+          <Button
+            render={<Link to={`/projects/${projectId}/alerts`} />}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <Bell className="size-4" />
+            View Alerts
           </Button>
           {!editing && (
             <Button variant="outline" size="sm" onClick={startEditing}>

@@ -66,6 +66,9 @@ class Project(Base):
     reports: Mapped[list["Report"]] = relationship(
         back_populates="project", cascade="all, delete-orphan"
     )
+    alerts: Mapped[list["Alert"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan"
+    )
 
 
 class Keyword(Base):
@@ -207,3 +210,26 @@ class Report(Base):
     )
 
     project: Mapped["Project"] = relationship(back_populates="reports")
+
+
+class Alert(Base):
+    __tablename__ = "alerts"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    project_id: Mapped[int] = mapped_column(
+        ForeignKey("projects.id"), nullable=False, index=True
+    )
+    alert_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    condition_text: Mapped[str] = mapped_column(String(512), nullable=False)
+    threshold_value: Mapped[float] = mapped_column(Float, nullable=False)
+    keyword: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    source: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    last_triggered_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    project: Mapped["Project"] = relationship(back_populates="alerts")
