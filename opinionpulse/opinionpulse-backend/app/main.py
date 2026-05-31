@@ -7,6 +7,7 @@ from sqlalchemy import create_engine, text
 from app.api.routes import (
     analytics,
     auth,
+    chat,
     collection,
     health,
     keywords,
@@ -75,6 +76,7 @@ app.include_router(mentions.router)
 app.include_router(sentiment.router)
 app.include_router(analytics.router)
 app.include_router(collection.router)
+app.include_router(chat.router)
 
 
 @app.get("/")

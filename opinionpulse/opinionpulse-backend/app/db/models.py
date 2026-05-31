@@ -179,6 +179,9 @@ class ChatMessage(Base):
     )
     role: Mapped[str] = mapped_column(String(20), nullable=False)  # user, assistant
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    sources_used: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    intent: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    metadata_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

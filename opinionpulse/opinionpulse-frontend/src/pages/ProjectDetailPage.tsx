@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { ArrowLeft, BarChart3, Database, Newspaper, Trash2 } from "lucide-react"
+import { ArrowLeft, BarChart3, Bot, Database, Newspaper, Trash2 } from "lucide-react"
 import { CollectDataButton } from "@/components/collection/CollectDataButton"
 import { ApiError } from "@/api/client"
 import { deleteProject, getProject, updateProject } from "@/api/projects"
@@ -138,7 +138,15 @@ export function ProjectDetailPage() {
           All projects
         </Button>
         <Badge className="capitalize">{project.tracking_frequency}</Badge>
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex flex-wrap gap-2">
+          <Button
+            render={<Link to={`/projects/${projectId}/chat`} />}
+            size="sm"
+            className="gap-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+          >
+            <Bot className="size-4" />
+            Ask AI Opinion Assistant
+          </Button>
           {!editing && (
             <Button variant="outline" size="sm" onClick={startEditing}>
               Edit project

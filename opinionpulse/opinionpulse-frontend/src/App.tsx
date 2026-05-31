@@ -7,6 +7,7 @@ import { DashboardPage } from "@/pages/DashboardPage"
 import { ProjectsPage } from "@/pages/ProjectsPage"
 import { CreateProjectPage } from "@/pages/CreateProjectPage"
 import { ProjectDetailPage } from "@/pages/ProjectDetailPage"
+import { ProjectChatPage } from "@/pages/ProjectChatPage"
 
 function App() {
   return (
@@ -35,6 +36,14 @@ function App() {
         element={
           <ProtectedRoute>
             <CreateProjectPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/projects/:id/chat"
+        element={
+          <ProtectedRoute>
+            <ProjectChatPage />
           </ProtectedRoute>
         }
       />
