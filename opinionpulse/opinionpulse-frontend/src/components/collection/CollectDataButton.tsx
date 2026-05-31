@@ -1,10 +1,11 @@
 import { useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Download, Layers, Video } from "lucide-react"
+import { Download, Layers, MessageSquare, Video } from "lucide-react"
 import { ApiError } from "@/api/client"
 import {
   collectAllSources,
   collectGdelt,
+  collectReddit,
   collectYoutube,
   type CollectionSourceResult,
   type CollectAllResponse,
@@ -65,6 +66,19 @@ export function CollectDataButton({ projectId }: CollectDataButtonProps) {
     },
   })
 
+  const redditMutation = useMutation({
+    mutationFn: () => collectReddit(projectId),
+    onSuccess: (data) => {
+      setError(null)
+      setLastResult(data)
+      invalidateAfterCollection(queryClient, projectId)
+    },
+    onError: (err) => {
+      setLastResult(null)
+      setError(err instanceof ApiError ? err.detail : "Reddit collection failed.")
+    },
+  })
+
   const allMutation = useMutation({
     mutationFn: () => collectAllSources(projectId),
     onSuccess: (data) => {
@@ -81,6 +95,7 @@ export function CollectDataButton({ projectId }: CollectDataButtonProps) {
   const busy =
     gdeltMutation.isPending ||
     youtubeMutation.isPending ||
+    redditMutation.isPending ||
     allMutation.isPending
 
   return (
@@ -107,6 +122,17 @@ export function CollectDataButton({ projectId }: CollectDataButtonProps) {
         </Button>
         <Button
           variant="outline"
+          onClick={() => redditMutation.mutate()}
+          disabled={busy}
+          className="gap-2"
+        >
+          <MessageSquare className="size-4" />
+          {redditMutation.isPending
+            ? "Collecting Reddit…"
+            : "Collect Reddit Posts & Comments"}
+        </Button>
+        <Button
+          variant="outline"
           onClick={() => allMutation.mutate()}
           disabled={busy}
           className="gap-2"
@@ -116,8 +142,9 @@ export function CollectDataButton({ projectId }: CollectDataButtonProps) {
         </Button>
       </div>
       <p className="text-xs text-slate-500">
-        YouTube search uses API quota — keep keywords limited while testing. After
-        collecting new mentions, click Analyze Sentiment to update analytics.
+        YouTube and Reddit use API quotas and rate limits — keep keywords limited
+        while testing. After collecting mentions, click Analyze Sentiment to
+        update analytics.
       </p>
       {error && (
         <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">

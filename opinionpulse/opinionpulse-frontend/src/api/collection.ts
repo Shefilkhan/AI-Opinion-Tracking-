@@ -10,6 +10,9 @@ export type CollectionSourceResult = {
   videos_checked?: number
   quota_note?: string
   warning?: string
+  posts_checked?: number
+  comments_checked?: number
+  rate_limit_note?: string
 }
 
 export type CollectionResponse = CollectionSourceResult
@@ -31,6 +34,13 @@ export function collectGdelt(projectId: number) {
 export function collectYoutube(projectId: number) {
   return apiRequest<CollectionResponse>(
     `/api/projects/${projectId}/collect/youtube`,
+    { method: "POST", auth: true }
+  )
+}
+
+export function collectReddit(projectId: number) {
+  return apiRequest<CollectionResponse>(
+    `/api/projects/${projectId}/collect/reddit`,
     { method: "POST", auth: true }
   )
 }

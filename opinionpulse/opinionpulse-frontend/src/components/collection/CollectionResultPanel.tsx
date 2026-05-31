@@ -32,6 +32,18 @@ function SourceStats({ data }: { data: CollectionSourceResult }) {
         <dt className="text-slate-500">Inserted</dt>
         <dd className="font-medium text-emerald-400">{data.inserted}</dd>
       </div>
+      {data.posts_checked !== undefined && data.posts_checked > 0 && (
+        <div>
+          <dt className="text-slate-500">Posts checked</dt>
+          <dd className="font-medium text-white">{data.posts_checked}</dd>
+        </div>
+      )}
+      {data.comments_checked !== undefined && data.comments_checked > 0 && (
+        <div>
+          <dt className="text-slate-500">Comments checked</dt>
+          <dd className="font-medium text-white">{data.comments_checked}</dd>
+        </div>
+      )}
       {data.videos_checked !== undefined && data.videos_checked > 0 && (
         <div>
           <dt className="text-slate-500">Videos checked</dt>
@@ -52,6 +64,12 @@ function SourceStats({ data }: { data: CollectionSourceResult }) {
         <div className="col-span-2 sm:col-span-4">
           <dt className="text-slate-500">Quota note</dt>
           <dd className="text-xs text-slate-400">{data.quota_note}</dd>
+        </div>
+      )}
+      {data.rate_limit_note && (
+        <div className="col-span-2 sm:col-span-4">
+          <dt className="text-slate-500">Rate limit note</dt>
+          <dd className="text-xs text-slate-400">{data.rate_limit_note}</dd>
         </div>
       )}
       {data.message && (
@@ -103,11 +121,10 @@ export function CollectionResultPanel({
               )}
             {typeof result.results.reddit === "object" &&
               result.results.reddit !== null && (
-                <p className="text-xs text-amber-300/90">
-                  Reddit:{" "}
-                  {(result.results.reddit as CollectionSourceResult).message ??
-                    "not implemented yet"}
-                </p>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-white">Reddit</p>
+                  <SourceStats data={result.results.reddit as CollectionSourceResult} />
+                </div>
               )}
           </>
         ) : (

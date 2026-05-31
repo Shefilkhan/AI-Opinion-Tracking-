@@ -14,8 +14,10 @@ from app.core.config import get_settings
 from app.services.collection_service import (
     collect_all_enabled_sources,
     collect_gdelt_for_project,
+    collect_reddit_for_project,
     collect_youtube_for_project,
 )
+from app.services.reddit_service import reddit_credentials_configured
 
 router = APIRouter(prefix="/api", tags=["collection"])
 
@@ -66,6 +68,32 @@ def collect_youtube(
         )
 
     result = collect_youtube_for_project(db, project.id, force=True)
+    return CollectionResponse(**result)
+
+
+@router.post(
+    "/projects/{project_id}/collect/reddit",
+    response_model=CollectionResponse,
+)
+def collect_reddit(
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    project = get_owned_project(project_id, current_user, db)
+    _require_keywords(db, project.id)
+
+    if not reddit_credentials_configured():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Reddit credentials are not configured. Set REDDIT_CLIENT_ID, "
+                "REDDIT_CLIENT_SECRET, REDDIT_USERNAME, REDDIT_PASSWORD, and "
+                "REDDIT_USER_AGENT in the backend .env file."
+            ),
+        )
+
+    result = collect_reddit_for_project(db, project.id, force=True)
     return CollectionResponse(**result)
 
 

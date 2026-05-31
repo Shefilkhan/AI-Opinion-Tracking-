@@ -13,6 +13,9 @@ class CollectionSourceResult(BaseModel):
     videos_checked: Optional[int] = None
     quota_note: Optional[str] = None
     warning: Optional[str] = None
+    posts_checked: Optional[int] = None
+    comments_checked: Optional[int] = None
+    rate_limit_note: Optional[str] = None
 
 
 class CollectionResponse(BaseModel):
@@ -25,6 +28,9 @@ class CollectionResponse(BaseModel):
     videos_checked: Optional[int] = None
     quota_note: Optional[str] = None
     warning: Optional[str] = None
+    posts_checked: Optional[int] = None
+    comments_checked: Optional[int] = None
+    rate_limit_note: Optional[str] = None
 
 
 class CollectAllResponse(BaseModel):

@@ -27,6 +27,14 @@ class Settings(BaseSettings):
     youtube_max_videos_per_keyword: int = 3
     youtube_max_comments_per_video: int = 20
 
+    reddit_client_id: str = ""
+    reddit_client_secret: str = ""
+    reddit_username: str = ""
+    reddit_password: str = ""
+    reddit_user_agent: str = "OpinionPulse/1.0"
+    reddit_max_posts_per_keyword: int = 10
+    reddit_max_comments_per_post: int = 10
+
     @property
     def database_url(self) -> str:
         password = self.db_password

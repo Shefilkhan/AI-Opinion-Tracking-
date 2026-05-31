@@ -7,10 +7,17 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.db.models import Keyword, Mention, Source
 from app.services.gdelt_service import search_gdelt_articles
+from app.services.reddit_service import (
+    RATE_LIMIT_NOTE,
+    RedditApiError,
+    RedditConfigError,
+    collect_reddit_for_keyword,
+)
 from app.services.youtube_service import YouTubeApiError, collect_youtube_for_keyword
 
 GDELT_SOURCE = "gdelt"
 YOUTUBE_SOURCE = "youtube"
+REDDIT_SOURCE = "reddit"
 RECORDS_PER_KEYWORD = 10
 
 
@@ -264,8 +271,155 @@ def collect_youtube_for_project(
     }
 
 
+def collect_reddit_for_project(
+    db: Session,
+    project_id: int,
+    *,
+    force: bool = False,
+) -> Dict[str, Any]:
+    """Collect Reddit posts and top-level comments for all project keywords."""
+    settings = get_settings()
+    keywords: List[Keyword] = (
+        db.query(Keyword).filter(Keyword.project_id == project_id).all()
+    )
+
+    empty = {
+        "source": REDDIT_SOURCE,
+        "keywords_checked": 0,
+        "posts_checked": 0,
+        "comments_checked": 0,
+        "fetched": 0,
+        "inserted": 0,
+        "duplicates_skipped": 0,
+        "message": "",
+    }
+
+    required = [
+        settings.reddit_client_id,
+        settings.reddit_client_secret,
+        settings.reddit_username,
+        settings.reddit_password,
+        settings.reddit_user_agent,
+    ]
+    if not all(v.strip() for v in required):
+        return {
+            **empty,
+            "message": (
+                "Reddit credentials are not configured. Set REDDIT_CLIENT_ID, "
+                "REDDIT_CLIENT_SECRET, REDDIT_USERNAME, REDDIT_PASSWORD, and "
+                "REDDIT_USER_AGENT in backend .env."
+            ),
+        }
+
+    if not keywords:
+        return {
+            **empty,
+            "message": "No keywords configured. Add keywords before collecting data.",
+        }
+
+    reddit_enabled = _is_source_enabled(db, project_id, REDDIT_SOURCE)
+    warning = None
+    if not reddit_enabled and force:
+        warning = "Reddit source is disabled; collection ran anyway."
+    elif not reddit_enabled and not force:
+        warning = "Reddit source is disabled for this project."
+
+    max_posts = settings.reddit_max_posts_per_keyword
+    max_comments = settings.reddit_max_comments_per_post
+    rate_limit_note = (
+        f"{RATE_LIMIT_NOTE} Defaults: {max_posts} posts and "
+        f"{max_comments} top-level comments per post per keyword."
+    )
+
+    fetched = 0
+    inserted = 0
+    duplicates_skipped = 0
+    posts_checked = 0
+    comments_checked = 0
+    seen_global: set[str] = set()
+    rate_limited = False
+    errors: List[str] = []
+
+    for i, kw in enumerate(keywords):
+        if i > 0:
+            time.sleep(0.5)
+        try:
+            batch = collect_reddit_for_keyword(
+                kw.keyword,
+                max_posts=max_posts,
+                max_comments=max_comments,
+            )
+        except (RedditApiError, RedditConfigError) as exc:
+            errors.append(str(exc))
+            if isinstance(exc, RedditApiError) and exc.rate_limited:
+                rate_limited = True
+                break
+            continue
+
+        if batch.get("rate_limited"):
+            rate_limited = True
+            if batch.get("error"):
+                errors.append(batch["error"])
+            break
+
+        if batch.get("error") and not batch.get("posts"):
+            errors.append(batch["error"])
+            if "credentials" in batch["error"].lower():
+                break
+
+        posts_checked += len(batch.get("posts", []))
+        comments_checked += len(batch.get("comments", []))
+
+        for item in batch.get("posts", []) + batch.get("comments", []):
+            fetched += 1
+            sid = item["source_item_id"]
+            if sid in seen_global:
+                duplicates_skipped += 1
+                continue
+            seen_global.add(sid)
+
+            if _mention_exists(db, project_id, REDDIT_SOURCE, sid):
+                duplicates_skipped += 1
+                continue
+
+            if _insert_mention(db, project_id, REDDIT_SOURCE, item):
+                inserted += 1
+            else:
+                duplicates_skipped += 1
+
+    db.commit()
+
+    message = (
+        f"Reddit collection complete: {inserted} new mention(s) from "
+        f"{len(keywords)} keyword(s) ({posts_checked} posts, "
+        f"{comments_checked} comments checked)."
+    )
+    if rate_limited:
+        message = (
+            f"Reddit rate limit reached. Partial results: {inserted} inserted. "
+            + (errors[-1] if errors else "")
+        )
+    if errors and inserted == 0:
+        message = errors[0]
+    if warning:
+        message = f"{warning} {message}"
+
+    return {
+        "source": REDDIT_SOURCE,
+        "keywords_checked": len(keywords),
+        "posts_checked": posts_checked,
+        "comments_checked": comments_checked,
+        "fetched": fetched,
+        "inserted": inserted,
+        "duplicates_skipped": duplicates_skipped,
+        "message": message.strip(),
+        "warning": warning,
+        "rate_limit_note": rate_limit_note,
+    }
+
+
 def collect_all_enabled_sources(db: Session, project_id: int) -> Dict[str, Any]:
-    """Collect from all enabled sources (GDELT + YouTube)."""
+    """Collect from all enabled sources (GDELT + YouTube + Reddit)."""
     sources = db.query(Source).filter(Source.project_id == project_id).all()
     enabled = {s.source_name: s.is_enabled for s in sources}
 
@@ -301,20 +455,25 @@ def collect_all_enabled_sources(db: Session, project_id: int) -> Dict[str, Any]:
             "message": "YouTube source is not enabled.",
         }
 
-    if enabled.get("reddit", False):
-        results["reddit"] = {
-            "source": "reddit",
+    if enabled.get(REDDIT_SOURCE, False):
+        reddit_result = collect_reddit_for_project(db, project_id, force=False)
+        results[REDDIT_SOURCE] = reddit_result
+        messages.append(reddit_result.get("message", ""))
+    else:
+        results[REDDIT_SOURCE] = {
+            "source": REDDIT_SOURCE,
             "keywords_checked": 0,
+            "posts_checked": 0,
+            "comments_checked": 0,
             "fetched": 0,
             "inserted": 0,
             "duplicates_skipped": 0,
-            "message": "not implemented yet",
+            "message": "Reddit source is not enabled.",
         }
-        messages.append("Reddit: not implemented yet.")
 
     total_inserted = 0
     total_fetched = 0
-    for key in (GDELT_SOURCE, YOUTUBE_SOURCE):
+    for key in (GDELT_SOURCE, YOUTUBE_SOURCE, REDDIT_SOURCE):
         val = results.get(key)
         if isinstance(val, dict):
             total_inserted += val.get("inserted", 0)
