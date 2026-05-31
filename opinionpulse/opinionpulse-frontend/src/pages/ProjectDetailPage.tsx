@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { ArrowLeft, BarChart3, Bot, Database, Newspaper, Trash2 } from "lucide-react"
+import { ArrowLeft, BarChart3, Bot, Database, FileBarChart, Newspaper, Trash2 } from "lucide-react"
 import { CollectDataButton } from "@/components/collection/CollectDataButton"
 import { ApiError } from "@/api/client"
 import { deleteProject, getProject, updateProject } from "@/api/projects"
@@ -146,6 +146,15 @@ export function ProjectDetailPage() {
           >
             <Bot className="size-4" />
             Ask AI Opinion Assistant
+          </Button>
+          <Button
+            render={<Link to={`/projects/${projectId}/reports`} />}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <FileBarChart className="size-4" />
+            View Reports
           </Button>
           {!editing && (
             <Button variant="outline" size="sm" onClick={startEditing}>

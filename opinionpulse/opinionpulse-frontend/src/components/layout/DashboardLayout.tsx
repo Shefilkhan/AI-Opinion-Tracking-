@@ -29,7 +29,7 @@ const navItems = [
   { label: "Projects", href: "/projects", icon: FolderKanban, active: true },
   { label: "Mentions", href: "#", icon: MessageSquare, active: false },
   { label: "AI Assistant", href: "/projects", icon: Bot, active: true },
-  { label: "Reports", href: "#", icon: FileText, active: false },
+  { label: "Reports", href: "/projects", icon: FileText, active: true },
   { label: "Settings", href: "#", icon: Settings, active: false },
 ]
 

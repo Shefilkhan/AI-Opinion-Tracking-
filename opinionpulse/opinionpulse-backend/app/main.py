@@ -9,6 +9,7 @@ from app.api.routes import (
     auth,
     chat,
     collection,
+    reports,
     health,
     keywords,
     mentions,
@@ -77,6 +78,7 @@ app.include_router(sentiment.router)
 app.include_router(analytics.router)
 app.include_router(collection.router)
 app.include_router(chat.router)
+app.include_router(reports.router)
 
 
 @app.get("/")

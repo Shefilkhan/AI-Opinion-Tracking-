@@ -63,6 +63,9 @@ class Project(Base):
         back_populates="project", cascade="all, delete-orphan"
     )
     chat_sessions: Mapped[list["ChatSession"]] = relationship(back_populates="project")
+    reports: Mapped[list["Report"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan"
+    )
 
 
 class Keyword(Base):
@@ -187,3 +190,20 @@ class ChatMessage(Base):
     )
 
     session: Mapped["ChatSession"] = relationship(back_populates="messages")
+
+
+class Report(Base):
+    __tablename__ = "reports"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    project_id: Mapped[int] = mapped_column(
+        ForeignKey("projects.id"), nullable=False, index=True
+    )
+    report_type: Mapped[str] = mapped_column(String(20), default="custom", nullable=False)
+    summary: Mapped[str] = mapped_column(Text, nullable=False)
+    report_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    generated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    project: Mapped["Project"] = relationship(back_populates="reports")

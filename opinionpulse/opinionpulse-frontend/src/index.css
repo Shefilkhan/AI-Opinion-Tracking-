@@ -108,3 +108,53 @@ body {
 *::-webkit-scrollbar-thumb:hover {
   background: oklch(0.4 0.05 265);
 }
+
+/* Part 10B: printable project reports */
+@media print {
+  body {
+    background: white !important;
+    color: #111 !important;
+  }
+
+  aside,
+  header,
+  .no-print {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .report-print-area {
+    color: #111 !important;
+  }
+
+  .report-print-card,
+  .report-print-section [class*="border-slate"] {
+    border-color: #ccc !important;
+    background: white !important;
+    box-shadow: none !important;
+  }
+
+  .report-print-area .text-white,
+  .report-print-area .text-slate-200,
+  .report-print-area .text-slate-300 {
+    color: #222 !important;
+  }
+
+  .report-print-area .text-emerald-300,
+  .report-print-area .text-emerald-400 {
+    color: #047857 !important;
+  }
+
+  .report-print-area .text-rose-300,
+  .report-print-area .text-rose-400 {
+    color: #be123c !important;
+  }
+
+  .report-print-area .text-violet-300 {
+    color: #5b21b6 !important;
+  }
+}

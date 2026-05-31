@@ -8,6 +8,7 @@ import { ProjectsPage } from "@/pages/ProjectsPage"
 import { CreateProjectPage } from "@/pages/CreateProjectPage"
 import { ProjectDetailPage } from "@/pages/ProjectDetailPage"
 import { ProjectChatPage } from "@/pages/ProjectChatPage"
+import { ProjectReportsPage } from "@/pages/ProjectReportsPage"
 
 function App() {
   return (
@@ -44,6 +45,14 @@ function App() {
         element={
           <ProtectedRoute>
             <ProjectChatPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/projects/:id/reports"
+        element={
+          <ProtectedRoute>
+            <ProjectReportsPage />
           </ProtectedRoute>
         }
       />
