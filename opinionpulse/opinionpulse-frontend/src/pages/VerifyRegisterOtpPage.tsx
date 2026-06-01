@@ -80,7 +80,9 @@ export function VerifyRegisterOtpPage() {
       footerLinkLabel="Sign up"
     >
       <form onSubmit={handleVerify} className="space-y-6">
-        {devOtpCode && <DevOtpBanner code={devOtpCode} />}
+        {import.meta.env.DEV && devOtpCode ? (
+          <DevOtpBanner code={devOtpCode} />
+        ) : null}
         <OtpInput value={otp} onChange={setOtp} disabled={loading} />
         {error && (
           <p className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">

@@ -80,7 +80,9 @@ export function VerifyLoginOtpPage() {
       footerLinkLabel="Login"
     >
       <form onSubmit={handleVerify} className="space-y-6">
-        {devOtpCode && <DevOtpBanner code={devOtpCode} />}
+        {import.meta.env.DEV && devOtpCode ? (
+          <DevOtpBanner code={devOtpCode} />
+        ) : null}
         <OtpInput value={otp} onChange={setOtp} disabled={loading} />
         {resent && !error && <p className={successSurface}>{resent}</p>}
         {error && (

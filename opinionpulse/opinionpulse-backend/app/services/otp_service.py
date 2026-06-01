@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.security import hash_otp_code, verify_otp_code
 from app.db.models import EmailOTP, User
-from app.services.email_service import send_otp_email
+from app.services.email_service import EmailSendError, deliver_otp_email
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -77,28 +77,13 @@ def create_email_otp_record(db: Session, user: User, purpose: str) -> str:
     return plain_otp
 
 
-def _send_otp_email_task(to_email: str, otp_code: str, purpose: str) -> None:
-    send_otp_email(to_email, otp_code, purpose)
-
-
-def schedule_otp_email(
-    background_tasks: Optional[BackgroundTasks],
-    to_email: str,
-    otp_code: str,
-    purpose: str,
-) -> None:
-    if background_tasks is not None:
-        background_tasks.add_task(_send_otp_email_task, to_email, otp_code, purpose)
-    else:
-        _send_otp_email_task(to_email, otp_code, purpose)
-
-
 def create_email_otp(
     db: Session,
     user: User,
     purpose: str,
     background_tasks: Optional[BackgroundTasks] = None,
 ) -> str:
+    del background_tasks  # OTP email is sent synchronously so failures reach the client
     window = settings.otp_resend_window_minutes
     max_sent = settings.otp_resend_max_per_window
     sent = count_recent_otps(db, user.email, purpose, window)
@@ -108,7 +93,13 @@ def create_email_otp(
             detail="Too many codes sent. Please wait before requesting another.",
         )
     plain_otp = create_email_otp_record(db, user, purpose)
-    schedule_otp_email(background_tasks, user.email, plain_otp, purpose)
+    try:
+        deliver_otp_email(user.email, plain_otp, purpose)
+    except EmailSendError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=exc.message,
+        ) from exc
     return plain_otp
 
 

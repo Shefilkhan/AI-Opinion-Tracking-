@@ -4,6 +4,7 @@ import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ApiError } from "@/api/client"
 import { signUpUser } from "@/api/auth"
+import { getApiErrorMessage } from "@/lib/apiErrorMessage"
 import { PasswordInput } from "@/components/auth/PasswordInput"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -54,8 +55,7 @@ export function SignUpForm() {
         { state: { devOtpCode: res.dev_otp_code ?? undefined } }
       )
     } catch (err) {
-      const message =
-        err instanceof ApiError ? err.detail : "Something went wrong. Please try again."
+      const message = getApiErrorMessage(err)
       if (err instanceof ApiError && err.status === 409) {
         setError("email", { message })
       } else {

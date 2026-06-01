@@ -1,11 +1,12 @@
 from functools import lru_cache
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(".env", ".env.local"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -42,12 +43,32 @@ class Settings(BaseSettings):
     reddit_max_comments_per_post: int = 10
 
     email_provider: str = "smtp"
-    smtp_host: str = ""
+    # Preferred names (Gmail); also accepts SMTP_USER / SMTP_PASSWORD
+    email_user: str = ""
+    email_app_password: str = ""
+    smtp_host: str = "smtp.gmail.com"
     smtp_port: int = 587
     smtp_user: str = ""
     smtp_password: str = ""
     smtp_from_name: str = "OpinionPulse"
     smtp_from_email: str = ""
+
+    @model_validator(mode="after")
+    def apply_email_env_aliases(self):
+        """Map EMAIL_USER / EMAIL_APP_PASSWORD to SMTP settings (Gmail)."""
+        user = (self.email_user or self.smtp_user or "").strip()
+        password = (
+            (self.email_app_password or self.smtp_password or "")
+            .replace(" ", "")
+            .strip()
+        )
+        host = (self.smtp_host or "smtp.gmail.com").strip() or "smtp.gmail.com"
+        object.__setattr__(self, "smtp_user", user)
+        object.__setattr__(self, "smtp_password", password)
+        object.__setattr__(self, "smtp_host", host)
+        if user and not (self.smtp_from_email or "").strip():
+            object.__setattr__(self, "smtp_from_email", user)
+        return self
 
     otp_expire_minutes: int = 2
     otp_max_attempts: int = 3
@@ -58,7 +79,7 @@ class Settings(BaseSettings):
 
     @property
     def email_configured(self) -> bool:
-        return bool(self.smtp_host and self.smtp_user and self.smtp_password)
+        return bool(self.smtp_user and self.smtp_password)
 
     @property
     def expose_dev_otp_in_api(self) -> bool:

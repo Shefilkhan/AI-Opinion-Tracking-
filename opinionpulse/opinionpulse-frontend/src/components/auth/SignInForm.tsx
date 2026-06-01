@@ -1,8 +1,8 @@
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ApiError } from "@/api/client"
 import { signInUser } from "@/api/auth"
+import { getApiErrorMessage } from "@/lib/apiErrorMessage"
 import { PasswordInput } from "@/components/auth/PasswordInput"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,11 +35,7 @@ export function SignInForm() {
         { state: { devOtpCode: res.dev_otp_code ?? undefined } }
       )
     } catch (err) {
-      const message =
-        err instanceof ApiError
-          ? err.detail
-          : "Something went wrong. Please try again."
-      setError("root", { message })
+      setError("root", { message: getApiErrorMessage(err) })
     }
   }
 

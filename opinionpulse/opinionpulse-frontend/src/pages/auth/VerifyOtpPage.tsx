@@ -177,7 +177,9 @@ export function VerifyOtpPage() {
       footerLinkLabel={footerLabel}
     >
       <form onSubmit={handleVerify} className="space-y-5">
-        {devOtp ? <DevOtpBanner code={devOtp} /> : null}
+        {import.meta.env.DEV && devOtp ? (
+          <DevOtpBanner code={devOtp} />
+        ) : null}
 
         <OtpInput
           value={code}

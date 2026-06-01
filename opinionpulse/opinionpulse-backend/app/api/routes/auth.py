@@ -34,6 +34,7 @@ from app.services.auth_log_service import log_auth_event
 from app.services.auth_rate_limit import rate_limit_by_email, rate_limit_by_ip
 from app.services.session_service import create_user_session, revoke_token_session
 from app.api.deps import extract_request_token
+from app.core.auth_errors import raise_auth_error
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -248,7 +249,10 @@ def register(
     request: Request,
     db: Session = Depends(get_db),
 ):
-    return _register_handler(payload, background_tasks, request, db)
+    try:
+        return _register_handler(payload, background_tasks, request, db)
+    except Exception as exc:
+        raise_auth_error(exc, context="signup")
 
 
 @router.post("/login", response_model=LoginPendingResponse)
@@ -259,7 +263,10 @@ def login(
     request: Request,
     db: Session = Depends(get_db),
 ):
-    return _login_handler(payload, background_tasks, request, db)
+    try:
+        return _login_handler(payload, background_tasks, request, db)
+    except Exception as exc:
+        raise_auth_error(exc, context="signin")
 
 
 @router.post("/verify-otp", response_model=TokenResponse)
