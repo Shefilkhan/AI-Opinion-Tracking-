@@ -36,10 +36,22 @@ export function SignupPage() {
 
     setLoading(true)
     try {
-      await registerUser({ name: name.trim(), email: email.trim(), password })
-      navigate("/dashboard")
+      const res = await registerUser({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+      })
+      navigate(`/verify-register-otp?email=${encodeURIComponent(res.email)}`, {
+        state: { devOtpCode: res.dev_otp_code ?? undefined },
+      })
     } catch (err) {
-      setError(err instanceof ApiError ? err.detail : "Signup failed. Try again.")
+      const message =
+        err instanceof ApiError
+          ? err.detail
+          : err instanceof Error
+            ? err.message
+            : "Signup failed. Try again."
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -55,7 +67,7 @@ export function SignupPage() {
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="mb-1.5 block text-sm text-slate-400" htmlFor="name">
+          <label className="mb-1.5 block text-sm text-muted-foreground" htmlFor="name">
             Name
           </label>
           <Input
@@ -68,7 +80,7 @@ export function SignupPage() {
           />
         </div>
         <div>
-          <label className="mb-1.5 block text-sm text-slate-400" htmlFor="email">
+          <label className="mb-1.5 block text-sm text-muted-foreground" htmlFor="email">
             Email
           </label>
           <Input
@@ -82,7 +94,7 @@ export function SignupPage() {
           />
         </div>
         <div>
-          <label className="mb-1.5 block text-sm text-slate-400" htmlFor="password">
+          <label className="mb-1.5 block text-sm text-muted-foreground" htmlFor="password">
             Password
           </label>
           <Input
@@ -97,7 +109,7 @@ export function SignupPage() {
         </div>
         <div>
           <label
-            className="mb-1.5 block text-sm text-slate-400"
+            className="mb-1.5 block text-sm text-muted-foreground"
             htmlFor="confirmPassword"
           >
             Confirm Password
@@ -113,7 +125,7 @@ export function SignupPage() {
           />
         </div>
         {error && (
-          <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">
+          <p className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
             {error}
           </p>
         )}
@@ -125,8 +137,8 @@ export function SignupPage() {
           {loading ? "Creating account…" : "Sign up"}
         </Button>
       </form>
-      <p className="mt-4 text-center text-xs text-slate-500">
-        <Link to="/" className="hover:text-slate-400">
+      <p className="mt-4 text-center text-xs text-muted-foreground">
+        <Link to="/" className="hover:text-muted-foreground">
           Back to home
         </Link>
       </p>

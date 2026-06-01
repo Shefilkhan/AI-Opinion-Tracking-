@@ -26,7 +26,20 @@ export function LoginPage() {
 
     setLoading(true)
     try {
-      await loginUser({ email: email.trim(), password })
+      const res = await loginUser({ email: email.trim(), password })
+      const mail = encodeURIComponent(res.email)
+      if (res.requires_email_verification) {
+        navigate(`/verify-register-otp?email=${mail}`, {
+          state: { devOtpCode: res.dev_otp_code ?? undefined },
+        })
+        return
+      }
+      if (res.requires_login_otp) {
+        navigate(`/verify-login-otp?email=${mail}`, {
+          state: { devOtpCode: res.dev_otp_code ?? undefined },
+        })
+        return
+      }
       navigate("/dashboard")
     } catch (err) {
       setError(err instanceof ApiError ? err.detail : "Login failed. Try again.")
@@ -45,7 +58,7 @@ export function LoginPage() {
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="mb-1.5 block text-sm text-slate-400" htmlFor="email">
+          <label className="mb-1.5 block text-sm text-muted-foreground" htmlFor="email">
             Email
           </label>
           <Input
@@ -59,7 +72,7 @@ export function LoginPage() {
           />
         </div>
         <div>
-          <label className="mb-1.5 block text-sm text-slate-400" htmlFor="password">
+          <label className="mb-1.5 block text-sm text-muted-foreground" htmlFor="password">
             Password
           </label>
           <Input
@@ -73,7 +86,7 @@ export function LoginPage() {
           />
         </div>
         {error && (
-          <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">
+          <p className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
             {error}
           </p>
         )}
@@ -85,8 +98,8 @@ export function LoginPage() {
           {loading ? "Logging in…" : "Log in"}
         </Button>
       </form>
-      <p className="mt-4 text-center text-xs text-slate-500">
-        <Link to="/" className="hover:text-slate-400">
+      <p className="mt-4 text-center text-xs text-muted-foreground">
+        <Link to="/" className="hover:text-muted-foreground">
           Back to home
         </Link>
       </p>
