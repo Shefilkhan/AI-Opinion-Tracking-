@@ -5,22 +5,26 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, text
 
 from app.api.routes import (
+    account,
     alerts,
     analytics,
     auth,
     chat,
     collection,
+    dashboard,
     reports,
     health,
     keywords,
     mentions,
     projects,
     sentiment,
+    settings as settings_routes,
     sources,
 )
 from app.core.config import get_settings
 from app.db import models  # noqa: F401 — register models with metadata
 from app.db.database import Base, engine
+from app.db.schema_sync import ensure_users_schema
 
 settings = get_settings()
 
@@ -48,6 +52,7 @@ async def lifespan(app: FastAPI):
     if settings.app_env == "development":
         ensure_database_exists()
         Base.metadata.create_all(bind=engine)
+        ensure_users_schema(engine)
     yield
 
 
@@ -71,6 +76,9 @@ app.add_middleware(
 
 app.include_router(health.router)
 app.include_router(auth.router)
+app.include_router(account.router)
+app.include_router(dashboard.router)
+app.include_router(settings_routes.router)
 app.include_router(projects.router)
 app.include_router(keywords.router)
 app.include_router(sources.router)

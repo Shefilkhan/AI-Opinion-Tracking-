@@ -13,6 +13,8 @@ from app.db.models import Mention, Project, SentimentResult, User
 from app.services.analytics_service import ALLOWED_SENTIMENT_FILTERS
 from app.schemas.mention import (
     ALLOWED_SOURCES,
+    GlobalMentionListResponse,
+    GlobalMentionResponse,
     MentionCreate,
     MentionListResponse,
     MentionResponse,
@@ -136,6 +138,79 @@ def _apply_sentiment_filter(query, sentiment: str):
     return query.join(
         SentimentResult, Mention.id == SentimentResult.mention_id
     ).filter(SentimentResult.sentiment_label == sentiment)
+
+
+@router.get("/mentions", response_model=GlobalMentionListResponse)
+def list_user_mentions(
+    project_id: Optional[int] = Query(default=None),
+    source: Optional[str] = Query(default=None),
+    sentiment: Optional[str] = Query(default=None),
+    search: Optional[str] = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    project_rows = (
+        db.query(Project.id, Project.name)
+        .filter(Project.user_id == current_user.id)
+        .all()
+    )
+    project_names = {row[0]: row[1] for row in project_rows}
+    if not project_names:
+        return GlobalMentionListResponse(
+            mentions=[], total=0, limit=limit, offset=offset
+        )
+
+    if project_id is not None:
+        get_owned_project(project_id, current_user, db)
+        if project_id not in project_names:
+            return GlobalMentionListResponse(
+                mentions=[], total=0, limit=limit, offset=offset
+            )
+        filter_ids = [project_id]
+    else:
+        filter_ids = list(project_names.keys())
+
+    query = db.query(Mention).filter(Mention.project_id.in_(filter_ids))
+
+    if source and source != "all":
+        _validate_source(source)
+        query = query.filter(Mention.source == source)
+
+    if sentiment and sentiment != "all":
+        _validate_sentiment(sentiment)
+        query = _apply_sentiment_filter(query, sentiment)
+
+    if search and search.strip():
+        term = f"%{search.strip()}%"
+        query = query.filter(Mention.text.ilike(term))
+
+    total = query.count()
+    mentions_rows = (
+        query.options(joinedload(Mention.sentiment_result))
+        .order_by(Mention.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+
+    mentions = []
+    for mention in mentions_rows:
+        base = build_mention_response(mention)
+        mentions.append(
+            GlobalMentionResponse(
+                **base.model_dump(),
+                project_name=project_names.get(mention.project_id, "Project"),
+            )
+        )
+
+    return GlobalMentionListResponse(
+        mentions=mentions,
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.get("/projects/{project_id}/mentions", response_model=MentionListResponse)

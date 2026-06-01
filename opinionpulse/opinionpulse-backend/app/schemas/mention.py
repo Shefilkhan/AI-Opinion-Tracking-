@@ -36,8 +36,19 @@ class MentionResponse(BaseModel):
     sentiment: Optional[SentimentBrief] = None
 
 
+class GlobalMentionResponse(MentionResponse):
+    project_name: str
+
+
 class MentionListResponse(BaseModel):
     mentions: List[MentionResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+class GlobalMentionListResponse(BaseModel):
+    mentions: List[GlobalMentionResponse]
     total: int
     limit: int
     offset: int
