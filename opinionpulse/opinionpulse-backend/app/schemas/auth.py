@@ -1,5 +1,8 @@
+from typing import Union
+
 from pydantic import BaseModel, EmailStr, Field
 
+from app.schemas.otp import LoginPendingResponse, RegisterPendingResponse
 from app.schemas.user import UserResponse
 
 
@@ -18,3 +21,7 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+
+
+RegisterResponse = Union[RegisterPendingResponse, TokenResponse]
+LoginResponse = Union[LoginPendingResponse, TokenResponse]

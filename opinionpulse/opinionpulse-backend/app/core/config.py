@@ -35,6 +35,26 @@ class Settings(BaseSettings):
     reddit_max_posts_per_keyword: int = 10
     reddit_max_comments_per_post: int = 10
 
+    email_provider: str = "smtp"
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from_name: str = "OpinionPulse"
+    smtp_from_email: str = ""
+
+    otp_expire_minutes: int = 10
+    otp_max_attempts: int = 5
+
+    @property
+    def email_configured(self) -> bool:
+        return bool(self.smtp_host and self.smtp_user and self.smtp_password)
+
+    @property
+    def expose_dev_otp_in_api(self) -> bool:
+        """Return OTP in API when SMTP is missing (local dev only)."""
+        return self.app_env == "development" and not self.email_configured
+
     @property
     def database_url(self) -> str:
         password = self.db_password
