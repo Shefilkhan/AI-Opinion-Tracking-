@@ -129,10 +129,23 @@ export async function loginUser(data: LoginData): Promise<LoginPendingResponse> 
   return signInUser(data)
 }
 
+export type ForgotPasswordResponse = {
+  success: boolean
+  message: string
+  dev_otp_code?: string | null
+}
+
 export async function forgotPassword(email: string) {
-  return apiRequest<{ success: boolean; message: string }>(
-    "/api/auth/forgot-password",
-    { method: "POST", body: { email } }
+  return apiRequest<ForgotPasswordResponse>("/api/auth/forgot-password", {
+    method: "POST",
+    body: { email },
+  })
+}
+
+export async function verifyPasswordResetOtp(email: string, otp_code: string) {
+  return apiRequest<{ message: string; verified: boolean }>(
+    "/api/auth/verify-password-reset-otp",
+    { method: "POST", body: { email, otp_code, code: otp_code } }
   )
 }
 

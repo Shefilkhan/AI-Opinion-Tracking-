@@ -4,6 +4,7 @@ import { ApiError } from "@/api/client"
 import {
   resendOtp,
   verifyOtp,
+  verifyPasswordResetOtp,
   type AuthResponse,
   type OtpType,
 } from "@/api/auth"
@@ -106,10 +107,11 @@ export function VerifyOtpPage() {
       setLoading(true)
       try {
         if (type === "password_reset") {
-          navigate(
-            `/auth/forgot-password?email=${encodeURIComponent(email)}&code=${otpCode}`,
-            { replace: true }
-          )
+          await verifyPasswordResetOtp(email, otpCode)
+          navigate("/auth/reset-password", {
+            replace: true,
+            state: { email, otp_code: otpCode },
+          })
           return
         }
 
@@ -154,16 +156,25 @@ export function VerifyOtpPage() {
     [submitVerification]
   )
 
-  const signInLink =
-    type === "signup" ? "/auth/signup" : "/auth/signin"
+  const isPasswordReset = type === "password_reset"
+  const footerLink = isPasswordReset
+    ? "/auth/forgot-password"
+    : type === "signup"
+      ? "/auth/signup"
+      : "/auth/signin"
+  const footerLabel = isPasswordReset ? "Use a different email" : "Back to sign in"
 
   return (
     <AuthLayout
-      title="Check your email"
-      subtitle={`We sent a 6-digit code to ${maskEmail(email)}`}
+      title={isPasswordReset ? "Verify reset code" : "Check your email"}
+      subtitle={
+        isPasswordReset
+          ? `Enter the code we sent to ${maskEmail(email)} to reset your password.`
+          : `We sent a 6-digit code to ${maskEmail(email)}`
+      }
       footerText="Wrong account?"
-      footerLink={signInLink}
-      footerLinkLabel="Back to sign in"
+      footerLink={footerLink}
+      footerLinkLabel={footerLabel}
     >
       <form onSubmit={handleVerify} className="space-y-5">
         {devOtp ? <DevOtpBanner code={devOtp} /> : null}
@@ -220,7 +231,11 @@ export function VerifyOtpPage() {
           disabled={loading || code.length !== 6}
           className={cn("w-full min-h-11", btnPrimary)}
         >
-          {loading ? "Please wait…" : "Verify Code"}
+          {loading
+            ? "Please wait…"
+            : isPasswordReset
+              ? "Continue"
+              : "Verify Code"}
         </Button>
 
         <p className="text-center text-sm">

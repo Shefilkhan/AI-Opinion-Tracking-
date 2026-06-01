@@ -5,6 +5,7 @@ import { SignInPage } from "@/pages/auth/SignInPage"
 import { SignUpPage } from "@/pages/auth/SignUpPage"
 import { VerifyOtpPage } from "@/pages/auth/VerifyOtpPage"
 import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage"
+import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage"
 import { DashboardPage } from "@/pages/DashboardPage"
 import { ProjectsPage } from "@/pages/ProjectsPage"
 import { CreateProjectPage } from "@/pages/CreateProjectPage"
@@ -44,6 +45,7 @@ function App() {
       <Route path="/auth/signin" element={<SignInPage />} />
       <Route path="/auth/verify-otp" element={<VerifyOtpPage />} />
       <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
 
       <Route path="/signup" element={<Navigate to="/auth/signup" replace />} />
       <Route path="/login" element={<Navigate to="/auth/signin" replace />} />

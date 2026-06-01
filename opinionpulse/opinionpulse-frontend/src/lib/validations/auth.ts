@@ -41,7 +41,7 @@ export const resetPasswordSchema = z
     otp_code: z.string().length(6, "Enter the 6-digit code"),
     new_password: z
       .string()
-      .min(8)
+      .min(8, "At least 8 characters")
       .regex(passwordRegex, "Include uppercase, number, and special character"),
     confirmPassword: z.string(),
   })
@@ -49,6 +49,8 @@ export const resetPasswordSchema = z
     message: "Passwords do not match",
     path: ["confirmPassword"],
   })
+
+export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>
 
 export type SignUpFormValues = z.infer<typeof signUpSchema>
 export type SignInFormValues = z.infer<typeof signInSchema>
