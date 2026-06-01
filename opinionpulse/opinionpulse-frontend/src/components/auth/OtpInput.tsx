@@ -4,13 +4,21 @@ import { cn } from "@/lib/utils"
 type OtpInputProps = {
   value: string
   onChange: (value: string) => void
+  /** Fired when all 6 digits are filled (paste or typing the last digit). */
+  onComplete?: (code: string) => void
   disabled?: boolean
   autoFocus?: boolean
 }
 
 const LENGTH = 6
 
-export function OtpInput({ value, onChange, disabled, autoFocus = true }: OtpInputProps) {
+export function OtpInput({
+  value,
+  onChange,
+  onComplete,
+  disabled,
+  autoFocus = true,
+}: OtpInputProps) {
   const inputsRef = useRef<(HTMLInputElement | null)[]>([])
   const [digits, setDigits] = useState<string[]>(
     Array(LENGTH)
@@ -33,7 +41,11 @@ export function OtpInput({ value, onChange, disabled, autoFocus = true }: OtpInp
 
   function updateDigits(next: string[]) {
     setDigits(next)
-    onChange(next.join("").slice(0, LENGTH))
+    const joined = next.join("").slice(0, LENGTH)
+    onChange(joined)
+    if (joined.length === LENGTH && onComplete) {
+      onComplete(joined)
+    }
   }
 
   function handleChange(index: number, char: string) {

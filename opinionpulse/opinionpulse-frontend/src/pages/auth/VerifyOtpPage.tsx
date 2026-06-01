@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { ApiError } from "@/api/client"
 import {
@@ -45,6 +45,7 @@ export function VerifyOtpPage() {
   const [devOtp, setDevOtp] = useState<string | undefined>(devOtpFromState)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const submitLockRef = useRef(false)
 
   useEffect(() => {
     if (!email) navigate("/auth/signin", { replace: true })
@@ -88,41 +89,70 @@ export function VerifyOtpPage() {
     }
   }, [email, type, resendCooldown, resendCount, showToast])
 
-  async function handleVerify(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    if (code.length !== 6) {
-      setError("Enter the full 6-digit code.")
-      return
-    }
-    if (expired) {
-      setError("Code expired. Please request a new code.")
-      return
-    }
-
-    setLoading(true)
-    try {
-      if (type === "password_reset") {
-        navigate(
-          `/auth/forgot-password?email=${encodeURIComponent(email)}&code=${code}`,
-          { replace: true }
-        )
+  const submitVerification = useCallback(
+    async (otpCode: string) => {
+      if (submitLockRef.current || loading) return
+      if (otpCode.length !== 6) {
+        setError("Enter the full 6-digit code.")
+        return
+      }
+      if (secondsLeft <= 0) {
+        setError("Code expired. Please request a new code.")
         return
       }
 
-      const res: AuthResponse = await verifyOtp(email, code, type)
-      setUser(res.user)
-      await refreshUser()
-      showToast("Signed in successfully", "success")
-      navigate(redirect, { replace: true })
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.detail : "Something went wrong. Please try again."
-      )
-    } finally {
-      setLoading(false)
-    }
+      submitLockRef.current = true
+      setError(null)
+      setLoading(true)
+      try {
+        if (type === "password_reset") {
+          navigate(
+            `/auth/forgot-password?email=${encodeURIComponent(email)}&code=${otpCode}`,
+            { replace: true }
+          )
+          return
+        }
+
+        const res: AuthResponse = await verifyOtp(email, otpCode, type)
+        setUser(res.user)
+        await refreshUser()
+        showToast("Signed in successfully", "success")
+        navigate(redirect, { replace: true })
+      } catch (err) {
+        setError(
+          err instanceof ApiError
+            ? err.detail
+            : "Something went wrong. Please try again."
+        )
+      } finally {
+        setLoading(false)
+        submitLockRef.current = false
+      }
+    },
+    [
+      email,
+      loading,
+      navigate,
+      redirect,
+      refreshUser,
+      secondsLeft,
+      setUser,
+      showToast,
+      type,
+    ]
+  )
+
+  function handleVerify(e: React.FormEvent) {
+    e.preventDefault()
+    void submitVerification(code)
   }
+
+  const handleOtpComplete = useCallback(
+    (otpCode: string) => {
+      void submitVerification(otpCode)
+    },
+    [submitVerification]
+  )
 
   const signInLink =
     type === "signup" ? "/auth/signup" : "/auth/signin"
@@ -138,7 +168,12 @@ export function VerifyOtpPage() {
       <form onSubmit={handleVerify} className="space-y-5">
         {devOtp ? <DevOtpBanner code={devOtp} /> : null}
 
-        <OtpInput value={code} onChange={setCode} disabled={loading} />
+        <OtpInput
+          value={code}
+          onChange={setCode}
+          onComplete={handleOtpComplete}
+          disabled={loading || expired}
+        />
 
         <p
           className={cn(
