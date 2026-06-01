@@ -22,7 +22,7 @@ export function CTASection() {
             Reddit, YouTube, and news — no backend required for this demo.
           </p>
           <Button
-            render={<Link to="/signup" />}
+            render={<Link to="/auth/signup" />}
             size="lg"
             className={cn("mt-8 gap-2", btnPrimary)}
           >

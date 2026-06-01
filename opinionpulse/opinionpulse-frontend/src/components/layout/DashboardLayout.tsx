@@ -14,7 +14,8 @@ import {
   User,
 } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
-import { getCurrentUser, logoutUser } from "@/api/auth"
+import { getCurrentUser } from "@/api/auth"
+import { useAuth } from "@/contexts/AuthContext"
 import { cn } from "@/lib/utils"
 import { pageShell } from "@/lib/ui-classes"
 import { Button } from "@/components/ui/button"
@@ -99,8 +100,10 @@ export function DashboardLayout({ title, subtitle, children }: DashboardLayoutPr
     .slice(0, 2)
     .toUpperCase()
 
-  function handleLogout() {
-    logoutUser()
+  const { logout } = useAuth()
+
+  async function handleLogout() {
+    await logout()
     navigate("/")
   }
 

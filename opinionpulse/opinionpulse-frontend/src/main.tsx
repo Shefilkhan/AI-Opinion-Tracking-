@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client"
 import { BrowserRouter } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { AppearanceProvider } from "@/contexts/AppearanceContext"
+import { AuthProvider } from "@/contexts/AuthContext"
 import { ToastProvider } from "@/components/ui/toast"
 import { applyAppearanceToDocument, initAppearanceListeners } from "@/lib/applyAppearance"
 import { loadUserSettings } from "@/lib/userSettingsStore"
@@ -17,7 +18,9 @@ function AppProviders({ children }: { children: React.ReactNode }) {
   useEffect(() => initAppearanceListeners(), [])
   return (
     <ToastProvider>
-      <AppearanceProvider>{children}</AppearanceProvider>
+      <AuthProvider>
+        <AppearanceProvider>{children}</AppearanceProvider>
+      </AuthProvider>
     </ToastProvider>
   )
 }

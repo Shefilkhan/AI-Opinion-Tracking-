@@ -38,10 +38,10 @@ export function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Button render={<Link to="/login" />} variant="ghost" size="sm">
+          <Button render={<Link to="/auth/signin" />} variant="ghost" size="sm">
             Login
           </Button>
-          <Button render={<Link to="/signup" />} size="sm" className={btnPrimary}>
+          <Button render={<Link to="/auth/signup" />} size="sm" className={btnPrimary}>
             Get Started
           </Button>
         </div>
@@ -70,13 +70,13 @@ export function Navbar() {
               ))}
               <div className="mt-4 flex flex-col gap-2 border-t border-gray-200 pt-4">
                 <Button
-                  render={<Link to="/login" onClick={() => setOpen(false)} />}
+                  render={<Link to="/auth/signin" onClick={() => setOpen(false)} />}
                   variant="outline"
                 >
                   Login
                 </Button>
                 <Button
-                  render={<Link to="/signup" onClick={() => setOpen(false)} />}
+                  render={<Link to="/auth/signup" onClick={() => setOpen(false)} />}
                   className={btnPrimary}
                 >
                   Get Started

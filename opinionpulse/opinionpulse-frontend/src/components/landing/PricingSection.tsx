@@ -49,7 +49,7 @@ export function PricingSection() {
               </CardContent>
               <CardFooter>
                 <Button
-                  render={<Link to="/signup" />}
+                  render={<Link to="/auth/signup" />}
                   variant={plan.highlighted ? "default" : "outline"}
                   className={cn(
                     "w-full",

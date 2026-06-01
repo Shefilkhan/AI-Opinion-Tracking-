@@ -37,7 +37,7 @@ export function AuthLayout({
         OpinionPulse
       </Link>
 
-      <div className={cn("w-full max-w-md p-8", cardSurface)}>
+      <div className={cn("w-full max-w-[420px] p-8", cardSurface)}>
         <h1 className="text-xl font-semibold tracking-tight text-foreground">{title}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
         <div className="mt-6">{children}</div>

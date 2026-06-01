@@ -246,6 +246,6 @@ export const footerLinks = {
   resources: [
     { label: "Tech Stack", href: "#tech-stack" },
     { label: "Dashboard", href: "/dashboard" },
-    { label: "Sign Up", href: "/signup" },
+    { label: "Sign Up", href: "/auth/signup" },
   ],
 }

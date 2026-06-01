@@ -1,16 +1,16 @@
-import { useRef, useState, useEffect } from "react"
+import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
-import { inputSurface } from "@/lib/ui-classes"
 
 type OtpInputProps = {
   value: string
   onChange: (value: string) => void
   disabled?: boolean
+  autoFocus?: boolean
 }
 
 const LENGTH = 6
 
-export function OtpInput({ value, onChange, disabled }: OtpInputProps) {
+export function OtpInput({ value, onChange, disabled, autoFocus = true }: OtpInputProps) {
   const inputsRef = useRef<(HTMLInputElement | null)[]>([])
   const [digits, setDigits] = useState<string[]>(
     Array(LENGTH)
@@ -24,6 +24,12 @@ export function OtpInput({ value, onChange, disabled }: OtpInputProps) {
       .map((_, i) => value[i] ?? "")
     setDigits(next)
   }, [value])
+
+  useEffect(() => {
+    if (autoFocus) {
+      inputsRef.current[0]?.focus()
+    }
+  }, [autoFocus])
 
   function updateDigits(next: string[]) {
     setDigits(next)
@@ -71,13 +77,15 @@ export function OtpInput({ value, onChange, disabled }: OtpInputProps) {
           }}
           type="text"
           inputMode="numeric"
+          pattern="[0-9]*"
           maxLength={1}
           value={digit}
           disabled={disabled}
-          aria-label={`Digit ${index + 1}`}
+          aria-label={`Digit ${index + 1} of 6`}
           className={cn(
-            "size-11 rounded-lg text-center text-lg font-semibold text-foreground sm:size-12",
-            inputSurface
+            "h-14 w-12 rounded-lg border border-gray-200 bg-white text-center text-2xl font-semibold text-foreground",
+            "transition-colors duration-150 hover:bg-gray-50",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           )}
           onChange={(e) => handleChange(index, e.target.value)}
           onKeyDown={(e) => handleKeyDown(index, e)}

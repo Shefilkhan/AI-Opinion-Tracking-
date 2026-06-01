@@ -1,8 +1,10 @@
-import { Navigate, Route, Routes } from "react-router-dom"
+import { Navigate, Route, Routes, useSearchParams } from "react-router-dom"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { LandingPage } from "@/pages/LandingPage"
-import { LoginPage } from "@/pages/LoginPage"
-import { SignupPage } from "@/pages/SignupPage"
+import { SignInPage } from "@/pages/auth/SignInPage"
+import { SignUpPage } from "@/pages/auth/SignUpPage"
+import { VerifyOtpPage } from "@/pages/auth/VerifyOtpPage"
+import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage"
 import { DashboardPage } from "@/pages/DashboardPage"
 import { ProjectsPage } from "@/pages/ProjectsPage"
 import { CreateProjectPage } from "@/pages/CreateProjectPage"
@@ -10,8 +12,6 @@ import { ProjectDetailPage } from "@/pages/ProjectDetailPage"
 import { ProjectChatPage } from "@/pages/ProjectChatPage"
 import { ProjectReportsPage } from "@/pages/ProjectReportsPage"
 import { ProjectAlertsPage } from "@/pages/ProjectAlertsPage"
-import { VerifyRegisterOtpPage } from "@/pages/VerifyRegisterOtpPage"
-import { VerifyLoginOtpPage } from "@/pages/VerifyLoginOtpPage"
 import { MentionsPage } from "@/pages/MentionsPage"
 import { SettingsPage } from "@/pages/SettingsPage"
 import { MyAccountPage } from "@/pages/MyAccountPage"
@@ -23,14 +23,39 @@ import { AppearanceSettings } from "@/components/settings/AppearanceSettings"
 import { PrivacySettings } from "@/components/settings/PrivacySettings"
 import { BillingSettings } from "@/components/settings/BillingSettings"
 
+function LegacyVerifyRedirect({ type }: { type: "signup" | "login" }) {
+  const [searchParams] = useSearchParams()
+  const email = searchParams.get("email") ?? ""
+  const redirect = searchParams.get("redirect") ?? "/dashboard"
+  const qs = new URLSearchParams({
+    type,
+    email,
+    redirect,
+  })
+  return <Navigate to={`/auth/verify-otp?${qs.toString()}`} replace />
+}
+
 function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/signup" element={<SignupPage />} />
-      <Route path="/verify-register-otp" element={<VerifyRegisterOtpPage />} />
-      <Route path="/verify-login-otp" element={<VerifyLoginOtpPage />} />
+
+      <Route path="/auth/signup" element={<SignUpPage />} />
+      <Route path="/auth/signin" element={<SignInPage />} />
+      <Route path="/auth/verify-otp" element={<VerifyOtpPage />} />
+      <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+
+      <Route path="/signup" element={<Navigate to="/auth/signup" replace />} />
+      <Route path="/login" element={<Navigate to="/auth/signin" replace />} />
+      <Route
+        path="/verify-register-otp"
+        element={<LegacyVerifyRedirect type="signup" />}
+      />
+      <Route
+        path="/verify-login-otp"
+        element={<LegacyVerifyRedirect type="login" />}
+      />
+
       <Route
         path="/dashboard"
         element={

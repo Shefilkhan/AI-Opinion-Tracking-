@@ -24,7 +24,7 @@ export function HeroSection() {
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button
-              render={<Link to="/signup" />}
+              render={<Link to="/auth/signup" />}
               size="lg"
               className={cn("gap-2", btnPrimary)}
             >

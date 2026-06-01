@@ -39,9 +39,9 @@ export function VerifyRegisterOtpPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await verifyRegisterOtp(email, otp)
-      setSuccess(res.message)
-      setTimeout(() => navigate("/login"), 1500)
+      await verifyRegisterOtp(email, otp)
+      setSuccess("Email verified. Redirecting to dashboard…")
+      setTimeout(() => navigate("/dashboard"), 1500)
     } catch (err) {
       setError(err instanceof ApiError ? err.detail : "Verification failed.")
     } finally {
