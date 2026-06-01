@@ -80,9 +80,16 @@ type DashboardLayoutProps = {
   title: string
   subtitle?: string
   children: React.ReactNode
+  /** Hide the sticky page header (e.g. Settings provides its own header). */
+  hidePageHeader?: boolean
 }
 
-export function DashboardLayout({ title, subtitle, children }: DashboardLayoutProps) {
+export function DashboardLayout({
+  title,
+  subtitle,
+  children,
+  hidePageHeader = false,
+}: DashboardLayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -162,11 +169,53 @@ export function DashboardLayout({ title, subtitle, children }: DashboardLayoutPr
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-40 flex min-h-14 items-center justify-between gap-3 border-b border-gray-200 bg-card/80 px-4 py-2 backdrop-blur-sm sm:gap-4 sm:px-6 md:min-h-16 md:px-8">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
+        {!hidePageHeader && (
+          <header className="sticky top-0 z-40 flex min-h-14 items-center justify-between gap-3 border-b border-gray-200 bg-card/80 px-4 py-2 backdrop-blur-sm sm:gap-4 sm:px-6 md:min-h-16 md:px-8">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                <SheetTrigger
+                  className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-gray-200 text-foreground transition-colors hover:bg-muted md:hidden"
+                  aria-label="Open navigation menu"
+                >
+                  <Menu className="size-5" aria-hidden />
+                </SheetTrigger>
+                <SheetContent
+                  side="left"
+                  className="w-[min(100vw-1rem,18rem)] border-gray-200 bg-card p-0 sm:w-72"
+                >
+                  <SheetHeader className="sr-only">
+                    <SheetTitle>Navigation</SheetTitle>
+                  </SheetHeader>
+                  <div className="flex h-full flex-col">{sidebar}</div>
+                </SheetContent>
+              </Sheet>
+              <div className="min-w-0 flex-1">
+                <h1 className="truncate text-lg font-semibold tracking-tight text-foreground sm:text-xl md:text-2xl">
+                  {title}
+                </h1>
+                {subtitle && (
+                  <p className="truncate text-sm font-normal text-muted-foreground">
+                    {subtitle}
+                  </p>
+                )}
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              onClick={handleLogout}
+              className="h-11 shrink-0 gap-2 px-3 sm:px-4 md:h-8"
+            >
+              <LogOut className="size-4" aria-hidden />
+              <span className="hidden sm:inline">Logout</span>
+              <span className="sr-only sm:hidden">Logout</span>
+            </Button>
+          </header>
+        )}
+        {hidePageHeader && (
+          <div className="sticky top-0 z-40 flex min-h-14 items-center border-b border-gray-200 bg-card/80 px-4 py-2 backdrop-blur-sm md:hidden md:px-8">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger
-                className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-gray-200 text-foreground transition-colors hover:bg-muted md:hidden"
+                className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-gray-200 text-foreground transition-colors hover:bg-muted"
                 aria-label="Open navigation menu"
               >
                 <Menu className="size-5" aria-hidden />
@@ -181,27 +230,8 @@ export function DashboardLayout({ title, subtitle, children }: DashboardLayoutPr
                 <div className="flex h-full flex-col">{sidebar}</div>
               </SheetContent>
             </Sheet>
-            <div className="min-w-0 flex-1">
-              <h1 className="truncate text-lg font-semibold tracking-tight text-foreground sm:text-xl md:text-2xl">
-                {title}
-              </h1>
-              {subtitle && (
-                <p className="truncate text-sm font-normal text-muted-foreground">
-                  {subtitle}
-                </p>
-              )}
-            </div>
           </div>
-          <Button
-            variant="outline"
-            onClick={handleLogout}
-            className="h-11 shrink-0 gap-2 px-3 sm:px-4 md:h-8"
-          >
-            <LogOut className="size-4" aria-hidden />
-            <span className="hidden sm:inline">Logout</span>
-            <span className="sr-only sm:hidden">Logout</span>
-          </Button>
-        </header>
+        )}
 
         <main className="flex-1 px-4 py-4 sm:px-6 sm:py-6 md:px-8 md:py-8">
           <div className="mx-auto w-full max-w-6xl">{children}</div>

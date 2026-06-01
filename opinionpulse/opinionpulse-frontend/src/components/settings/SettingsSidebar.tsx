@@ -1,47 +1,34 @@
-import { Link, useLocation } from "react-router-dom"
-import { Settings } from "lucide-react"
-import { SETTINGS_SECTIONS } from "@/components/settings/settingsNav"
-import { cn } from "@/lib/utils"
+import { SETTINGS_NAV_GROUPS } from "@/components/settings/settingsNav"
+import { SettingsNavItem } from "@/components/settings/SettingsNavItem"
+import type { SettingsSectionId } from "@/components/settings/settingsNav"
 
 type SettingsSidebarProps = {
-  onNavigate?: () => void
-  className?: string
+  activeSection: SettingsSectionId
+  onSelect: (section: SettingsSectionId) => void
 }
 
-export function SettingsSidebar({ onNavigate, className }: SettingsSidebarProps) {
-  const { pathname } = useLocation()
-
+export function SettingsSidebar({ activeSection, onSelect }: SettingsSidebarProps) {
   return (
-    <nav
-      className={cn("flex flex-col gap-1", className)}
-      aria-label="Settings sections"
-    >
-      <div className="mb-3 flex items-center gap-2 px-3 py-2">
-        <Settings className="size-4 text-primary" aria-hidden />
-        <span className="text-sm font-semibold text-foreground">Settings</span>
-      </div>
-      {SETTINGS_SECTIONS.map((item) => {
-        const Icon = item.icon
-        const active = pathname === item.href
-        return (
-          <Link
-            key={item.id}
-            to={item.href}
-            onClick={onNavigate}
-            className={cn(
-              "flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150",
-              "hover:bg-gray-100 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
-              active
-                ? "bg-muted text-foreground"
-                : "text-muted-foreground"
-            )}
-            aria-current={active ? "page" : undefined}
-          >
-            <Icon className="size-4 shrink-0" aria-hidden />
-            {item.label}
-          </Link>
-        )
-      })}
+    <nav className="w-60 shrink-0 space-y-1" aria-label="Settings sections">
+      {SETTINGS_NAV_GROUPS.map((group) => (
+        <div key={group.label} className="space-y-0.5">
+          <span className="block px-3.5 pb-1.5 pt-4 text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/80">
+            {group.label}
+          </span>
+          <div className="flex flex-col gap-0.5">
+            {group.items.map((item) => (
+              <SettingsNavItem
+                key={item.id}
+                icon={item.icon}
+                label={item.label}
+                section={item.id}
+                active={activeSection === item.id}
+                onSelect={onSelect}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
     </nav>
   )
 }

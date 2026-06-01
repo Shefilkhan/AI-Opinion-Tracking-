@@ -14,15 +14,8 @@ import { ProjectChatPage } from "@/pages/ProjectChatPage"
 import { ProjectReportsPage } from "@/pages/ProjectReportsPage"
 import { ProjectAlertsPage } from "@/pages/ProjectAlertsPage"
 import { MentionsPage } from "@/pages/MentionsPage"
-import { SettingsPage } from "@/pages/SettingsPage"
+import { SettingsPage, SettingsLegacyRedirect } from "@/pages/SettingsPage"
 import { MyAccountPage } from "@/pages/MyAccountPage"
-import { SettingsLayout } from "@/components/settings/SettingsLayout"
-import { ProfileSettings } from "@/components/settings/ProfileSettings"
-import { AccountSettings } from "@/components/settings/AccountSettings"
-import { NotificationSettings } from "@/components/settings/NotificationSettings"
-import { AppearanceSettings } from "@/components/settings/AppearanceSettings"
-import { PrivacySettings } from "@/components/settings/PrivacySettings"
-import { BillingSettings } from "@/components/settings/BillingSettings"
 
 function LegacyVerifyRedirect({ type }: { type: "signup" | "login" }) {
   const [searchParams] = useSearchParams()
@@ -81,17 +74,15 @@ function App() {
             <SettingsPage />
           </ProtectedRoute>
         }
-      >
-        <Route element={<SettingsLayout />}>
-          <Route index element={<Navigate to="profile" replace />} />
-          <Route path="profile" element={<ProfileSettings />} />
-          <Route path="account" element={<AccountSettings />} />
-          <Route path="notifications" element={<NotificationSettings />} />
-          <Route path="appearance" element={<AppearanceSettings />} />
-          <Route path="privacy" element={<PrivacySettings />} />
-          <Route path="billing" element={<BillingSettings />} />
-        </Route>
-      </Route>
+      />
+      <Route
+        path="/settings/:section"
+        element={
+          <ProtectedRoute>
+            <SettingsLegacyRedirect />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/my-account"
         element={
