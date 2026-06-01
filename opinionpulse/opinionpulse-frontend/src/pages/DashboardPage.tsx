@@ -1,25 +1,16 @@
-import { Link } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
-import { FolderKanban, Loader2, Sparkles } from "lucide-react"
-import { getAnalyticsOverview } from "@/api/analytics"
-import { apiRequest } from "@/api/client"
 import { getCurrentUser } from "@/api/auth"
-import { getProjects } from "@/api/projects"
+import { getDashboardSummary, getDashboardTrending } from "@/api/dashboard"
+import { getSettingsStatus } from "@/api/settings"
+import { DashboardHero } from "@/components/dashboard/DashboardHero"
+import { DashboardStats } from "@/components/dashboard/DashboardStats"
+import { GettingStartedChecklist } from "@/components/dashboard/GettingStartedChecklist"
+import { LatestSentimentSnapshot } from "@/components/dashboard/LatestSentimentSnapshot"
+import { RecentProjectsPanel } from "@/components/dashboard/RecentProjectsPanel"
+import { SourceStatusPanel } from "@/components/dashboard/SourceStatusPanel"
+import { TrendingNewsPanel } from "@/components/dashboard/TrendingNewsPanel"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { cardInteractive, btnPrimary } from "@/lib/ui-classes"
-import { cn } from "@/lib/utils"
-
-type HealthResponse = {
-  status: string
-  message: string
-}
-
-async function fetchHealth(): Promise<HealthResponse> {
-  return apiRequest<HealthResponse>("/api/health")
-}
+import { LoadingState } from "@/components/ui/LoadingState"
 
 export function DashboardPage() {
   const userQuery = useQuery({
@@ -27,196 +18,52 @@ export function DashboardPage() {
     queryFn: getCurrentUser,
   })
 
-  const projectsQuery = useQuery({
-    queryKey: ["projects"],
-    queryFn: getProjects,
+  const summaryQuery = useQuery({
+    queryKey: ["dashboard-summary"],
+    queryFn: getDashboardSummary,
   })
 
-  const healthQuery = useQuery({
-    queryKey: ["backend-health"],
-    queryFn: fetchHealth,
-    retry: 1,
+  const trendingQuery = useQuery({
+    queryKey: ["dashboard-trending"],
+    queryFn: getDashboardTrending,
   })
 
-  const connected = healthQuery.data?.status === "ok"
-  const user = userQuery.data
-  const projects = projectsQuery.data?.projects ?? []
-  const latestProject = projects[0]
-
-  const analyticsQuery = useQuery({
-    queryKey: ["analytics-overview", latestProject?.id],
-    queryFn: () => getAnalyticsOverview(latestProject!.id),
-    enabled: !!latestProject?.id,
+  const statusQuery = useQuery({
+    queryKey: ["settings-status"],
+    queryFn: getSettingsStatus,
   })
+
+  const summary = summaryQuery.data
 
   return (
     <DashboardLayout
       title="Dashboard"
-      subtitle={user ? `Welcome back, ${user.name}` : "Overview"}
+      subtitle="Your opinion intelligence hub"
     >
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className={cardInteractive}>
-          <CardHeader>
-            <CardTitle className="text-white">Your projects</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {projectsQuery.isLoading ? (
-              <Loader2 className="size-6 animate-spin text-blue-400" />
-            ) : (
-              <p className="text-4xl font-bold text-white">
-                {projectsQuery.data?.total ?? 0}
-              </p>
-            )}
-            <p className="mt-2 text-sm text-slate-400">Active tracking projects</p>
-            <Button
-              render={<Link to="/projects" />}
-              className={cn("mt-4 w-full gap-2", btnPrimary)}
-            >
-              <FolderKanban className="size-4" />
-              View projects
-            </Button>
-          </CardContent>
-        </Card>
+      {summaryQuery.isLoading ? (
+        <LoadingState label="Loading dashboard…" />
+      ) : (
+        <div className="flex flex-col gap-6 sm:gap-8">
+          <DashboardHero userName={userQuery.data?.name} />
 
-        <Card className={cardInteractive}>
-          <CardHeader>
-            <CardTitle className="text-white">Backend status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {healthQuery.isLoading && (
-              <div className="flex items-center gap-2 text-slate-300">
-                <Loader2 className="size-4 animate-spin" />
-                Checking…
-              </div>
-            )}
-            {healthQuery.isError && (
-              <Badge variant="destructive">Disconnected</Badge>
-            )}
-            {healthQuery.isSuccess && (
-              <>
-                <Badge
-                  className={
-                    connected
-                      ? "bg-emerald-500/15 text-emerald-400"
-                      : "bg-rose-500/15 text-rose-400"
-                  }
-                >
-                  {connected ? "Connected" : "Unknown"}
-                </Badge>
-                {healthQuery.data?.message && (
-                  <p className="mt-2 text-xs text-slate-400">
-                    {healthQuery.data.message}
-                  </p>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
+          <DashboardStats summary={summary} />
 
-        <Card className={cn(cardInteractive, "md:col-span-2 lg:col-span-1")}>
-          <CardHeader>
-            <CardTitle className="text-white">Quick start</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-slate-400">
-            <p>
-              Create a project, seed mentions, run Analyze Sentiment, then explore
-              analytics on the project page.
-            </p>
-            <Button
-              render={<Link to="/projects/new" />}
-              variant="outline"
-              className="w-full"
-            >
-              Create new project
-            </Button>
-          </CardContent>
-        </Card>
+          <TrendingNewsPanel
+            items={trendingQuery.data?.items ?? []}
+            message={trendingQuery.data?.message}
+          />
 
-        {latestProject && (
-          <Card className={cn(cardInteractive, "md:col-span-2")}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-white">
-                <Sparkles className="size-4 text-violet-400" />
-                Latest project — {latestProject.name}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {analyticsQuery.isLoading && (
-                <Loader2 className="size-5 animate-spin text-blue-400" />
-              )}
-              {analyticsQuery.isSuccess && (
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                  <div>
-                    <p className="text-2xl font-bold text-white">
-                      {analyticsQuery.data.total_mentions}
-                    </p>
-                    <p className="text-xs text-slate-500">Mentions</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-emerald-400">
-                      {analyticsQuery.data.total_analyzed > 0
-                        ? `${analyticsQuery.data.positive_percentage}%`
-                        : "—"}
-                    </p>
-                    <p className="text-xs text-slate-500">Positive</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-rose-400">
-                      {analyticsQuery.data.total_analyzed > 0
-                        ? `${analyticsQuery.data.negative_percentage}%`
-                        : "—"}
-                    </p>
-                    <p className="text-xs text-slate-500">Negative</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-slate-300">
-                      {analyticsQuery.data.total_analyzed}
-                    </p>
-                    <p className="text-xs text-slate-500">Analyzed</p>
-                  </div>
-                </div>
-              )}
-              <Button
-                render={<Link to={`/projects/${latestProject.id}`} />}
-                variant="outline"
-                className="mt-4 w-full"
-              >
-                Open analytics dashboard
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2">
+            <RecentProjectsPanel projects={summary?.recent_projects ?? []} />
+            <LatestSentimentSnapshot snapshot={summary?.latest_sentiment} />
+          </div>
 
-        {projects.length > 0 && (
-          <Card className={cn(cardInteractive, "md:col-span-2 lg:col-span-3")}>
-            <CardHeader>
-              <CardTitle className="text-white">Recent projects</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="divide-y divide-slate-800/80">
-                {projects.slice(0, 5).map((p) => (
-                  <li key={p.id} className="flex items-center justify-between py-3">
-                    <div>
-                      <p className="font-medium text-white">{p.name}</p>
-                      <p className="text-xs text-slate-500 capitalize">
-                        {p.tracking_frequency} ·{" "}
-                        {new Date(p.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <Button
-                      render={<Link to={`/projects/${p.id}`} />}
-                      variant="outline"
-                      size="sm"
-                    >
-                      Open
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2">
+            <SourceStatusPanel status={statusQuery.data} />
+            <GettingStartedChecklist summary={summary} />
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   )
 }

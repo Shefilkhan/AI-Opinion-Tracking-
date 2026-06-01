@@ -17,8 +17,17 @@ export type Mention = {
   sentiment: SentimentBrief | null
 }
 
+export type GlobalMention = Mention & { project_name: string }
+
 export type MentionListResponse = {
   mentions: Mention[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export type GlobalMentionListResponse = {
+  mentions: GlobalMention[]
   total: number
   limit: number
   offset: number
@@ -50,6 +59,37 @@ export type MentionQueryParams = {
   search?: string
   limit?: number
   offset?: number
+}
+
+export type GlobalMentionQueryParams = MentionQueryParams & {
+  project_id?: number
+}
+
+export function getAllMentions(params: GlobalMentionQueryParams = {}) {
+  const searchParams = new URLSearchParams()
+  if (params.project_id !== undefined) {
+    searchParams.set("project_id", String(params.project_id))
+  }
+  if (params.source && params.source !== "all") {
+    searchParams.set("source", params.source)
+  }
+  if (params.sentiment && params.sentiment !== "all") {
+    searchParams.set("sentiment", params.sentiment)
+  }
+  if (params.search?.trim()) {
+    searchParams.set("search", params.search.trim())
+  }
+  if (params.limit !== undefined) {
+    searchParams.set("limit", String(params.limit))
+  }
+  if (params.offset !== undefined) {
+    searchParams.set("offset", String(params.offset))
+  }
+  const qs = searchParams.toString()
+  return apiRequest<GlobalMentionListResponse>(
+    `/api/mentions${qs ? `?${qs}` : ""}`,
+    { auth: true }
+  )
 }
 
 export function getProjectMentions(projectId: number, params: MentionQueryParams = {}) {
