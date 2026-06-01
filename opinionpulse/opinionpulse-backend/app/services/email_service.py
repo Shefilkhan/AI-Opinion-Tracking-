@@ -11,7 +11,7 @@ settings = get_settings()
 PURPOSE_SUBJECTS = {
     "register_verification": "Your verification code is {otp}",
     "login_verification": "Your verification code is {otp}",
-    "password_reset": "Your verification code is {otp}",
+    "password_reset": "Your password reset code is {otp}",
 }
 
 SMTP_TIMEOUT_SECONDS = 8

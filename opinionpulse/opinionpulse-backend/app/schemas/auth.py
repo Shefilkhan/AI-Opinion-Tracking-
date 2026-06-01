@@ -88,6 +88,12 @@ class AuthSuccessResponse(BaseModel):
     message: str
 
 
+class ForgotPasswordResponse(BaseModel):
+    success: bool = True
+    message: str
+    dev_otp_code: Optional[str] = None
+
+
 class LoginErrorResponse(BaseModel):
     detail: str
     attempts_remaining: Optional[int] = None

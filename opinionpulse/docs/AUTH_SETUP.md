@@ -9,7 +9,7 @@ This project uses **React (Vite) + FastAPI + MySQL**, not Next.js/Prisma. The au
 | `/auth/signup` | `POST /api/auth/signup` (alias `/register`) |
 | `/auth/signin` | `POST /api/auth/signin` (alias `/login`) |
 | `/auth/verify-otp` | `POST /api/auth/verify-otp` |
-| `/auth/forgot-password` | `POST /api/auth/forgot-password`, `POST /api/auth/reset-password` |
+| `/auth/forgot-password` → `/auth/verify-otp?type=password_reset` → `/auth/reset-password` | `POST /api/auth/forgot-password`, `POST /api/auth/verify-password-reset-otp`, `POST /api/auth/reset-password` |
 | Protected: `/dashboard`, `/settings`, … | `GET /api/auth/me`, `POST /api/auth/logout` |
 
 Legacy `/login`, `/signup`, `/verify-*-otp` redirect to the `/auth/*` paths.

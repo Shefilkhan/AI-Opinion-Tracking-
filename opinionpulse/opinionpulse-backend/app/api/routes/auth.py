@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
@@ -12,6 +13,7 @@ from app.db.models import User
 from app.schemas.auth import (
     AuthSuccessResponse,
     ForgotPasswordRequest,
+    ForgotPasswordResponse,
     LoginRequest,
     RegisterRequest,
     ResetPasswordRequest,
@@ -20,6 +22,7 @@ from app.schemas.auth import (
 from app.schemas.otp import (
     LoginPendingResponse,
     OtpEmailRequest,
+    OtpSuccessResponse,
     RegisterPendingResponse,
     ResendOtpRequest,
     ResendOtpResponse,
@@ -198,6 +201,11 @@ def _verify_otp_handler(
     response: Response,
     purpose: str,
 ):
+    if purpose == "password_reset":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Use POST /api/auth/verify-password-reset-otp for password reset codes.",
+        )
     rate_limit_by_ip(request, "verify-otp", 10, 3600)
     user = otp_service.verify_email_otp(
         db, payload.email, payload.resolved_code, purpose
@@ -360,7 +368,7 @@ def resend_login_otp(
     )
 
 
-@router.post("/forgot-password", response_model=AuthSuccessResponse)
+@router.post("/forgot-password", response_model=ForgotPasswordResponse)
 def forgot_password(
     payload: ForgotPasswordRequest,
     background_tasks: BackgroundTasks,
@@ -368,13 +376,38 @@ def forgot_password(
     db: Session = Depends(get_db),
 ):
     rate_limit_by_ip(request, "forgot-password", 5, 3600)
+    plain_otp: Optional[str] = None
     user = db.query(User).filter(User.email == payload.email).first()
     if user is not None:
-        otp_service.create_email_otp(db, user, "password_reset", background_tasks)
+        plain_otp = otp_service.create_email_otp(
+            db, user, "password_reset", background_tasks
+        )
         log_auth_event("password_reset_requested", email=payload.email, request=request)
-    return AuthSuccessResponse(
+    return ForgotPasswordResponse(
         success=True,
         message="If an account exists, a reset code has been sent.",
+        dev_otp_code=otp_service.dev_otp_payload(plain_otp) if plain_otp else None,
+    )
+
+
+@router.post("/verify-password-reset-otp", response_model=OtpSuccessResponse)
+def verify_password_reset_otp(
+    payload: VerifyOtpRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    rate_limit_by_ip(request, "verify-otp", 10, 3600)
+    otp_service.validate_email_otp(
+        db,
+        payload.email,
+        payload.resolved_code,
+        "password_reset",
+        consume=False,
+    )
+    log_auth_event("password_reset_otp_verified", email=payload.email, request=request)
+    return OtpSuccessResponse(
+        message="Code verified. You can set a new password.",
+        verified=True,
     )
 
 

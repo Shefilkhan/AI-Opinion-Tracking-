@@ -118,9 +118,15 @@ def dev_otp_payload(plain_otp: str) -> Optional[str]:
     return None
 
 
-def verify_email_otp(
-    db: Session, email: str, otp_code: str, purpose: str
+def validate_email_otp(
+    db: Session,
+    email: str,
+    otp_code: str,
+    purpose: str,
+    *,
+    consume: bool = False,
 ) -> User:
+    """Check OTP validity; optionally mark it used (consume=True)."""
     email_lower = email.lower().strip()
     user = db.query(User).filter(User.email == email_lower).first()
     if user is None:
@@ -173,7 +179,12 @@ def verify_email_otp(
             detail=f"Incorrect code. {remaining} attempts remaining.",
         )
 
-    record.is_used = True
-    record.used_at = now
+    if consume:
+        record.is_used = True
+        record.used_at = now
     db.commit()
     return user
+
+
+def verify_email_otp(db: Session, email: str, otp_code: str, purpose: str) -> User:
+    return validate_email_otp(db, email, otp_code, purpose, consume=True)
