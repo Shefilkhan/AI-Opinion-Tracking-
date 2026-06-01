@@ -13,9 +13,8 @@ import {
   FolderKanban,
   User,
 } from "lucide-react"
-import { useQuery } from "@tanstack/react-query"
-import { getCurrentUser } from "@/api/auth"
 import { useAuth } from "@/contexts/AuthContext"
+import { Skeleton } from "@/components/ui/Skeleton"
 import { cn } from "@/lib/utils"
 import { pageShell } from "@/lib/ui-classes"
 import { Button } from "@/components/ui/button"
@@ -88,10 +87,7 @@ export function DashboardLayout({ title, subtitle, children }: DashboardLayoutPr
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  const { data: user } = useQuery({
-    queryKey: ["current-user"],
-    queryFn: getCurrentUser,
-  })
+  const { user } = useAuth()
 
   const initials = user?.name
     ?.split(" ")
@@ -131,8 +127,8 @@ export function DashboardLayout({ title, subtitle, children }: DashboardLayoutPr
           />
         ))}
       </nav>
-      {user && (
-        <div className="border-t border-gray-200 p-3 sm:p-4">
+      <div className="border-t border-gray-200 p-3 sm:p-4">
+        {user ? (
           <div className="flex min-h-11 items-center gap-3 rounded-lg border border-gray-200 bg-card px-3 py-2 shadow-[var(--shadow-subtle)]">
             <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-medium text-foreground">
               {initials || "?"}
@@ -142,8 +138,19 @@ export function DashboardLayout({ title, subtitle, children }: DashboardLayoutPr
               <p className="truncate text-xs text-muted-foreground">{user.email}</p>
             </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <div
+            className="flex min-h-11 items-center gap-3 rounded-lg border border-gray-200 bg-card px-3 py-2"
+            aria-hidden
+          >
+            <Skeleton className="size-8 shrink-0 rounded-md" />
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <Skeleton className="h-3.5 w-24" />
+              <Skeleton className="h-3 w-32" />
+            </div>
+          </div>
+        )}
+      </div>
     </>
   )
 

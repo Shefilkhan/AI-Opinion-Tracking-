@@ -1,4 +1,5 @@
 import { Navigate, useLocation } from "react-router-dom"
+import { AuthLoadingSkeleton } from "@/components/auth/AuthLoadingSkeleton"
 import { useAuth } from "@/contexts/AuthContext"
 
 type ProtectedRouteProps = {
@@ -10,11 +11,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation()
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
-        Loading…
-      </div>
-    )
+    return <AuthLoadingSkeleton />
   }
 
   if (!isAuthenticated) {

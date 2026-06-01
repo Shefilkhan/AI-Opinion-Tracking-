@@ -9,7 +9,7 @@ import {
 } from "react"
 import { getCurrentUser, logoutUser, type User } from "@/api/auth"
 import { ApiError } from "@/api/client"
-import { getToken, removeToken } from "@/lib/authStore"
+import { removeToken } from "@/lib/authStore"
 
 type AuthContextValue = {
   user: User | null
@@ -27,11 +27,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   const refreshUser = useCallback(async () => {
-    const token = getToken()
-    if (!token) {
-      setUser(null)
-      return
-    }
     try {
       const me = await getCurrentUser()
       setUser(me)

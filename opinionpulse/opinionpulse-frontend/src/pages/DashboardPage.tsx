@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
-import { getCurrentUser } from "@/api/auth"
 import { getDashboardSummary, getDashboardTrending } from "@/api/dashboard"
+import { useAuth } from "@/contexts/AuthContext"
 import { getSettingsStatus } from "@/api/settings"
 import { DashboardHero } from "@/components/dashboard/DashboardHero"
 import { DashboardStats } from "@/components/dashboard/DashboardStats"
@@ -13,10 +13,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { LoadingState } from "@/components/ui/LoadingState"
 
 export function DashboardPage() {
-  const userQuery = useQuery({
-    queryKey: ["current-user"],
-    queryFn: getCurrentUser,
-  })
+  const { user } = useAuth()
 
   const summaryQuery = useQuery({
     queryKey: ["dashboard-summary"],
@@ -44,7 +41,7 @@ export function DashboardPage() {
         <LoadingState label="Loading dashboard…" />
       ) : (
         <div className="flex flex-col gap-6 sm:gap-8">
-          <DashboardHero userName={userQuery.data?.name} />
+          <DashboardHero userName={user?.name} />
 
           <DashboardStats summary={summary} />
 
