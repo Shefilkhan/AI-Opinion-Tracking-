@@ -16,11 +16,11 @@ export function Navbar() {
   const [open, setOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-xl supports-[backdrop-filter]:bg-slate-950/60">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-6">
-        <Link to="/" className="flex items-center gap-2 font-semibold text-white">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-violet-600">
-            <Activity className="size-4 text-white" />
+    <header className="sticky top-0 z-50 border-b border-gray-200 bg-card/80 backdrop-blur-sm">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 md:px-6">
+        <Link to="/" className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <Activity className="size-4" />
           </span>
           OpinionPulse
         </Link>
@@ -30,7 +30,7 @@ export function Navbar() {
             <a
               key={link.href}
               href={link.href}
-              className="text-sm text-slate-400 transition-colors duration-200 hover:text-white"
+              className="text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground"
             >
               {link.label}
             </a>
@@ -41,25 +41,21 @@ export function Navbar() {
           <Button render={<Link to="/login" />} variant="ghost" size="sm">
             Login
           </Button>
-          <Button
-            render={<Link to="/signup" />}
-            size="sm"
-            className={btnPrimary}
-          >
+          <Button render={<Link to="/signup" />} size="sm" className={btnPrimary}>
             Get Started
           </Button>
         </div>
 
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger
-            className="inline-flex size-9 items-center justify-center rounded-lg border border-slate-700 text-slate-300 md:hidden"
+            className="inline-flex size-8 items-center justify-center rounded-md border border-gray-200 text-foreground transition-colors hover:bg-muted md:hidden"
             aria-label="Open menu"
           >
-            <Menu className="size-5" />
+            <Menu className="size-4" />
           </SheetTrigger>
-          <SheetContent side="right" className="border-slate-800 bg-slate-950">
+          <SheetContent side="right" className="border-gray-200 bg-card">
             <SheetHeader>
-              <SheetTitle className="text-white">Menu</SheetTitle>
+              <SheetTitle>Menu</SheetTitle>
             </SheetHeader>
             <nav className="mt-6 flex flex-col gap-4">
               {navLinks.map((link) => (
@@ -67,12 +63,12 @@ export function Navbar() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setOpen(false)}
-                  className="text-slate-300 hover:text-white"
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {link.label}
                 </a>
               ))}
-              <div className="mt-4 flex flex-col gap-2 border-t border-slate-800 pt-4">
+              <div className="mt-4 flex flex-col gap-2 border-t border-gray-200 pt-4">
                 <Button
                   render={<Link to="/login" onClick={() => setOpen(false)} />}
                   variant="outline"

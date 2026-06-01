@@ -17,12 +17,12 @@ export function ReportSummaryCard({
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <Card className={cardSurface}>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-slate-400">Project</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Project</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-lg font-semibold text-white">{projectName ?? "—"}</p>
+          <p className="text-lg font-semibold text-foreground">{projectName ?? "—"}</p>
           {generatedAt && (
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-muted-foreground">
               Generated {new Date(generatedAt).toLocaleString()}
             </p>
           )}
@@ -30,39 +30,39 @@ export function ReportSummaryCard({
       </Card>
       <Card className={cardSurface}>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-slate-400">Mentions</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Mentions</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-2xl font-bold text-white">{overview.total_mentions}</p>
-          <p className="text-xs text-slate-500">{overview.total_analyzed} analyzed</p>
+          <p className="text-2xl font-bold text-foreground">{overview.total_mentions}</p>
+          <p className="text-xs text-muted-foreground">{overview.total_analyzed} analyzed</p>
         </CardContent>
       </Card>
       <Card className={cardSurface}>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-slate-400">Sentiment mix</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Sentiment mix</CardTitle>
         </CardHeader>
         <CardContent className="space-y-1 text-sm">
-          <p className="text-emerald-400">
+          <p className="text-success">
             Positive {overview.positive_percentage.toFixed(0)}%
           </p>
-          <p className="text-slate-400">
+          <p className="text-muted-foreground">
             Neutral {overview.neutral_percentage.toFixed(0)}%
           </p>
-          <p className="text-rose-400">
+          <p className="text-destructive">
             Negative {overview.negative_percentage.toFixed(0)}%
           </p>
         </CardContent>
       </Card>
       <Card className={cardSurface}>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-slate-400">Average score</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Average score</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-2xl font-bold text-violet-300">
+          <p className="text-2xl font-bold text-primary">
             {overview.average_score >= 0 ? "+" : ""}
             {overview.average_score.toFixed(2)}
           </p>
-          <p className="text-xs text-slate-500">{overview.keyword_count} keywords tracked</p>
+          <p className="text-xs text-muted-foreground">{overview.keyword_count} keywords tracked</p>
         </CardContent>
       </Card>
     </div>

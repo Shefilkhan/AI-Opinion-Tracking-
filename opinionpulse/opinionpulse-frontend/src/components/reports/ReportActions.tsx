@@ -52,7 +52,7 @@ export function ReportActions({
       <Button
         onClick={onGenerate}
         disabled={generating}
-        className="gap-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+        className="gap-2 bg-primary text-primary-foreground text-foreground"
       >
         <FilePlus className="size-4" />
         {generating ? "Generating…" : "Generate Report"}

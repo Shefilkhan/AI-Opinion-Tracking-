@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 
 type SectionHeaderProps = {
   badge?: string
@@ -24,14 +25,14 @@ export function SectionHeader({
       )}
     >
       {badge && (
-        <span className="mb-4 inline-block rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-300">
+        <Badge variant="secondary" className="mb-4">
           {badge}
-        </span>
+        </Badge>
       )}
-      <h2 className="bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-3xl font-bold tracking-tight text-transparent md:text-4xl">
+      <h2 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
         {title}
       </h2>
-      <p className="mt-4 text-base leading-relaxed text-slate-400 md:text-lg">
+      <p className="mt-4 text-base leading-relaxed text-muted-foreground md:text-lg">
         {description}
       </p>
     </div>

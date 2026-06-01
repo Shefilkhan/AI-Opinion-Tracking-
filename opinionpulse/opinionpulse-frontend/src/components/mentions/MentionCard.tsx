@@ -4,16 +4,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { SentimentBadge } from "@/components/sentiment/SentimentBadge"
+import { SOURCE_STYLES } from "@/lib/badge-styles"
 import { cardSurface } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
-
-const SOURCE_STYLES: Record<string, string> = {
-  manual: "bg-violet-500/15 text-violet-300",
-  reddit: "bg-orange-500/15 text-orange-300",
-  youtube: "bg-red-500/15 text-red-300",
-  gdelt: "bg-blue-500/15 text-blue-300",
-  hackernews: "bg-amber-500/15 text-amber-300",
-}
 
 type MentionCardProps = {
   mention: Mention
@@ -30,7 +23,7 @@ export function MentionCard({ mention, onDelete, deleting }: MentionCardProps) {
     <Card
       className={cn(
         cardSurface,
-        "bg-slate-950/60 transition-all duration-200 hover:border-slate-700/70"
+        "transition-all duration-200 hover:border-gray-300"
       )}
     >
       <CardContent className="pt-4">
@@ -39,13 +32,13 @@ export function MentionCard({ mention, onDelete, deleting }: MentionCardProps) {
             <Badge
               className={cn(
                 "capitalize",
-                SOURCE_STYLES[mention.source] ?? "bg-slate-700 text-slate-300"
+                SOURCE_STYLES[mention.source] ?? "bg-muted text-foreground/80"
               )}
             >
               {mention.source}
             </Badge>
             {mention.author && (
-              <span className="text-sm text-slate-400">{mention.author}</span>
+              <span className="text-sm text-muted-foreground">{mention.author}</span>
             )}
             <SentimentBadge sentiment={mention.sentiment} showDetails />
           </div>
@@ -56,11 +49,11 @@ export function MentionCard({ mention, onDelete, deleting }: MentionCardProps) {
             disabled={deleting}
             aria-label="Delete mention"
           >
-            <Trash2 className="size-4 text-rose-400" />
+            <Trash2 className="size-4 text-destructive" />
           </Button>
         </div>
-        <p className="mt-3 text-sm leading-relaxed text-slate-200">{mention.text}</p>
-        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+        <p className="mt-3 text-sm leading-relaxed text-foreground">{mention.text}</p>
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           <span>{date}</span>
           <span>Engagement: {mention.engagement_score}</span>
           {mention.url && (
@@ -68,7 +61,7 @@ export function MentionCard({ mention, onDelete, deleting }: MentionCardProps) {
               href={mention.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300"
+              className="inline-flex items-center gap-1 text-primary hover:text-primary"
             >
               View source
               <ExternalLink className="size-3" />

@@ -90,7 +90,7 @@ export function ProjectChatPage() {
   if (Number.isNaN(projectId)) {
     return (
       <DashboardLayout title="Invalid project">
-        <p className="text-slate-400">Invalid project ID.</p>
+        <p className="text-muted-foreground">Invalid project ID.</p>
       </DashboardLayout>
     )
   }
@@ -113,16 +113,16 @@ export function ProjectChatPage() {
           <ArrowLeft className="size-4" />
           Back to project
         </Button>
-        <span className="flex items-center gap-2 text-sm text-violet-300">
+        <span className="flex items-center gap-2 text-sm text-primary">
           <Bot className="size-4" />
           Template-based assistant — no external AI APIs
         </span>
       </div>
 
-      <Card className={`${cardSurface} mb-6 border-violet-500/20`}>
+      <Card className={`${cardSurface} mb-6`}>
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-white">
-            <Sparkles className="size-5 text-violet-400" />
+          <CardTitle className="flex items-center gap-2 text-foreground">
+            <Sparkles className="size-5 text-primary" />
             Suggested questions
           </CardTitle>
         </CardHeader>
@@ -141,7 +141,7 @@ export function ProjectChatPage() {
             loading={askMutation.isPending || (sessionLoading && sessionId != null)}
           />
           {error && (
-            <p className="text-sm text-rose-400" role="alert">
+            <p className="text-sm text-destructive" role="alert">
               {error}
             </p>
           )}
@@ -156,7 +156,7 @@ export function ProjectChatPage() {
         <aside className="space-y-4">
           <Card className={cardSurface}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base text-white">Chat history</CardTitle>
+              <CardTitle className="text-base text-foreground">Chat history</CardTitle>
             </CardHeader>
             <CardContent>
               <ChatSessionList

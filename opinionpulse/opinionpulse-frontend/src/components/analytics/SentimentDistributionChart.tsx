@@ -3,13 +3,7 @@ import { Loader2 } from "lucide-react"
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts"
 import { getSentimentDistribution } from "@/api/analytics"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { cardSurface } from "@/lib/ui-classes"
-
-const COLORS: Record<string, string> = {
-  positive: "#34d399",
-  neutral: "#94a3b8",
-  negative: "#f87171",
-}
+import { cardSurface, chartColors, chartTooltipStyle } from "@/lib/ui-classes"
 
 type SentimentDistributionChartProps = {
   projectId: number
@@ -35,17 +29,17 @@ export function SentimentDistributionChart({
   return (
     <Card className={cardSurface}>
       <CardHeader>
-        <CardTitle className="text-white">Sentiment distribution</CardTitle>
-        <p className="text-sm text-slate-400">Share of analyzed mentions by label</p>
+        <CardTitle className="text-foreground">Sentiment distribution</CardTitle>
+        <p className="text-sm text-muted-foreground">Share of analyzed mentions by label</p>
       </CardHeader>
       <CardContent>
         {isLoading && (
           <div className="flex h-[260px] items-center justify-center">
-            <Loader2 className="size-6 animate-spin text-blue-400" />
+            <Loader2 className="size-6 animate-spin text-primary" />
           </div>
         )}
         {!isLoading && !hasData && (
-          <p className="flex h-[260px] items-center justify-center text-sm text-slate-500">
+          <p className="flex h-[260px] items-center justify-center text-sm text-muted-foreground">
             No analyzed mentions yet. Run Analyze Sentiment first.
           </p>
         )}
@@ -64,15 +58,11 @@ export function SentimentDistributionChart({
                   paddingAngle={2}
                 >
                   {chartData.map((entry) => (
-                    <Cell key={entry.label} fill={COLORS[entry.label] ?? "#64748b"} />
+                    <Cell key={entry.label} fill={chartColors[entry.label as keyof typeof chartColors] ?? chartColors.neutral} />
                   ))}
                 </Pie>
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#0f172a",
-                    border: "1px solid #334155",
-                    borderRadius: "8px",
-                  }}
+                  contentStyle={chartTooltipStyle}
                   formatter={(value, _name, item) => {
                     const pct = item?.payload?.percentage
                     return [

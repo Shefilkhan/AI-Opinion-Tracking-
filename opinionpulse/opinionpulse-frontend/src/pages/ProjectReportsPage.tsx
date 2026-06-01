@@ -67,7 +67,7 @@ export function ProjectReportsPage() {
   if (Number.isNaN(projectId)) {
     return (
       <DashboardLayout title="Invalid project">
-        <p className="text-slate-400">Invalid project ID.</p>
+        <p className="text-muted-foreground">Invalid project ID.</p>
       </DashboardLayout>
     )
   }
@@ -95,7 +95,7 @@ export function ProjectReportsPage() {
           <ArrowLeft className="size-4" />
           Back to project
         </Button>
-        <span className="flex items-center gap-2 text-sm text-blue-300">
+        <span className="flex items-center gap-2 text-sm text-primary">
           <FileBarChart className="size-4" />
           Template-based reports — no external AI APIs
         </span>
@@ -112,7 +112,7 @@ export function ProjectReportsPage() {
       </div>
 
       {error && (
-        <p className="no-print mb-4 text-sm text-rose-400" role="alert">
+        <p className="no-print mb-4 text-sm text-destructive" role="alert">
           {error}
         </p>
       )}
@@ -124,9 +124,9 @@ export function ProjectReportsPage() {
           ) : activeReport ? (
             <ReportPreview report={activeReport} />
           ) : (
-            <div className="rounded-xl border border-dashed border-slate-700/80 bg-slate-900/30 p-12 text-center no-print">
-              <FileBarChart className="mx-auto size-10 text-slate-600" />
-              <p className="mt-4 text-slate-400">
+            <div className="rounded-xl border border-dashed border-gray-200 bg-card p-12 text-center no-print">
+              <FileBarChart className="mx-auto size-10 text-muted-foreground" />
+              <p className="mt-4 text-muted-foreground">
                 Generate a report or select one from history to preview.
               </p>
             </div>

@@ -22,13 +22,13 @@ export function TechStackSection() {
                 className={cn(cardSurface, "text-center")}
               >
                 <CardHeader className="items-center">
-                  <div className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600/20 to-violet-600/20 text-blue-400">
+                  <div className="flex size-11 items-center justify-center rounded-xl bg-primary/5 text-primary">
                     <Icon className="size-5" />
                   </div>
-                  <CardTitle className="text-base text-white">{item.name}</CardTitle>
+                  <CardTitle className="text-base text-foreground">{item.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-slate-400">{item.description}</p>
+                  <p className="text-sm text-muted-foreground">{item.description}</p>
                 </CardContent>
               </Card>
             )

@@ -50,10 +50,10 @@ export function AnalyzeSentimentButton({ projectId }: AnalyzeSentimentButtonProp
         {mutation.isPending ? "Analyzing…" : "Analyze Sentiment"}
       </Button>
       {message && (
-        <p className="text-sm text-emerald-300">{message}</p>
+        <p className="text-sm text-success">{message}</p>
       )}
       {error && (
-        <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">
+        <p className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
           {error}
         </p>
       )}

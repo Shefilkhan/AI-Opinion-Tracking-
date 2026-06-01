@@ -103,7 +103,7 @@ export function ProjectDetailPage() {
   if (Number.isNaN(projectId)) {
     return (
       <DashboardLayout title="Project not found">
-        <p className="text-slate-400">Invalid project ID.</p>
+        <p className="text-muted-foreground">Invalid project ID.</p>
       </DashboardLayout>
     )
   }
@@ -119,7 +119,7 @@ export function ProjectDetailPage() {
   if (isError || !project) {
     return (
       <DashboardLayout title="Project not found">
-        <p className="text-slate-400">This project does not exist or you do not have access.</p>
+        <p className="text-muted-foreground">This project does not exist or you do not have access.</p>
         <Button render={<Link to="/projects" />} className="mt-4">
           Back to projects
         </Button>
@@ -142,7 +142,7 @@ export function ProjectDetailPage() {
           <Button
             render={<Link to={`/projects/${projectId}/chat`} />}
             size="sm"
-            className="gap-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+            className="gap-2"
           >
             <Bot className="size-4" />
             Ask AI Opinion Assistant
@@ -173,7 +173,7 @@ export function ProjectDetailPage() {
           <Button
             variant="outline"
             size="sm"
-            className="gap-2 text-rose-400"
+            className="gap-2 text-destructive"
             onClick={() => {
               if (confirm("Delete this project?")) deleteMutation.mutate()
             }}
@@ -190,7 +190,7 @@ export function ProjectDetailPage() {
           {editing ? (
             <Card className={cardSurface}>
               <CardHeader>
-                <CardTitle className="text-white">Edit project</CardTitle>
+                <CardTitle className="text-foreground">Edit project</CardTitle>
               </CardHeader>
               <CardContent>
                 <ProjectForm
@@ -216,11 +216,11 @@ export function ProjectDetailPage() {
           ) : (
             <Card className={cardSurface}>
               <CardHeader>
-                <CardTitle className="text-white">Overview</CardTitle>
+                <CardTitle className="text-foreground">Overview</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2 text-sm text-slate-400">
+              <CardContent className="space-y-2 text-sm text-muted-foreground">
                 {project.description ? (
-                  <p className="text-slate-300">{project.description}</p>
+                  <p className="text-foreground/80">{project.description}</p>
                 ) : (
                   <p className="italic">No description</p>
                 )}
@@ -233,12 +233,12 @@ export function ProjectDetailPage() {
         <KeywordManager projectId={projectId} />
       </div>
 
-      <section className="mt-10 space-y-4 border-t border-slate-800/80 pt-10">
+      <section className="mt-10 space-y-4 border-t border-gray-200 pt-10">
         <div className="flex items-center gap-2">
-          <Newspaper className="size-5 text-blue-400" />
+          <Newspaper className="size-5 text-primary" />
           <div>
-            <h2 className="text-xl font-bold text-white">Data collection</h2>
-            <p className="text-sm text-slate-400">
+            <h2 className="text-xl font-bold text-foreground">Data collection</h2>
+            <p className="text-sm text-muted-foreground">
               Pull real news articles from GDELT using your project keywords.
             </p>
           </div>
@@ -246,13 +246,13 @@ export function ProjectDetailPage() {
         <CollectDataButton projectId={projectId} />
       </section>
 
-      <section className="mt-10 space-y-6 border-t border-slate-800/80 pt-10">
+      <section className="mt-10 space-y-6 border-t border-gray-200 pt-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <BarChart3 className="size-5 text-violet-400" />
+            <BarChart3 className="size-5 text-primary" />
             <div>
-              <h2 className="text-xl font-bold text-white">Analytics dashboard</h2>
-              <p className="text-sm text-slate-400">
+              <h2 className="text-xl font-bold text-foreground">Analytics dashboard</h2>
+              <p className="text-sm text-muted-foreground">
                 Real metrics from stored mentions and VADER sentiment.
               </p>
             </div>
@@ -283,8 +283,8 @@ export function ProjectDetailPage() {
         <TopMentionsPanel projectId={projectId} />
       </section>
 
-      <section className="mt-10 space-y-4 border-t border-slate-800/80 pt-10">
-        <h2 className="text-xl font-bold text-white">Mention feed</h2>
+      <section className="mt-10 space-y-4 border-t border-gray-200 pt-10">
+        <h2 className="text-xl font-bold text-foreground">Mention feed</h2>
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-1">
             <MentionForm projectId={projectId} />

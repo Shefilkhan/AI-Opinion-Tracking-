@@ -11,9 +11,9 @@ type SentimentSummaryCardsProps = {
 
 const statCards = [
   { key: "total_analyzed" as const, label: "Total Analyzed", icon: null },
-  { key: "positive" as const, label: "Positive", icon: ThumbsUp, color: "text-emerald-400" },
-  { key: "neutral" as const, label: "Neutral", icon: Minus, color: "text-slate-400" },
-  { key: "negative" as const, label: "Negative", icon: ThumbsDown, color: "text-rose-400" },
+  { key: "positive" as const, label: "Positive", icon: ThumbsUp, color: "text-success" },
+  { key: "neutral" as const, label: "Neutral", icon: Minus, color: "text-muted-foreground" },
+  { key: "negative" as const, label: "Negative", icon: ThumbsDown, color: "text-destructive" },
 ]
 
 export function SentimentSummaryCards({ projectId }: SentimentSummaryCardsProps) {
@@ -25,14 +25,14 @@ export function SentimentSummaryCards({ projectId }: SentimentSummaryCardsProps)
   if (isLoading) {
     return (
       <div className="flex justify-center py-6">
-        <Loader2 className="size-6 animate-spin text-blue-400" />
+        <Loader2 className="size-6 animate-spin text-primary" />
       </div>
     )
   }
 
   if (!data || data.total_analyzed === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-slate-700 bg-slate-900/30 px-4 py-6 text-center text-sm text-slate-500">
+      <p className="rounded-xl border border-dashed border-gray-200 bg-card px-4 py-6 text-center text-sm text-muted-foreground">
         No sentiment analysis yet. Click Analyze Sentiment to begin.
       </p>
     )
@@ -44,25 +44,25 @@ export function SentimentSummaryCards({ projectId }: SentimentSummaryCardsProps)
         {statCards.map(({ key, label, icon: Icon, color }) => (
           <Card key={key} className={cardSurface}>
             <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm font-medium text-slate-400">
+              <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 {Icon && <Icon className={cn("size-4", color)} />}
                 {label}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-white">{data[key]}</p>
+              <p className="text-2xl font-bold text-foreground">{data[key]}</p>
               {key === "positive" && (
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {data.positive_percentage}% of analyzed
                 </p>
               )}
               {key === "neutral" && (
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {data.neutral_percentage}% of analyzed
                 </p>
               )}
               {key === "negative" && (
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {data.negative_percentage}% of analyzed
                 </p>
               )}
@@ -72,15 +72,15 @@ export function SentimentSummaryCards({ projectId }: SentimentSummaryCardsProps)
       </div>
       <Card className={cardSurface}>
         <CardContent className="flex flex-wrap items-center justify-between gap-2 pt-6">
-          <span className="text-sm text-slate-400">Overall average score (compound)</span>
+          <span className="text-sm text-muted-foreground">Overall average score (compound)</span>
           <span
             className={cn(
               "text-xl font-bold",
               data.average_score > 0.05
-                ? "text-emerald-400"
+                ? "text-success"
                 : data.average_score < -0.05
-                  ? "text-rose-400"
-                  : "text-slate-300"
+                  ? "text-destructive"
+                  : "text-foreground/80"
             )}
           >
             {data.average_score >= 0 ? "+" : ""}

@@ -68,7 +68,7 @@ export function ProjectAlertsPage() {
   if (Number.isNaN(projectId)) {
     return (
       <DashboardLayout title="Invalid project">
-        <p className="text-slate-400">Invalid project ID.</p>
+        <p className="text-muted-foreground">Invalid project ID.</p>
       </DashboardLayout>
     )
   }
@@ -96,7 +96,7 @@ export function ProjectAlertsPage() {
           <ArrowLeft className="size-4" />
           Back to project
         </Button>
-        <span className="flex items-center gap-2 text-sm text-amber-300/90">
+        <span className="flex items-center gap-2 text-sm text-muted-foreground/90">
           <Bell className="size-4" />
           In-app alerts only — no email or push notifications
         </span>

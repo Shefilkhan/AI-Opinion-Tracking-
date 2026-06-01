@@ -21,13 +21,13 @@ export function ProblemSection() {
                 className={cardInteractive}
               >
                 <CardHeader>
-                  <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-rose-500/10 text-rose-400">
+                  <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-destructive/5 text-destructive">
                     <Icon className="size-5" />
                   </div>
-                  <CardTitle className="text-lg text-white">{card.title}</CardTitle>
+                  <CardTitle className="text-lg text-foreground">{card.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm leading-relaxed text-slate-400">{card.description}</p>
+                  <p className="text-sm leading-relaxed text-muted-foreground">{card.description}</p>
                 </CardContent>
               </Card>
             )

@@ -45,21 +45,21 @@ export function MentionFeed({ projectId, filters }: MentionFeedProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-white">Mention feed</h3>
+        <h3 className="font-semibold text-foreground">Mention feed</h3>
         {isFetching && !isLoading && (
-          <Loader2 className="size-4 animate-spin text-slate-500" />
+          <Loader2 className="size-4 animate-spin text-muted-foreground" />
         )}
-        <span className="text-sm text-slate-500">{data?.total ?? 0} total</span>
+        <span className="text-sm text-muted-foreground">{data?.total ?? 0} total</span>
       </div>
 
       {isLoading && (
         <div className="flex justify-center py-8">
-          <Loader2 className="size-6 animate-spin text-blue-400" />
+          <Loader2 className="size-6 animate-spin text-primary" />
         </div>
       )}
 
       {!isLoading && data?.mentions.length === 0 && (
-        <p className="rounded-lg border border-dashed border-slate-700 py-8 text-center text-sm text-slate-500">
+        <p className="rounded-lg border border-dashed border-gray-200 py-8 text-center text-sm text-muted-foreground">
           No mentions found. Add sample data or create a manual mention.
         </p>
       )}

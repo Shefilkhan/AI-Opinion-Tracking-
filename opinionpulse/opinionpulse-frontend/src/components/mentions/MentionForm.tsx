@@ -55,7 +55,7 @@ export function MentionForm({ projectId }: MentionFormProps) {
   return (
     <Card className={panelSurface}>
       <CardHeader>
-        <CardTitle className="text-white">Add manual mention</CardTitle>
+        <CardTitle className="text-foreground">Add manual mention</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-3">
@@ -72,7 +72,7 @@ export function MentionForm({ projectId }: MentionFormProps) {
             rows={3}
             required
             className={cn(
-              "w-full rounded-lg border px-3 py-2 text-sm text-white outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+              "w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
               inputSurface
             )}
           />
@@ -90,7 +90,7 @@ export function MentionForm({ projectId }: MentionFormProps) {
             className={inputSurface}
             min={0}
           />
-          {error && <p className="text-sm text-rose-300">{error}</p>}
+          {error && <p className="text-sm text-destructive">{error}</p>}
           <Button
             type="submit"
             disabled={mutation.isPending}

@@ -12,7 +12,7 @@ import {
 } from "recharts"
 import { getSourceSentiment } from "@/api/analytics"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { cardSurface } from "@/lib/ui-classes"
+import { cardSurface, chartColors, chartTooltipStyle } from "@/lib/ui-classes"
 
 const SOURCE_LABELS: Record<string, string> = {
   manual: "Manual",
@@ -44,17 +44,17 @@ export function SourceSentimentChart({ projectId }: SourceSentimentChartProps) {
   return (
     <Card className={cardSurface}>
       <CardHeader>
-        <CardTitle className="text-white">Sentiment by source</CardTitle>
-        <p className="text-sm text-slate-400">Stacked counts per data source</p>
+        <CardTitle className="text-foreground">Sentiment by source</CardTitle>
+        <p className="text-sm text-muted-foreground">Stacked counts per data source</p>
       </CardHeader>
       <CardContent>
         {isLoading && (
           <div className="flex h-[280px] items-center justify-center">
-            <Loader2 className="size-6 animate-spin text-blue-400" />
+            <Loader2 className="size-6 animate-spin text-primary" />
           </div>
         )}
         {!isLoading && !hasData && (
-          <p className="flex h-[280px] items-center justify-center text-sm text-slate-500">
+          <p className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
             No mentions by source yet.
           </p>
         )}
@@ -62,20 +62,14 @@ export function SourceSentimentChart({ projectId }: SourceSentimentChartProps) {
           <div className="h-[280px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
-                <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
-                <XAxis dataKey="source" stroke="#94a3b8" tick={{ fontSize: 11 }} />
-                <YAxis stroke="#94a3b8" tick={{ fontSize: 11 }} allowDecimals={false} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#0f172a",
-                    border: "1px solid #334155",
-                    borderRadius: "8px",
-                  }}
-                />
+                <CartesianGrid stroke={chartColors.grid} strokeDasharray="3 3" />
+                <XAxis dataKey="source" stroke={chartColors.axis} tick={{ fontSize: 11 }} />
+                <YAxis stroke={chartColors.axis} tick={{ fontSize: 11 }} allowDecimals={false} />
+                <Tooltip contentStyle={chartTooltipStyle} />
                 <Legend />
-                <Bar dataKey="positive" stackId="a" fill="#34d399" name="Positive" />
-                <Bar dataKey="neutral" stackId="a" fill="#94a3b8" name="Neutral" />
-                <Bar dataKey="negative" stackId="a" fill="#f87171" name="Negative" />
+                <Bar dataKey="positive" stackId="a" fill={chartColors.positive} name="Positive" />
+                <Bar dataKey="neutral" stackId="a" fill={chartColors.neutral} name="Neutral" />
+                <Bar dataKey="negative" stackId="a" fill={chartColors.negative} name="Negative" />
               </BarChart>
             </ResponsiveContainer>
           </div>

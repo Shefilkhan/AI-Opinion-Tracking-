@@ -43,7 +43,7 @@ export function MentionFilters({ values, onChange }: MentionFiltersProps) {
         <option value="hackernews">Hacker News</option>
       </select>
       <div className="relative flex-1">
-        <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+        <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder="Search mention text…"
           value={values.search}

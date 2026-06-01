@@ -14,30 +14,30 @@ export function ChatbotPreview() {
           title="Ask questions in plain language"
           description="Get instant summaries of what people are saying — powered by your tracked data and NLP insights."
         />
-        <Card className={cn("mx-auto max-w-2xl bg-slate-900/70 shadow-2xl", cardSurface)}>
-          <CardHeader className="flex flex-row items-center gap-3 border-b border-slate-800">
-            <div className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-violet-600">
-              <Bot className="size-5 text-white" />
+        <Card className={cn("mx-auto max-w-2xl", cardSurface)}>
+          <CardHeader className="flex flex-row items-center gap-3 border-b border-gray-200">
+            <div className="flex size-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              <Bot className="size-5" />
             </div>
             <div>
-              <CardTitle className="text-base text-white">Opinion Assistant</CardTitle>
-              <p className="text-xs text-slate-500">Mock conversation preview</p>
+              <CardTitle className="text-base text-foreground">Opinion Assistant</CardTitle>
+              <p className="text-xs text-muted-foreground">Mock conversation preview</p>
             </div>
           </CardHeader>
           <CardContent className="space-y-4 pt-6">
             <div className="flex justify-end gap-3">
-              <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-blue-600/20 px-4 py-3 text-sm text-slate-200">
+              <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-primary px-4 py-3 text-sm text-primary-foreground">
                 {chatbotMock.userMessage}
               </div>
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-800">
-                <User className="size-4 text-slate-400" />
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted">
+                <User className="size-4 text-muted-foreground" />
               </div>
             </div>
             <div className="flex gap-3">
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-violet-600">
-                <Bot className="size-4 text-white" />
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                <Bot className="size-4" />
               </div>
-              <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-slate-800 bg-slate-950/80 px-4 py-3 text-sm leading-relaxed text-slate-300">
+              <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-gray-200 bg-background/80 px-4 py-3 text-sm leading-relaxed text-foreground/80">
                 {chatbotMock.assistantMessage}
               </div>
             </div>

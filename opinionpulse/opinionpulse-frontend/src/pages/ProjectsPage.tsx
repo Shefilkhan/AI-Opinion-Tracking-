@@ -30,7 +30,7 @@ export function ProjectsPage() {
       subtitle="Manage your opinion tracking projects"
     >
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <p className="text-slate-400">
+        <p className="text-muted-foreground">
           {data?.total ?? 0} project{data?.total === 1 ? "" : "s"}
         </p>
         <Button
@@ -54,12 +54,12 @@ export function ProjectsPage() {
         <div
           className={cn(
             panelSurface,
-            "border-dashed border-slate-700/80 py-20 text-center"
+            "border-dashed border-gray-200 py-20 text-center"
           )}
         >
-          <FolderKanban className="mx-auto size-12 text-slate-600" />
-          <h3 className="mt-4 text-lg font-semibold text-white">No projects yet</h3>
-          <p className="mt-2 text-sm text-slate-400">
+          <FolderKanban className="mx-auto size-12 text-muted-foreground" />
+          <h3 className="mt-4 text-lg font-semibold text-foreground">No projects yet</h3>
+          <p className="mt-2 text-sm text-muted-foreground">
             Create your first tracking project to get started.
           </p>
           <Button

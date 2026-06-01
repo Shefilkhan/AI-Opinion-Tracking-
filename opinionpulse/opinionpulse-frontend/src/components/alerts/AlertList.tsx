@@ -41,11 +41,11 @@ export function AlertList({ projectId, alerts }: AlertListProps) {
   return (
     <Card className={cardSurface}>
       <CardHeader>
-        <CardTitle className="text-white">Alert rules</CardTitle>
+        <CardTitle className="text-foreground">Alert rules</CardTitle>
       </CardHeader>
       <CardContent>
         {alerts.length === 0 ? (
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             No alerts yet. Create a rule above to monitor opinion signals.
           </p>
         ) : (
@@ -53,20 +53,20 @@ export function AlertList({ projectId, alerts }: AlertListProps) {
             {alerts.map((a) => (
               <li
                 key={a.id}
-                className="rounded-lg border border-slate-800/80 bg-slate-950/50 p-4"
+                className="rounded-lg border border-gray-200 bg-card p-4"
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <Bell className="size-4 text-violet-400" />
-                    <span className="font-medium text-white">
+                    <Bell className="size-4 text-primary" />
+                    <span className="font-medium text-foreground">
                       {TYPE_LABELS[a.alert_type] ?? a.alert_type}
                     </span>
                     <Badge
                       variant="outline"
                       className={cn(
                         a.is_active
-                          ? "border-emerald-500/30 text-emerald-300"
-                          : "border-slate-600 text-slate-500"
+                          ? "border-success/20 text-success"
+                          : "border-gray-200 text-muted-foreground"
                       )}
                     >
                       {a.is_active ? "Active" : "Inactive"}
@@ -90,7 +90,7 @@ export function AlertList({ projectId, alerts }: AlertListProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 text-rose-400"
+                      className="h-8 text-destructive"
                       disabled={deleteMutation.isPending}
                       onClick={() => {
                         if (confirm("Delete this alert?")) {
@@ -102,15 +102,15 @@ export function AlertList({ projectId, alerts }: AlertListProps) {
                     </Button>
                   </div>
                 </div>
-                <p className="mt-2 text-sm text-slate-400">{a.condition_text}</p>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-2 text-sm text-muted-foreground">{a.condition_text}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
                   Threshold: {a.threshold_value}
                   {a.alert_type === "negative_sentiment" ? "%" : " mentions"}
                   {a.keyword && ` · Keyword: ${a.keyword}`}
                   {a.source && ` · Source: ${a.source}`}
                 </p>
                 {a.last_triggered_at && (
-                  <p className="mt-1 text-xs text-amber-400/90">
+                  <p className="mt-1 text-xs text-muted-foreground/90">
                     Last triggered {new Date(a.last_triggered_at).toLocaleString()}
                   </p>
                 )}

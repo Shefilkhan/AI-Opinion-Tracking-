@@ -20,7 +20,7 @@ export function ProjectCard({ project, onDelete, deleting }: ProjectCardProps) {
     <Card className={cn(cardInteractive, "group overflow-hidden")}>
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-lg text-white transition-colors group-hover:text-blue-100">
+          <CardTitle className="text-lg text-foreground transition-colors group-hover:text-primary">
             {project.name}
           </CardTitle>
           <Badge variant="secondary" className="shrink-0 capitalize">
@@ -28,11 +28,11 @@ export function ProjectCard({ project, onDelete, deleting }: ProjectCardProps) {
           </Badge>
         </div>
         {project.description && (
-          <p className="line-clamp-2 text-sm text-slate-400">{project.description}</p>
+          <p className="line-clamp-2 text-sm text-muted-foreground">{project.description}</p>
         )}
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-2 text-xs text-slate-500">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Calendar className="size-3.5" />
           Created {created}
         </div>
@@ -51,7 +51,7 @@ export function ProjectCard({ project, onDelete, deleting }: ProjectCardProps) {
           disabled={deleting}
           aria-label="Delete project"
         >
-          <Trash2 className="size-4 text-rose-400" />
+          <Trash2 className="size-4 text-destructive" />
         </Button>
       </CardFooter>
     </Card>

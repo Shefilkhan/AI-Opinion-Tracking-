@@ -15,29 +15,29 @@ export function ReportPreview({ report }: ReportPreviewProps) {
     <div id="report-print-area" className="report-print-area space-y-6">
       <div className="report-print-header hidden print:block">
         <h1 className="text-2xl font-bold text-black">OpinionPulse Report</h1>
-        <p className="text-sm text-gray-600">{report.project_name}</p>
+        <p className="text-sm text-muted-foreground">{report.project_name}</p>
       </div>
 
       <Card className={`${cardSurface} report-print-card`}>
         <CardHeader>
           <div className="flex flex-wrap items-center gap-2">
-            <CardTitle className="text-white print:text-black">
+            <CardTitle className="text-foreground print:text-black">
               {report.project_name} — Opinion Report
             </CardTitle>
-            <Badge variant="outline" className="capitalize border-violet-500/30 text-violet-300 print:border-gray-400 print:text-gray-700">
+            <Badge variant="outline" className="capitalize border-primary/20 text-primary print:border-gray-400 print:text-gray-700">
               {report.report_type}
             </Badge>
           </div>
-          <p className="text-sm text-slate-500 print:text-gray-600">
+          <p className="text-sm text-muted-foreground print:text-muted-foreground">
             Generated {new Date(report.generated_at).toLocaleString()}
           </p>
         </CardHeader>
         <CardContent>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-200 print:text-gray-800">
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground print:text-foreground">
             {report.summary}
           </p>
           {report.keyword_hints.length > 0 && (
-            <p className="mt-4 text-xs text-slate-500 print:text-gray-600">
+            <p className="mt-4 text-xs text-muted-foreground print:text-muted-foreground">
               Keywords: {report.keyword_hints.join(", ")}
             </p>
           )}

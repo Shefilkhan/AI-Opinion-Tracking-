@@ -33,14 +33,14 @@ export function ChatInput({
         disabled={disabled}
         placeholder={placeholder}
         className={cn(
-          "min-w-0 flex-1 rounded-xl px-4 py-3 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50",
+          "min-w-0 flex-1 rounded-xl px-4 py-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/20",
           inputSurface
         )}
       />
       <Button
         type="submit"
         disabled={disabled || !value.trim()}
-        className="shrink-0 gap-2 bg-gradient-to-r from-blue-600 to-violet-600 px-4"
+        className="shrink-0 gap-2 bg-primary text-primary-foreground px-4"
       >
         <Send className="size-4" />
         <span className="hidden sm:inline">Send</span>

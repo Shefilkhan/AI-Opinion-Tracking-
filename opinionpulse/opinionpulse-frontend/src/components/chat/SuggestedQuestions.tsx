@@ -24,8 +24,8 @@ export function SuggestedQuestions({ onSelect, disabled }: SuggestedQuestionsPro
           disabled={disabled}
           onClick={() => onSelect(q)}
           className={cn(
-            "rounded-full border border-slate-700/80 bg-slate-900/80 px-3 py-1.5 text-xs text-slate-300 transition-all duration-200",
-            "hover:border-blue-500/40 hover:bg-blue-950/30 hover:text-blue-200",
+            "rounded-full border border-gray-200 bg-muted px-3 py-1.5 text-xs text-foreground/80 transition-all duration-200",
+            "hover:border-primary/30 hover:bg-muted hover:text-foreground",
             disabled && "cursor-not-allowed opacity-50"
           )}
         >

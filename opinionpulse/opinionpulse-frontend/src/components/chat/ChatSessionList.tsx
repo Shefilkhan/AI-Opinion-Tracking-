@@ -33,7 +33,7 @@ export function ChatSessionList({
 
   if (sessions.length === 0) {
     return (
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-muted-foreground">
         No chat history yet. Ask a question to start a session.
       </p>
     )
@@ -47,8 +47,8 @@ export function ChatSessionList({
             className={cn(
               "flex items-center gap-1 rounded-lg border transition-colors",
               activeSessionId === s.id
-                ? "border-blue-500/40 bg-blue-950/20"
-                : "border-transparent hover:border-slate-700/80 hover:bg-slate-900/50",
+                ? "border-primary/30 bg-muted"
+                : "border-transparent hover:border-gray-200 hover:bg-card",
               cardSurface
             )}
           >
@@ -57,15 +57,15 @@ export function ChatSessionList({
               onClick={() => onSelect(s.id)}
               className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2.5 text-left text-sm"
             >
-              <MessageSquare className="size-4 shrink-0 text-slate-500" />
-              <span className="truncate text-slate-200">
+              <MessageSquare className="size-4 shrink-0 text-muted-foreground" />
+              <span className="truncate text-foreground">
                 {s.title || `Session #${s.id}`}
               </span>
             </button>
             <Button
               variant="ghost"
               size="sm"
-              className="shrink-0 text-slate-500 hover:text-rose-400"
+              className="shrink-0 text-muted-foreground hover:text-destructive"
               disabled={deleteMutation.isPending}
               onClick={() => {
                 if (confirm("Delete this chat session?")) {

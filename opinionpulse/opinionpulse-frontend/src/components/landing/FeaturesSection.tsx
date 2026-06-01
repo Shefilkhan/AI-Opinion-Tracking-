@@ -19,16 +19,16 @@ export function FeaturesSection() {
             return (
               <Card
                 key={feature.title}
-                className={cn(cardInteractive, "hover:border-blue-500/20")}
+                className={cn(cardInteractive, "hover:border-primary/20")}
               >
                 <CardHeader className="pb-2">
-                  <div className="mb-3 flex size-9 items-center justify-center rounded-md bg-blue-500/10 text-blue-400">
+                  <div className="mb-3 flex size-9 items-center justify-center rounded-md bg-primary/5 text-primary">
                     <Icon className="size-4" />
                   </div>
-                  <CardTitle className="text-base text-white">{feature.title}</CardTitle>
+                  <CardTitle className="text-base text-foreground">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-slate-400">{feature.description}</p>
+                  <p className="text-sm text-muted-foreground">{feature.description}</p>
                 </CardContent>
               </Card>
             )

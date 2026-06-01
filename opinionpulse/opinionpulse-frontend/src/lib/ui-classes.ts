@@ -1,21 +1,52 @@
-/** Shared Tailwind class strings for consistent SaaS polish */
+/** Shared Tailwind classes — Vercel / Linear minimal system */
+
+export const pageShell = "min-h-screen bg-background text-foreground"
+
 export const cardSurface =
-  "border border-slate-800/60 bg-slate-900/50 shadow-lg shadow-black/20"
+  "rounded-lg border border-gray-200 bg-card text-card-foreground shadow-[var(--shadow-subtle)]"
 
 export const cardInteractive =
-  "border border-slate-800/60 bg-slate-900/50 shadow-lg shadow-black/20 transition-all duration-200 hover:border-slate-700/80 hover:shadow-xl hover:shadow-blue-950/15"
+  "rounded-lg border border-gray-200 bg-card text-card-foreground shadow-[var(--shadow-subtle)] transition-colors duration-150 hover:border-gray-300 hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)]"
 
 export const panelSurface =
-  "rounded-xl border border-slate-800/60 bg-slate-900/50 backdrop-blur-sm"
+  "rounded-lg border border-gray-200 bg-card shadow-[var(--shadow-subtle)]"
 
 export const btnPrimary =
-  "bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-md shadow-blue-900/30 transition-all duration-200 hover:opacity-95 hover:shadow-lg hover:shadow-violet-900/25"
+  "bg-primary text-primary-foreground rounded-md shadow-none hover:bg-primary/90 transition-colors duration-150"
 
 export const inputSurface =
-  "border-slate-700/80 bg-slate-950/80 transition-colors duration-200 placeholder:text-slate-600"
+  "h-9 rounded-lg border border-gray-200 bg-card text-foreground text-sm placeholder:text-muted-foreground transition-colors duration-150 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20"
 
 export const selectSurface =
-  "h-8 rounded-lg border border-slate-700/80 bg-slate-950/80 px-2.5 text-sm text-white transition-colors duration-200 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+  "h-9 rounded-lg border border-gray-200 bg-card px-3 text-sm text-foreground transition-colors duration-150 outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20"
 
-export const pageMesh =
-  "bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950"
+/** Page h1 (layout header) */
+export const pageTitle = "text-xl font-semibold tracking-tight text-foreground md:text-2xl"
+
+export const pageSubtitle = "text-sm font-normal text-muted-foreground"
+
+/** Section h2 inside page content */
+export const sectionTitle = "text-lg font-semibold tracking-tight text-foreground"
+
+/** Card / panel h3 */
+export const cardTitle = "text-base font-semibold tracking-tight text-foreground"
+
+export const labelText = "text-sm font-medium text-foreground"
+
+export const bodyText = "text-sm font-normal text-foreground"
+
+export const mutedText = "text-sm font-normal text-muted-foreground"
+
+export const errorSurface =
+  "rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+
+export const successSurface =
+  "rounded-lg border border-success/20 bg-success/5 px-3 py-2 text-sm text-success"
+
+/** Neutral section wrapper (no tinted backgrounds) */
+export const sectionShell = "border-y border-gray-200 py-16 md:py-24"
+
+/** @deprecated Use pageShell */
+export const pageMesh = pageShell
+
+export { chartColors, chartTooltipStyle, chartTooltipLabelStyle } from "@/lib/palette"

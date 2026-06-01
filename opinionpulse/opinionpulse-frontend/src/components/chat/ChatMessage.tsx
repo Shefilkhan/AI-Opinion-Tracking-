@@ -28,10 +28,10 @@ export function ChatMessage({ message }: ChatMessageProps) {
     return (
       <div className="flex justify-end">
         <div className="flex max-w-[85%] items-end gap-2">
-          <div className="rounded-2xl rounded-br-md bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-2.5 text-sm text-white shadow-md shadow-blue-900/30">
+          <div className="rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-sm text-primary-foreground">
             {message.content}
           </div>
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-600/30 text-blue-300">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
             <User className="size-4" />
           </span>
         </div>
@@ -42,28 +42,28 @@ export function ChatMessage({ message }: ChatMessageProps) {
   return (
     <div className="flex justify-start">
       <div className="flex max-w-[90%] items-start gap-2 md:max-w-[85%]">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-violet-600/20 text-violet-300">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Bot className="size-4" />
         </span>
-        <Card className={cn(cardSurface, "flex-1 border-slate-800/80")}>
+        <Card className={cn(cardSurface, "flex-1")}>
           <CardContent className="pt-4">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               {message.intent && (
-                <Badge variant="outline" className="border-violet-500/30 text-violet-300">
+                <Badge variant="outline" className="border-primary/20 text-primary">
                   {INTENT_LABELS[message.intent] ?? message.intent}
                 </Badge>
               )}
               {message.sources_used && message.sources_used.length > 0 && (
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-muted-foreground">
                   Sources: {message.sources_used.join(", ")}
                 </span>
               )}
             </div>
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-200">
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
               {message.content}
             </p>
             {message.sentiment && (
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-muted-foreground">
                 Sentiment snapshot — +{message.sentiment.positive} / ~
                 {message.sentiment.neutral} / -{message.sentiment.negative}
               </p>

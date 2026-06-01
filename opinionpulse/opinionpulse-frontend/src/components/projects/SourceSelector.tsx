@@ -63,7 +63,7 @@ export function SourceSelector({ projectId }: SourceSelectorProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 text-slate-400">
+      <div className="flex items-center gap-2 text-muted-foreground">
         <Loader2 className="size-4 animate-spin" />
         Loading sources…
       </div>
@@ -72,29 +72,29 @@ export function SourceSelector({ projectId }: SourceSelectorProps) {
 
   return (
     <div className={cn(panelSurface, "p-5")}>
-      <h3 className="font-semibold text-white">Data sources</h3>
-      <p className="mt-1 text-sm text-slate-400">
+      <h3 className="font-semibold text-foreground">Data sources</h3>
+      <p className="mt-1 text-sm text-muted-foreground">
         Choose where to collect opinions (API integration coming later).
       </p>
       <div className="mt-4 space-y-3">
         {localSources.map((source) => (
           <label
             key={source.source_name}
-            className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-800/80 bg-slate-950/60 px-4 py-3 transition-colors duration-200 hover:border-slate-700/80 hover:bg-slate-950/90"
+            className="flex cursor-pointer items-center justify-between rounded-lg border border-gray-200 bg-card/80 px-4 py-3 transition-colors duration-200 hover:border-gray-200 hover:bg-background/90"
           >
-            <span className="text-sm text-white">
+            <span className="text-sm text-foreground">
               {SOURCE_LABELS[source.source_name] ?? source.source_name}
             </span>
             <input
               type="checkbox"
               checked={source.is_enabled}
               onChange={() => toggleSource(source.source_name)}
-              className="size-4 rounded border-slate-600 accent-blue-600"
+              className="size-4 rounded border-gray-200 accent-primary"
             />
           </label>
         ))}
       </div>
-      {error && <p className="mt-2 text-sm text-rose-300">{error}</p>}
+      {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
       <Button
         className={cn("mt-4", btnPrimary)}
         onClick={() => saveMutation.mutate()}

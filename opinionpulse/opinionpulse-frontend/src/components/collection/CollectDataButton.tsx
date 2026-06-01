@@ -141,13 +141,13 @@ export function CollectDataButton({ projectId }: CollectDataButtonProps) {
           {allMutation.isPending ? "Collecting…" : "Collect All Enabled Sources"}
         </Button>
       </div>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-muted-foreground">
         YouTube and Reddit use API quotas and rate limits — keep keywords limited
         while testing. After collecting mentions, click Analyze Sentiment to
         update analytics.
       </p>
       {error && (
-        <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">
+        <p className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
           {error}
         </p>
       )}

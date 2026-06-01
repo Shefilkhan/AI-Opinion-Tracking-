@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="border-y border-slate-800/50 bg-slate-900/30 py-16 md:py-24">
+    <section id="pricing" className="border-y border-gray-200 py-16 md:py-24">
       <div className="mx-auto max-w-6xl px-4 md:px-6">
         <SectionHeader
           badge="Pricing"
@@ -21,27 +21,27 @@ export function PricingSection() {
             <Card
               key={plan.name}
               className={cn(
-                "flex flex-col bg-slate-950/50",
+                "flex flex-col",
                 cardInteractive,
                 plan.highlighted &&
-                  "border-blue-500/40 ring-1 ring-blue-500/30 shadow-blue-900/20"
+                  "border-primary/30 ring-1 ring-primary/20"
               )}
             >
               <CardHeader>
                 {plan.highlighted && (
-                  <span className="mb-2 w-fit rounded-full bg-blue-500/15 px-2 py-0.5 text-xs text-blue-300">
+                  <span className="mb-2 w-fit rounded-full bg-primary/5 px-2 py-0.5 text-xs text-primary">
                     Recommended
                   </span>
                 )}
-                <CardTitle className="text-xl text-white">{plan.name}</CardTitle>
-                <p className="text-3xl font-bold text-white">{plan.price}</p>
-                <p className="text-sm text-slate-400">{plan.description}</p>
+                <CardTitle className="text-xl text-foreground">{plan.name}</CardTitle>
+                <p className="text-3xl font-bold text-foreground">{plan.price}</p>
+                <p className="text-sm text-muted-foreground">{plan.description}</p>
               </CardHeader>
               <CardContent className="flex-1">
                 <ul className="space-y-2">
                   {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2 text-sm text-slate-300">
-                      <Check className="size-4 shrink-0 text-emerald-400" />
+                    <li key={feature} className="flex items-center gap-2 text-sm text-foreground/80">
+                      <Check className="size-4 shrink-0 text-success" />
                       {feature}
                     </li>
                   ))}

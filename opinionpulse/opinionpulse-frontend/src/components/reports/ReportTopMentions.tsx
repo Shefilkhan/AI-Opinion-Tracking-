@@ -3,16 +3,9 @@ import type { TopMentionReportItem } from "@/api/reports"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { SOURCE_STYLES } from "@/lib/badge-styles"
 import { cardSurface } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
-
-const SOURCE_STYLES: Record<string, string> = {
-  manual: "bg-violet-500/15 text-violet-300",
-  reddit: "bg-orange-500/15 text-orange-300",
-  youtube: "bg-red-500/15 text-red-300",
-  gdelt: "bg-blue-500/15 text-blue-300",
-  hackernews: "bg-amber-500/15 text-amber-300",
-}
 
 function MentionList({
   title,
@@ -29,7 +22,7 @@ function MentionList({
         <CardTitle
           className={cn(
             "text-base",
-            tone === "positive" ? "text-emerald-300" : "text-rose-300"
+            tone === "positive" ? "text-success" : "text-destructive"
           )}
         >
           {title}
@@ -37,19 +30,19 @@ function MentionList({
       </CardHeader>
       <CardContent>
         {items.length === 0 ? (
-          <p className="text-sm text-slate-500">No {tone} mentions in this report.</p>
+          <p className="text-sm text-muted-foreground">No {tone} mentions in this report.</p>
         ) : (
           <ul className="space-y-3">
             {items.map((m) => (
               <li
                 key={m.id}
-                className="rounded-lg border border-slate-800/80 bg-slate-950/50 p-3"
+                className="rounded-lg border border-gray-200 bg-card p-3"
               >
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <Badge
                     className={cn(
                       "capitalize",
-                      SOURCE_STYLES[m.source] ?? "bg-slate-700 text-slate-300"
+                      SOURCE_STYLES[m.source] ?? "bg-muted text-foreground/80"
                     )}
                   >
                     {m.source}
@@ -57,19 +50,19 @@ function MentionList({
                   <span
                     className={cn(
                       "text-xs font-medium",
-                      tone === "positive" ? "text-emerald-400" : "text-rose-400"
+                      tone === "positive" ? "text-success" : "text-destructive"
                     )}
                   >
                     {m.sentiment_score >= 0 ? "+" : ""}
                     {m.sentiment_score.toFixed(2)}
                   </span>
                 </div>
-                <p className="line-clamp-4 text-sm text-slate-300">{m.text}</p>
+                <p className="line-clamp-4 text-sm text-foreground/80">{m.text}</p>
                 {m.url && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="mt-2 h-8 gap-1 px-2 text-blue-400"
+                    className="mt-2 h-8 gap-1 px-2 text-primary"
                     render={
                       <a href={m.url} target="_blank" rel="noopener noreferrer" />
                     }

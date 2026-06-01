@@ -27,10 +27,10 @@ export function ChatWindow({ messages, loading }: ChatWindowProps) {
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
         {messages.length === 0 && !loading && (
           <div className="flex h-full min-h-[240px] flex-col items-center justify-center text-center">
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-muted-foreground">
               Ask a question about public opinion for this project.
             </p>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-muted-foreground">
               Answers use your collected mentions and VADER sentiment analysis.
             </p>
           </div>

@@ -17,7 +17,7 @@ export function AnalyticsOverviewCards({ projectId }: AnalyticsOverviewCardsProp
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
-        <Loader2 className="size-6 animate-spin text-blue-400" />
+        <Loader2 className="size-6 animate-spin text-primary" />
       </div>
     )
   }
@@ -29,53 +29,53 @@ export function AnalyticsOverviewCards({ projectId }: AnalyticsOverviewCardsProp
       label: "Total Mentions",
       value: data.total_mentions,
       icon: MessageSquare,
-      color: "text-blue-400",
+      color: "text-primary",
     },
     {
       label: "Total Analyzed",
       value: data.total_analyzed,
       icon: Sparkles,
-      color: "text-violet-400",
+      color: "text-primary",
     },
     {
       label: "Positive %",
       value: `${data.positive_percentage}%`,
       sub: `${data.positive} mentions`,
       icon: TrendingUp,
-      color: "text-emerald-400",
+      color: "text-success",
     },
     {
       label: "Negative %",
       value: `${data.negative_percentage}%`,
       sub: `${data.negative} mentions`,
       icon: TrendingUp,
-      color: "text-rose-400",
+      color: "text-destructive",
     },
     {
       label: "Average Score",
       value: `${data.average_score >= 0 ? "+" : ""}${data.average_score.toFixed(2)}`,
       icon: Target,
-      color: "text-slate-300",
+      color: "text-foreground/80",
     },
     {
       label: "Top Source",
       value: data.top_source ?? "—",
       icon: Layers,
-      color: "text-blue-300",
+      color: "text-primary",
       capitalize: true,
     },
     {
       label: "Top Sentiment",
       value: data.top_sentiment ?? "—",
       icon: Sparkles,
-      color: "text-violet-300",
+      color: "text-primary",
       capitalize: true,
     },
     {
       label: "Keywords",
       value: data.keyword_count,
       icon: Hash,
-      color: "text-amber-400",
+      color: "text-muted-foreground",
     },
   ]
 
@@ -86,7 +86,7 @@ export function AnalyticsOverviewCards({ projectId }: AnalyticsOverviewCardsProp
         return (
           <Card key={card.label} className={cardSurface}>
             <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm font-medium text-slate-400">
+              <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <Icon className={cn("size-4", card.color)} />
                 {card.label}
               </CardTitle>
@@ -94,14 +94,14 @@ export function AnalyticsOverviewCards({ projectId }: AnalyticsOverviewCardsProp
             <CardContent>
               <p
                 className={cn(
-                  "text-2xl font-bold text-white",
+                  "text-2xl font-bold text-foreground",
                   card.capitalize && "capitalize"
                 )}
               >
                 {card.value}
               </p>
               {"sub" in card && card.sub && (
-                <p className="mt-1 text-xs text-slate-500">{card.sub}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{card.sub}</p>
               )}
             </CardContent>
           </Card>

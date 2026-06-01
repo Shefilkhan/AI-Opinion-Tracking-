@@ -69,8 +69,8 @@ export function KeywordManager({ projectId }: KeywordManagerProps) {
 
   return (
     <div className={cn(panelSurface, "p-5")}>
-      <h3 className="font-semibold text-white">Keywords</h3>
-      <p className="mt-1 text-sm text-slate-400">Track brands, topics, and competitors.</p>
+      <h3 className="font-semibold text-foreground">Keywords</h3>
+      <p className="mt-1 text-sm text-muted-foreground">Track brands, topics, and competitors.</p>
 
       <form onSubmit={handleAdd} className="mt-4 flex flex-col gap-3 sm:flex-row">
         <Input
@@ -97,31 +97,31 @@ export function KeywordManager({ projectId }: KeywordManagerProps) {
           Add
         </Button>
       </form>
-      {error && <p className="mt-2 text-sm text-rose-300">{error}</p>}
+      {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {isLoading && <p className="text-sm text-slate-500">Loading keywords…</p>}
+        {isLoading && <p className="text-sm text-muted-foreground">Loading keywords…</p>}
         {data?.keywords.map((kw) => (
           <Badge
             key={kw.id}
-            className="gap-2 border-slate-700 bg-slate-800 py-1.5 pl-3 pr-1 text-slate-200"
+            className="gap-2 border-gray-200 bg-muted py-1.5 pl-3 pr-1 text-foreground"
           >
             <span>
               {kw.keyword}{" "}
-              <span className="text-slate-500">({kw.keyword_type})</span>
+              <span className="text-muted-foreground">({kw.keyword_type})</span>
             </span>
             <button
               type="button"
               onClick={() => deleteMutation.mutate(kw.id)}
-              className="rounded p-0.5 hover:bg-slate-700"
+              className="rounded p-0.5 hover:bg-muted"
               aria-label={`Delete ${kw.keyword}`}
             >
-              <X className="size-3.5 text-slate-400" />
+              <X className="size-3.5 text-muted-foreground" />
             </button>
           </Badge>
         ))}
         {!isLoading && data?.keywords.length === 0 && (
-          <p className="text-sm text-slate-500">No keywords yet.</p>
+          <p className="text-sm text-muted-foreground">No keywords yet.</p>
         )}
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { btnPrimary, inputSurface } from "@/lib/ui-classes"
+import { btnPrimary, errorSurface, labelText } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 export type ProjectFormValues = {
@@ -9,6 +9,14 @@ export type ProjectFormValues = {
   tracking_frequency: "manual" | "daily" | "weekly"
 }
 
+const fieldClass = cn(
+  "w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-foreground",
+  "transition-colors duration-150",
+  "placeholder:text-muted-foreground",
+  "hover:bg-gray-50",
+  "focus-visible:border-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+)
+
 type ProjectFormProps = {
   values: ProjectFormValues
   onChange: (values: ProjectFormValues) => void
@@ -16,6 +24,7 @@ type ProjectFormProps = {
   submitLabel: string
   loading?: boolean
   error?: string | null
+  className?: string
 }
 
 export function ProjectForm({
@@ -25,42 +34,36 @@ export function ProjectForm({
   submitLabel,
   loading,
   error,
+  className,
 }: ProjectFormProps) {
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div>
-        <label className="mb-1.5 block text-sm text-slate-400" htmlFor="name">
-          Project name
-        </label>
+    <form onSubmit={onSubmit} className={cn("space-y-4", className)}>
+      <label className={cn("block", labelText)} htmlFor="name">
+        Project name
         <Input
           id="name"
           value={values.name}
           onChange={(e) => onChange({ ...values, name: e.target.value })}
           placeholder="Netflix pricing tracker"
-          className={inputSurface}
+          className={cn(fieldClass, "mt-1.5 h-auto min-h-11")}
           required
         />
-      </div>
-      <div>
-        <label className="mb-1.5 block text-sm text-slate-400" htmlFor="description">
-          Description
-        </label>
+      </label>
+
+      <label className={cn("block", labelText)} htmlFor="description">
+        Description
         <textarea
           id="description"
           value={values.description}
           onChange={(e) => onChange({ ...values, description: e.target.value })}
           placeholder="What are you tracking?"
           rows={3}
-          className={cn(
-            "w-full rounded-lg border px-3 py-2 text-sm text-white outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
-            inputSurface
-          )}
+          className={cn(fieldClass, "mt-1.5 resize-y")}
         />
-      </div>
-      <div>
-        <label className="mb-1.5 block text-sm text-slate-400" htmlFor="frequency">
-          Tracking frequency
-        </label>
+      </label>
+
+      <label className={cn("block", labelText)} htmlFor="frequency">
+        Tracking frequency
         <select
           id="frequency"
           value={values.tracking_frequency}
@@ -70,25 +73,25 @@ export function ProjectForm({
               tracking_frequency: e.target.value as ProjectFormValues["tracking_frequency"],
             })
           }
-          className={cn(
-            "h-8 w-full rounded-lg border px-2.5 text-sm text-white",
-            inputSurface
-          )}
+          className={cn(fieldClass, "mt-1.5 min-h-11 cursor-pointer")}
         >
           <option value="manual">Manual</option>
           <option value="daily">Daily</option>
           <option value="weekly">Weekly</option>
         </select>
-      </div>
-      {error && (
-        <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">
-          {error}
-        </p>
-      )}
+      </label>
+
+      {error && <p className={errorSurface}>{error}</p>}
+
       <Button
         type="submit"
         disabled={loading}
-        className={cn("w-full", btnPrimary)}
+        className={cn(
+          "min-h-11 w-full px-5 py-2.5 text-sm font-medium",
+          "transition-colors duration-150",
+          "focus-visible:ring-2 focus-visible:ring-blue-500",
+          btnPrimary
+        )}
       >
         {loading ? "Saving…" : submitLabel}
       </Button>

@@ -3,16 +3,9 @@ import { ExternalLink, Loader2 } from "lucide-react"
 import { getTopMentions } from "@/api/analytics"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { SOURCE_STYLES } from "@/lib/badge-styles"
 import { cardSurface } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
-
-const SOURCE_STYLES: Record<string, string> = {
-  manual: "bg-violet-500/15 text-violet-300",
-  reddit: "bg-orange-500/15 text-orange-300",
-  youtube: "bg-red-500/15 text-red-300",
-  gdelt: "bg-blue-500/15 text-blue-300",
-  hackernews: "bg-amber-500/15 text-amber-300",
-}
 
 type TopMentionsPanelProps = {
   projectId: number
@@ -28,7 +21,7 @@ function MentionList({
 }) {
   if (items.length === 0) {
     return (
-      <p className="py-6 text-center text-sm text-slate-500">
+      <p className="py-6 text-center text-sm text-muted-foreground">
         No {tone} analyzed mentions yet.
       </p>
     )
@@ -39,13 +32,13 @@ function MentionList({
       {items.map((m) => (
         <li
           key={m.id}
-          className="rounded-lg border border-slate-800/80 bg-slate-950/50 p-3"
+          className="rounded-lg border border-gray-200 bg-card p-3"
         >
           <div className="flex flex-wrap items-center gap-2">
             <Badge
               className={cn(
                 "capitalize",
-                SOURCE_STYLES[m.source] ?? "bg-slate-700 text-slate-300"
+                SOURCE_STYLES[m.source] ?? "bg-muted text-foreground/80"
               )}
             >
               {m.source}
@@ -53,23 +46,23 @@ function MentionList({
             <span
               className={cn(
                 "text-xs font-medium",
-                tone === "positive" ? "text-emerald-400" : "text-rose-400"
+                tone === "positive" ? "text-success" : "text-destructive"
               )}
             >
               {m.sentiment_score >= 0 ? "+" : ""}
               {m.sentiment_score.toFixed(2)}
             </span>
             {m.author && (
-              <span className="text-xs text-slate-500">{m.author}</span>
+              <span className="text-xs text-muted-foreground">{m.author}</span>
             )}
           </div>
-          <p className="mt-2 line-clamp-3 text-sm text-slate-300">{m.text}</p>
+          <p className="mt-2 line-clamp-3 text-sm text-foreground/80">{m.text}</p>
           {m.url && (
             <a
               href={m.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300"
+              className="mt-2 inline-flex items-center gap-1 text-xs text-primary hover:text-primary"
             >
               Open URL
               <ExternalLink className="size-3" />
@@ -90,7 +83,7 @@ export function TopMentionsPanel({ projectId, limit = 5 }: TopMentionsPanelProps
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
-        <Loader2 className="size-6 animate-spin text-blue-400" />
+        <Loader2 className="size-6 animate-spin text-primary" />
       </div>
     )
   }
@@ -99,7 +92,7 @@ export function TopMentionsPanel({ projectId, limit = 5 }: TopMentionsPanelProps
     <div className="grid gap-6 lg:grid-cols-2">
       <Card className={cardSurface}>
         <CardHeader>
-          <CardTitle className="text-emerald-400">Top positive mentions</CardTitle>
+          <CardTitle className="text-success">Top positive mentions</CardTitle>
         </CardHeader>
         <CardContent>
           <MentionList items={data?.top_positive ?? []} tone="positive" />
@@ -107,7 +100,7 @@ export function TopMentionsPanel({ projectId, limit = 5 }: TopMentionsPanelProps
       </Card>
       <Card className={cardSurface}>
         <CardHeader>
-          <CardTitle className="text-rose-400">Top negative mentions</CardTitle>
+          <CardTitle className="text-destructive">Top negative mentions</CardTitle>
         </CardHeader>
         <CardContent>
           <MentionList items={data?.top_negative ?? []} tone="negative" />

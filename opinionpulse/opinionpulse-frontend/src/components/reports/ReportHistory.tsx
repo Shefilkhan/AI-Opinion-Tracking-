@@ -34,11 +34,11 @@ export function ReportHistory({
   return (
     <Card className={`${cardSurface} no-print`}>
       <CardHeader>
-        <CardTitle className="text-white">Report history</CardTitle>
+        <CardTitle className="text-foreground">Report history</CardTitle>
       </CardHeader>
       <CardContent>
         {reports.length === 0 ? (
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             No reports yet. Generate one to see history here.
           </p>
         ) : (
@@ -48,20 +48,20 @@ export function ReportHistory({
                 key={r.id}
                 className={`rounded-lg border p-3 transition-colors ${
                   selectedId === r.id
-                    ? "border-blue-500/40 bg-blue-950/20"
-                    : "border-slate-800/80 bg-slate-950/40"
+                    ? "border-primary/30 bg-muted"
+                    : "border-gray-200 bg-background/40"
                 }`}
               >
                 <div className="flex items-start gap-2">
-                  <FileText className="mt-0.5 size-4 shrink-0 text-slate-500" />
+                  <FileText className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium capitalize text-white">
+                    <p className="text-sm font-medium capitalize text-foreground">
                       {r.report_type} report
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       {new Date(r.generated_at).toLocaleString()}
                     </p>
-                    <p className="mt-1 line-clamp-2 text-xs text-slate-400">{r.summary}</p>
+                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{r.summary}</p>
                   </div>
                 </div>
                 <div className="mt-2 flex gap-2">
@@ -77,7 +77,7 @@ export function ReportHistory({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 text-rose-400"
+                    className="h-8 text-destructive"
                     disabled={deleteMutation.isPending}
                     onClick={() => {
                       if (confirm("Delete this report?")) {

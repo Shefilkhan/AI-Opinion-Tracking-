@@ -20,7 +20,7 @@ export function AlertEvaluationPanel({
   return (
     <Card className={cardSurface}>
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
-        <CardTitle className="text-white">Evaluation results</CardTitle>
+        <CardTitle className="text-foreground">Evaluation results</CardTitle>
         <Button
           variant="outline"
           size="sm"
@@ -34,39 +34,39 @@ export function AlertEvaluationPanel({
       </CardHeader>
       <CardContent>
         {!evaluation ? (
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Run evaluation to see which rules are triggered against current project data.
           </p>
         ) : (
           <div className="space-y-4">
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-muted-foreground">
               Evaluated {evaluation.evaluated} active rule(s) —{" "}
-              <span className="text-amber-300">{evaluation.triggered} triggered</span>
+              <span className="text-muted-foreground">{evaluation.triggered} triggered</span>
             </p>
             {evaluation.results.length === 0 ? (
-              <p className="text-sm text-slate-500">No active alerts to evaluate.</p>
+              <p className="text-sm text-muted-foreground">No active alerts to evaluate.</p>
             ) : (
               <ul className="space-y-2">
                 {evaluation.results.map((r) => (
                   <li
                     key={r.alert_id}
-                    className="rounded-lg border border-slate-800/80 bg-slate-950/40 px-3 py-3"
+                    className="rounded-lg border border-gray-200 bg-background/40 px-3 py-3"
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge
                         className={cn(
                           r.triggered
-                            ? "bg-amber-500/15 text-amber-300 border-amber-500/30"
-                            : "bg-slate-700/50 text-slate-300 border-slate-600"
+                            ? "bg-muted text-muted-foreground border-gray-200"
+                            : "bg-card text-foreground/80 border-gray-200"
                         )}
                       >
                         {r.triggered ? "Triggered" : "Not triggered"}
                       </Badge>
-                      <span className="text-xs capitalize text-slate-500">
+                      <span className="text-xs capitalize text-muted-foreground">
                         {r.alert_type.replace(/_/g, " ")}
                       </span>
                     </div>
-                    <p className="mt-2 text-sm text-slate-300">{r.message}</p>
+                    <p className="mt-2 text-sm text-foreground/80">{r.message}</p>
                   </li>
                 ))}
               </ul>

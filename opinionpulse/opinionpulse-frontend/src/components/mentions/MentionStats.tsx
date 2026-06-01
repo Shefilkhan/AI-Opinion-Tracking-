@@ -5,12 +5,12 @@ import { cardInteractive } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 const SOURCE_LABELS: { key: string; label: string; color: string }[] = [
-  { key: "total", label: "Total", color: "text-white" },
-  { key: "manual", label: "Manual", color: "text-violet-400" },
-  { key: "reddit", label: "Reddit", color: "text-orange-400" },
-  { key: "youtube", label: "YouTube", color: "text-red-400" },
-  { key: "gdelt", label: "GDELT", color: "text-blue-400" },
-  { key: "hackernews", label: "Hacker News", color: "text-amber-400" },
+  { key: "total", label: "Total", color: "text-foreground" },
+  { key: "manual", label: "Manual", color: "text-muted-foreground" },
+  { key: "reddit", label: "Reddit", color: "text-muted-foreground" },
+  { key: "youtube", label: "YouTube", color: "text-muted-foreground" },
+  { key: "gdelt", label: "GDELT", color: "text-muted-foreground" },
+  { key: "hackernews", label: "Hacker News", color: "text-muted-foreground" },
 ]
 
 type MentionStatsProps = {
@@ -24,7 +24,7 @@ export function MentionStats({ projectId }: MentionStatsProps) {
   })
 
   if (isLoading) {
-    return <p className="text-sm text-slate-500">Loading mention stats…</p>
+    return <p className="text-sm text-muted-foreground">Loading mention stats…</p>
   }
 
   const total = data?.total_mentions ?? 0
@@ -38,7 +38,7 @@ export function MentionStats({ projectId }: MentionStatsProps) {
         return (
           <Card key={item.key} className={cn(cardInteractive, "text-center")}>
             <CardHeader className="pb-1">
-              <CardTitle className="text-xs font-medium text-slate-500">
+              <CardTitle className="text-xs font-medium text-muted-foreground">
                 {item.label}
               </CardTitle>
             </CardHeader>

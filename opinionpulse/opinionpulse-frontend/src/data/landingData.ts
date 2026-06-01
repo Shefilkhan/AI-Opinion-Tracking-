@@ -193,9 +193,9 @@ export const sentimentChartData = [
 ]
 
 export const heroPreviewStats = [
-  { label: "Positive", value: 42, color: "bg-emerald-500" },
-  { label: "Neutral", value: 27, color: "bg-slate-500" },
-  { label: "Negative", value: 31, color: "bg-rose-500" },
+  { label: "Positive", value: 42, color: "bg-success", widthClass: "w-[42%]" },
+  { label: "Neutral", value: 27, color: "bg-muted-foreground/30", widthClass: "w-[27%]" },
+  { label: "Negative", value: 31, color: "bg-destructive", widthClass: "w-[31%]" },
 ]
 
 export const techStack: {
