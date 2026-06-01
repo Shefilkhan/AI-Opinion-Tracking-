@@ -12,5 +12,6 @@ class UserResponse(BaseModel):
     email: EmailStr
     role: str
     is_email_verified: bool = False
+    avatar_url: Optional[str] = None
     created_at: datetime
     last_login_at: Optional[datetime] = None

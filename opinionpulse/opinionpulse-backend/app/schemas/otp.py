@@ -10,9 +10,21 @@ class OtpEmailRequest(BaseModel):
 class VerifyOtpRequest(BaseModel):
     email: EmailStr
     otp_code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
+    code: Optional[str] = Field(default=None, min_length=6, max_length=6)
+    type: Optional[str] = None
+
+    @property
+    def resolved_code(self) -> str:
+        return (self.code or self.otp_code).strip()
+
+
+class ResendOtpRequest(BaseModel):
+    email: EmailStr
+    type: Optional[str] = None
 
 
 class RegisterPendingResponse(BaseModel):
+    success: bool = True
     message: str
     email: EmailStr
     requires_otp: bool = True
@@ -28,6 +40,7 @@ class LoginPendingResponse(BaseModel):
 
 
 class ResendOtpResponse(BaseModel):
+    success: bool = True
     message: str
     dev_otp_code: Optional[str] = None
 

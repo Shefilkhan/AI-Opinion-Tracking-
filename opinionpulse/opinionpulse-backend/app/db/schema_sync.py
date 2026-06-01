@@ -76,3 +76,27 @@ def ensure_users_schema(engine: Engine) -> None:
                     "NULL DEFAULT CURRENT_TIMESTAMP"
                 )
             )
+
+        columns = {col["name"] for col in inspector.get_columns("users")}
+
+        if "avatar_url" not in columns:
+            conn.execute(
+                text("ALTER TABLE users ADD COLUMN avatar_url VARCHAR(512) NULL")
+            )
+        if "is_active" not in columns:
+            conn.execute(
+                text(
+                    "ALTER TABLE users ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1"
+                )
+            )
+        if "failed_login_attempts" not in columns:
+            conn.execute(
+                text(
+                    "ALTER TABLE users ADD COLUMN failed_login_attempts INT "
+                    "NOT NULL DEFAULT 0"
+                )
+            )
+        if "lock_until" not in columns:
+            conn.execute(
+                text("ALTER TABLE users ADD COLUMN lock_until DATETIME NULL")
+            )

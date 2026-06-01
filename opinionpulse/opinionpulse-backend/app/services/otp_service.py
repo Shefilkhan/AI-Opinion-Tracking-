@@ -1,16 +1,13 @@
-import hashlib
-import hmac
 import logging
 import secrets
 from datetime import datetime, timedelta, timezone
-
-import bcrypt
 from typing import Optional
 
 from fastapi import BackgroundTasks, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.core.security import hash_otp_code, verify_otp_code
 from app.db.models import EmailOTP, User
 from app.services.email_service import send_otp_email
 
@@ -25,31 +22,7 @@ ALLOWED_PURPOSES = (
 
 
 def generate_otp_code() -> str:
-    return f"{secrets.randbelow(1_000_000):06d}"
-
-
-def _is_bcrypt_hash(hashed_otp: str) -> bool:
-    return hashed_otp.startswith("$2")
-
-
-def hash_otp(otp_code: str) -> str:
-    """Fast HMAC hash for new OTP records (instant login/register)."""
-    key = settings.secret_key.encode("utf-8")
-    return hmac.new(key, otp_code.encode("utf-8"), hashlib.sha256).hexdigest()
-
-
-def verify_otp_hash(plain_otp: str, hashed_otp: str) -> bool:
-    plain = plain_otp.strip()
-    if _is_bcrypt_hash(hashed_otp):
-        try:
-            return bcrypt.checkpw(
-                plain.encode("utf-8"),
-                hashed_otp.encode("utf-8"),
-            )
-        except (ValueError, TypeError):
-            return False
-    expected = hash_otp(plain)
-    return hmac.compare_digest(expected, hashed_otp)
+    return f"{secrets.randbelow(900_000) + 100_000:06d}"
 
 
 def invalidate_existing_otps(db: Session, user_id: int, purpose: str) -> None:
@@ -65,8 +38,22 @@ def invalidate_existing_otps(db: Session, user_id: int, purpose: str) -> None:
     db.commit()
 
 
+def count_recent_otps(
+    db: Session, email: str, purpose: str, window_minutes: int
+) -> int:
+    since = datetime.now(timezone.utc) - timedelta(minutes=window_minutes)
+    return (
+        db.query(EmailOTP)
+        .filter(
+            EmailOTP.email == email.lower(),
+            EmailOTP.purpose == purpose,
+            EmailOTP.created_at >= since,
+        )
+        .count()
+    )
+
+
 def create_email_otp_record(db: Session, user: User, purpose: str) -> str:
-    """Persist OTP and return the plain code (email sent separately)."""
     if purpose not in ALLOWED_PURPOSES:
         raise ValueError(f"Invalid OTP purpose: {purpose}")
 
@@ -79,7 +66,7 @@ def create_email_otp_record(db: Session, user: User, purpose: str) -> str:
     record = EmailOTP(
         user_id=user.id,
         email=user.email,
-        otp_code_hash=hash_otp(plain_otp),
+        otp_code_hash=hash_otp_code(plain_otp),
         purpose=purpose,
         expires_at=expires_at,
         is_used=False,
@@ -112,6 +99,14 @@ def create_email_otp(
     purpose: str,
     background_tasks: Optional[BackgroundTasks] = None,
 ) -> str:
+    window = settings.otp_resend_window_minutes
+    max_sent = settings.otp_resend_max_per_window
+    sent = count_recent_otps(db, user.email, purpose, window)
+    if sent >= max_sent:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many codes sent. Please wait before requesting another.",
+        )
     plain_otp = create_email_otp_record(db, user, purpose)
     schedule_otp_email(background_tasks, user.email, plain_otp, purpose)
     return plain_otp
@@ -130,8 +125,8 @@ def verify_email_otp(
     user = db.query(User).filter(User.email == email_lower).first()
     if user is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No account found for this email.",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid verification request.",
         )
 
     record = (
@@ -148,7 +143,7 @@ def verify_email_otp(
     if record is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No active OTP found. Please request a new code.",
+            detail="No active code found. Please request a new code.",
         )
 
     now = datetime.now(timezone.utc)
@@ -157,22 +152,25 @@ def verify_email_otp(
         expires = expires.replace(tzinfo=timezone.utc)
     if now > expires:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="OTP has expired. Please request a new code.",
+            status_code=status.HTTP_410_GONE,
+            detail="OTP expired. Please request a new code.",
         )
 
     if record.attempt_count >= settings.otp_max_attempts:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Too many failed attempts. Please request a new OTP.",
-        )
-
-    if not verify_otp_hash(otp_code.strip(), record.otp_code_hash):
-        record.attempt_count += 1
+        record.is_used = True
         db.commit()
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid OTP code.",
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Maximum attempts reached. Please request a new code.",
+        )
+
+    if not verify_otp_code(otp_code.strip(), record.otp_code_hash):
+        record.attempt_count += 1
+        db.commit()
+        remaining = max(0, settings.otp_max_attempts - record.attempt_count)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Incorrect code. {remaining} attempts remaining.",
         )
 
     record.is_used = True

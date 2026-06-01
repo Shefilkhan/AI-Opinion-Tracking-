@@ -20,8 +20,14 @@ class Settings(BaseSettings):
     db_name: str = "opinionpulse_db"
 
     secret_key: str = "change_this_secret_key_later"
+    otp_secret: str = "change_this_otp_pepper_secret"
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 60
+    access_token_expire_minutes: int = 10080  # 7 days
+    access_token_expire_days: int = 7
+    bcrypt_rounds: int = 12
+    frontend_url: str = "http://localhost:5173"
+    auth_cookie_name: str = "opinionpulse_token"
+    auth_cookie_secure: bool = False
 
     youtube_api_key: str = ""
     youtube_max_videos_per_keyword: int = 3
@@ -43,8 +49,12 @@ class Settings(BaseSettings):
     smtp_from_name: str = "OpinionPulse"
     smtp_from_email: str = ""
 
-    otp_expire_minutes: int = 10
-    otp_max_attempts: int = 5
+    otp_expire_minutes: int = 2
+    otp_max_attempts: int = 3
+    otp_resend_max_per_window: int = 3
+    otp_resend_window_minutes: int = 10
+    login_max_failed_attempts: int = 5
+    login_lockout_minutes: int = 15
 
     @property
     def email_configured(self) -> bool:

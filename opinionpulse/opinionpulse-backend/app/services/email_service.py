@@ -9,12 +9,16 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 PURPOSE_SUBJECTS = {
-    "register_verification": "Verify your OpinionPulse account",
-    "login_verification": "Your OpinionPulse login code",
-    "password_reset": "Reset your OpinionPulse password",
+    "register_verification": "Your verification code is {otp}",
+    "login_verification": "Your verification code is {otp}",
+    "password_reset": "Your verification code is {otp}",
 }
 
 SMTP_TIMEOUT_SECONDS = 8
+
+
+def _format_otp_display(otp_code: str) -> str:
+    return " ".join(list(otp_code.strip()))
 
 
 def send_email(to_email: str, subject: str, html_body: str, plain_body: str) -> bool:
@@ -51,21 +55,31 @@ def send_email(to_email: str, subject: str, html_body: str, plain_body: str) -> 
 
 
 def send_otp_email(to_email: str, otp_code: str, purpose: str) -> bool:
-    subject = PURPOSE_SUBJECTS.get(purpose, "Your OpinionPulse verification code")
+    spaced = _format_otp_display(otp_code)
+    subject_template = PURPOSE_SUBJECTS.get(
+        purpose, "Your verification code is {otp}"
+    )
+    subject = subject_template.format(otp=otp_code)
     plain_body = (
-        f"Your OpinionPulse verification code is: {otp_code}\n\n"
-        f"This code expires in {settings.otp_expire_minutes} minutes.\n"
-        "If you did not request this, please ignore this email."
+        f"Your one-time passcode for {settings.app_name} is: {otp_code}\n\n"
+        f"This code expires in {settings.otp_expire_minutes} minutes.\n\n"
+        "If you didn't request this, please ignore this email and your account "
+        "remains secure.\n\n"
+        "Never share this code with anyone.\n"
     )
     html_body = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
-      <h2 style="color: #0070f3;">OpinionPulse verification code</h2>
-      <p>Your verification code is:</p>
-      <p style="font-size: 28px; font-weight: bold; letter-spacing: 6px; color: #111111;">{otp_code}</p>
-      <p>This code expires in {settings.otp_expire_minutes} minutes.</p>
-      <p style="color: #666666; font-size: 12px;">
-        If you did not request this, please ignore this email.
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
+      <div style="font-weight: 700; font-size: 18px; color: #0070f3; margin-bottom: 24px;">{settings.app_name}</div>
+      <h1 style="font-size: 22px; color: #111111; margin: 0 0 12px;">Your one-time passcode</h1>
+      <p style="color: #444444; font-size: 15px;">Enter this code to continue:</p>
+      <p style="font-size: 36px; font-weight: 700; letter-spacing: 12px; color: #111111; margin: 24px 0;">{spaced}</p>
+      <p style="color: #444444; font-size: 14px;">This code expires in <strong>{settings.otp_expire_minutes} minutes</strong>.</p>
+      <p style="color: #666666; font-size: 13px; margin-top: 24px;">
+        If you didn't request this, please ignore this email and your account remains secure.
       </p>
+      <p style="color: #b45309; font-size: 13px; font-weight: 600;">Never share this code with anyone.</p>
+      <hr style="border: none; border-top: 1px solid #eeeeee; margin: 32px 0 16px;" />
+      <p style="color: #999999; font-size: 12px;">{settings.app_name}</p>
     </div>
     """
     sent = send_email(to_email, subject, html_body, plain_body)
