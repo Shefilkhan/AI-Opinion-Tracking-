@@ -1,6 +1,5 @@
 import { apiRequest } from "@/api/client"
 import type { SearchFilters, SearchResponse } from "@/lib/api/types"
-import { getClientMockSearch } from "@/lib/api/mock-data"
 import { enrichSearchResponse } from "@/lib/api/sentiment"
 
 export type { SearchFilters, SearchResponse }
@@ -21,9 +20,13 @@ export async function searchOpinions(
         sort_by: filters.sortBy,
       },
     })
-    return enrichSearchResponse(data)
-  } catch {
-    return enrichSearchResponse(getClientMockSearch(query))
+    if (data.demo_mode) {
+      return enrichSearchResponse(data)
+    }
+    return data
+  } catch (err) {
+    console.error("❌ Search API failed:", err)
+    throw err
   }
 }
 

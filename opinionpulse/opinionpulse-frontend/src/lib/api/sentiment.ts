@@ -182,10 +182,12 @@ export function formatSentimentPct(value: number): string {
 
 export function platformDisplayName(platform: string): string {
   const map: Record<string, string> = {
-    twitter: "Twitter/X",
     reddit: "Reddit",
     youtube: "YouTube",
     news: "News",
+    guardian: "Guardian",
+    devto: "Dev.to",
+    hackernews: "Hacker News",
   }
   return map[platform] ?? platform
 }
@@ -196,14 +198,11 @@ export type PlatformBadgeStyle = {
   icon: string
 }
 
-export function platformBadge(platform: string): PlatformBadgeStyle {
+export function platformBadge(
+  platform: string,
+  sourceLabel?: string | null
+): PlatformBadgeStyle {
   switch (platform) {
-    case "twitter":
-      return {
-        label: "Twitter/X",
-        className: "bg-black text-white",
-        icon: "𝕏",
-      }
     case "reddit":
       return {
         label: "Reddit",
@@ -216,12 +215,32 @@ export function platformBadge(platform: string): PlatformBadgeStyle {
         className: "bg-red-600 text-white",
         icon: "▶",
       }
-    case "news":
+    case "guardian":
       return {
-        label: "News",
+        label: "Guardian",
+        className: "bg-blue-700 text-white",
+        icon: "G",
+      }
+    case "devto":
+      return {
+        label: "Dev.to",
+        className: "bg-violet-600 text-white",
+        icon: "D",
+      }
+    case "hackernews":
+      return {
+        label: "HN",
+        className: "bg-orange-600 text-white",
+        icon: "Y",
+      }
+    case "news": {
+      const pub = sourceLabel?.split("·")[0]?.trim() || sourceLabel?.split(".")[0]
+      return {
+        label: pub && pub.length < 24 ? pub : "News",
         className: "bg-blue-600 text-white",
         icon: "📰",
       }
+    }
     default:
       return {
         label: platformDisplayName(platform),
