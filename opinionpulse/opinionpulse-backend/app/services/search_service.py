@@ -8,7 +8,8 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.db.models import SearchHistory
-from app.services.search_mock_data import generate_mock_search, score_sentiment
+from app.services.search_mock_data import generate_mock_search
+from app.services.sentiment_analysis import apply_sentiment_to_results, calculate_sentiment_summary
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -59,30 +60,18 @@ async def run_search(
         data["demo_mode"] = True
         return data
 
-    for row in combined:
-        if "sentiment" not in row:
-            label, score = score_sentiment(row.get("content", ""))
-            row["sentiment"] = label
-            row["sentiment_score"] = score
+    combined = apply_sentiment_to_results(combined)
 
     if sentiment != "all":
         combined = [r for r in combined if r.get("sentiment") == sentiment]
 
     combined.sort(key=lambda r: r.get("posted_at", ""), reverse=True)
-    pos = sum(1 for r in combined if r.get("sentiment") == "positive")
-    neg = sum(1 for r in combined if r.get("sentiment") == "negative")
-    neu = len(combined) - pos - neg
-    n = len(combined) or 1
     mock_extra = generate_mock_search(query, platform, sentiment, time_range, sort_by)
 
     return {
         "query": query,
         "total_results": len(combined),
-        "sentiment_summary": {
-            "positive": round(pos / n * 100, 1),
-            "negative": round(neg / n * 100, 1),
-            "neutral": round(neu / n * 100, 1),
-        },
+        "sentiment_summary": calculate_sentiment_summary(combined),
         "platforms_searched": platforms,
         "demo_mode": False,
         "peak_discussion": mock_extra.get("peak_discussion"),

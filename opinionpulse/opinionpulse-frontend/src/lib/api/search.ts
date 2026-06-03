@@ -1,6 +1,7 @@
 import { apiRequest } from "@/api/client"
 import type { SearchFilters, SearchResponse } from "@/lib/api/types"
 import { getClientMockSearch } from "@/lib/api/mock-data"
+import { enrichSearchResponse } from "@/lib/api/sentiment"
 
 export type { SearchFilters, SearchResponse }
 
@@ -9,7 +10,7 @@ export async function searchOpinions(
   filters: SearchFilters
 ): Promise<SearchResponse> {
   try {
-    return await apiRequest<SearchResponse>("/api/search", {
+    const data = await apiRequest<SearchResponse>("/api/search", {
       method: "POST",
       auth: true,
       body: {
@@ -20,8 +21,9 @@ export async function searchOpinions(
         sort_by: filters.sortBy,
       },
     })
+    return enrichSearchResponse(data)
   } catch {
-    return getClientMockSearch(query)
+    return enrichSearchResponse(getClientMockSearch(query))
   }
 }
 

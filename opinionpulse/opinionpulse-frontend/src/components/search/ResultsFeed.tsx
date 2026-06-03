@@ -1,6 +1,10 @@
 import { ExternalLink, Heart, MessageCircle, Repeat2 } from "lucide-react"
 import type { SearchResultItem } from "@/lib/api/types"
-import { platformDisplayName, sentimentLabelColor } from "@/lib/api/sentiment"
+import {
+  platformBadge,
+  sentimentBadgeClass,
+  sentimentBadgeLabel,
+} from "@/lib/api/sentiment"
 import { cn } from "@/lib/utils"
 
 function timeAgo(iso: string): string {
@@ -24,50 +28,61 @@ export function ResultsFeed({ results }: ResultsFeedProps) {
 
   return (
     <ul className="divide-y divide-gray-200 rounded-xl border border-gray-200 bg-white">
-      {results.map((r) => (
-        <li key={r.id}>
-          <a
-            href={r.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex gap-4 px-5 py-4 transition-colors hover:bg-gray-50"
-          >
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">
-                  {platformDisplayName(r.platform)}
-                </span>
-                <span>·</span>
-                <span>{r.author}</span>
-                <span>·</span>
-                <span>{timeAgo(r.posted_at)}</span>
-              </div>
-              <p className="mt-2 line-clamp-3 text-sm text-gray-700">{r.content}</p>
-              <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1">
-                  <Heart className="size-3.5" /> {r.engagement.likes.toLocaleString()}
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <Repeat2 className="size-3.5" /> {r.engagement.shares.toLocaleString()}
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <MessageCircle className="size-3.5" />{" "}
-                  {r.engagement.comments.toLocaleString()}
-                </span>
-              </div>
-            </div>
-            <span
-              className={cn(
-                "shrink-0 self-start rounded-full px-2.5 py-1 text-xs font-medium capitalize",
-                sentimentLabelColor(r.sentiment)
-              )}
+      {results.map((r) => {
+        const plat = platformBadge(r.platform)
+        return (
+          <li key={r.id}>
+            <a
+              href={r.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex gap-4 px-5 py-4 transition-colors hover:bg-gray-50"
             >
-              {r.sentiment}
-            </span>
-            <ExternalLink className="size-4 shrink-0 self-center text-muted-foreground" />
-          </a>
-        </li>
-      ))}
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-semibold",
+                      plat.className
+                    )}
+                  >
+                    <span aria-hidden>{plat.icon}</span>
+                    {plat.label}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{r.author}</span>
+                  <span className="text-xs text-muted-foreground">·</span>
+                  <span className="text-xs text-muted-foreground">
+                    {timeAgo(r.posted_at)}
+                  </span>
+                </div>
+                <p className="mt-2 line-clamp-3 text-sm text-gray-700">{r.content}</p>
+                <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1">
+                    <Heart className="size-3.5" /> {r.engagement.likes.toLocaleString()}
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <Repeat2 className="size-3.5" />{" "}
+                    {r.engagement.shares.toLocaleString()}
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <MessageCircle className="size-3.5" />{" "}
+                    {r.engagement.comments.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+              <span
+                className={cn(
+                  "shrink-0 self-start rounded-full px-2 py-1 text-xs font-medium",
+                  sentimentBadgeClass(r.sentiment)
+                )}
+              >
+                {sentimentBadgeLabel(r.sentiment)}
+              </span>
+              <ExternalLink className="size-4 shrink-0 self-center text-muted-foreground" />
+            </a>
+          </li>
+        )
+      })}
     </ul>
   )
 }

@@ -1,5 +1,5 @@
 import type { SearchResponse } from "@/lib/api/types"
-import { platformDisplayName } from "@/lib/api/sentiment"
+import { formatSentimentPct, platformDisplayName } from "@/lib/api/sentiment"
 
 type OpinionSummaryCardProps = {
   data: SearchResponse
@@ -8,7 +8,9 @@ type OpinionSummaryCardProps = {
 
 export function OpinionSummaryCard({ data, timeLabel }: OpinionSummaryCardProps) {
   const s = data.sentiment_summary
-  const pos = s.positive
+  const pos = Math.round(s.positive)
+  const neg = Math.round(s.negative)
+  const neu = Math.round(s.neutral)
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-6">
@@ -18,38 +20,82 @@ export function OpinionSummaryCard({ data, timeLabel }: OpinionSummaryCardProps)
       <p className="mt-1 text-sm text-muted-foreground">
         {data.total_results.toLocaleString()} mentions found • {timeLabel}
       </p>
+
       <div className="mt-6">
         <p className="text-sm font-medium text-foreground">Overall Sentiment</p>
-        <div className="mt-2 h-3 overflow-hidden rounded-full bg-gray-100">
-          <div
-            className="h-full rounded-full bg-green-500"
-            style={{ width: `${pos}%` }}
-          />
+        <div className="mt-3 flex h-3 overflow-hidden rounded-md">
+          {pos > 0 && (
+            <div
+              className="bg-green-500 transition-all"
+              style={{ width: `${pos}%` }}
+              title={`${pos}% positive`}
+            />
+          )}
+          {neg > 0 && (
+            <div
+              className="bg-red-500 transition-all"
+              style={{ width: `${neg}%` }}
+              title={`${neg}% negative`}
+            />
+          )}
+          {neu > 0 && (
+            <div
+              className="bg-gray-300 transition-all"
+              style={{ width: `${neu}%` }}
+              title={`${neu}% neutral`}
+            />
+          )}
         </div>
-        <p className="mt-1 text-sm text-green-700">{pos}% Positive</p>
+        <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+          <span className="text-green-700">{formatSentimentPct(pos)} Positive</span>
+          <span className="text-red-600">{formatSentimentPct(neg)} Negative</span>
+          <span>{formatSentimentPct(neu)} Neutral</span>
+        </div>
       </div>
-      <div className="mt-4 grid grid-cols-3 gap-4 text-center text-sm">
-        <div>
-          <span className="text-lg">😊</span>
-          <p className="font-medium text-green-700">{s.positive}% Positive</p>
+
+      <div className="mt-6 grid grid-cols-3 gap-3">
+        <div className="rounded-[10px] bg-[#F0FDF4] px-4 py-4 text-center">
+          <span className="text-2xl" aria-hidden>
+            😊
+          </span>
+          <p className="mt-2 text-[32px] font-bold leading-none text-[#16A34A]">
+            {formatSentimentPct(pos)}
+          </p>
+          <p className="mt-1 text-[13px] text-gray-500">Positive</p>
         </div>
-        <div>
-          <span className="text-lg">😐</span>
-          <p className="font-medium text-gray-600">{s.neutral}% Neutral</p>
+        <div className="rounded-[10px] bg-[#F9FAFB] px-4 py-4 text-center">
+          <span className="text-2xl" aria-hidden>
+            😐
+          </span>
+          <p className="mt-2 text-[32px] font-bold leading-none text-[#6B7280]">
+            {formatSentimentPct(neu)}
+          </p>
+          <p className="mt-1 text-[13px] text-gray-500">Neutral</p>
         </div>
-        <div>
-          <span className="text-lg">😠</span>
-          <p className="font-medium text-red-600">{s.negative}% Negative</p>
+        <div className="rounded-[10px] bg-[#FEF2F2] px-4 py-4 text-center">
+          <span className="text-2xl" aria-hidden>
+            😠
+          </span>
+          <p className="mt-2 text-[32px] font-bold leading-none text-[#DC2626]">
+            {formatSentimentPct(neg)}
+          </p>
+          <p className="mt-1 text-[13px] text-gray-500">Negative</p>
         </div>
       </div>
-      {data.peak_discussion && (
+
+      {(data.peak_discussion || data.most_active_platform) && (
         <p className="mt-4 text-xs text-muted-foreground">
-          Peak discussion: {data.peak_discussion}
-        </p>
-      )}
-      {data.most_active_platform && (
-        <p className="text-xs text-muted-foreground">
-          Most active platform: {platformDisplayName(data.most_active_platform)}
+          {data.peak_discussion && (
+            <span>📈 Peak discussion: {data.peak_discussion}</span>
+          )}
+          {data.peak_discussion && data.most_active_platform && (
+            <span className="mx-2">•</span>
+          )}
+          {data.most_active_platform && (
+            <span>
+              Most active: {platformDisplayName(data.most_active_platform)}
+            </span>
+          )}
         </p>
       )}
     </div>

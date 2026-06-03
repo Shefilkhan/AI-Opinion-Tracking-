@@ -34,6 +34,7 @@ export type SearchResponse = {
     time: string
     positive: number
     negative: number
-    volume: number
+    neutral: number
+    volume?: number
   }[]
 }

@@ -45,7 +45,8 @@ class SentimentTrendPoint(BaseModel):
     time: str
     positive: int
     negative: int
-    volume: int
+    neutral: int = 0
+    volume: int = 0
 
 
 class SearchResponse(BaseModel):
