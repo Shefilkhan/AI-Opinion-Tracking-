@@ -48,10 +48,10 @@ export function SearchFiltersBar({ filters, onChange }: SearchFiltersBarProps) {
         onSelect={(platform) => onChange({ ...filters, platform })}
         options={[
           { id: "all", label: "All" },
-          { id: "twitter", label: "Twitter/X" },
           { id: "reddit", label: "Reddit" },
           { id: "youtube", label: "YouTube" },
           { id: "news", label: "News" },
+          { id: "tech", label: "Tech" },
         ]}
       />
       <FilterGroup

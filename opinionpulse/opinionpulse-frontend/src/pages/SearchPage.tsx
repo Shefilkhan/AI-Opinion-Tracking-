@@ -7,6 +7,8 @@ import { KeywordsSidebar } from "@/components/search/KeywordsSidebar"
 import { OpinionSummaryCard } from "@/components/search/OpinionSummaryCard"
 import { ResultsFeed } from "@/components/search/ResultsFeed"
 import { SearchFiltersBar } from "@/components/search/SearchFiltersBar"
+import { SourcesStatusBar } from "@/components/search/SourcesStatusBar"
+import { WikipediaSummaryCard } from "@/components/search/WikipediaSummaryCard"
 import { SearchSentimentChart } from "@/components/search/SearchSentimentChart"
 import { btnPrimary } from "@/lib/ui-classes"
 import { searchOpinions } from "@/lib/api/search"
@@ -137,10 +139,11 @@ export function SearchPage() {
           </div>
         </section>
 
-        {data?.demo_mode && (
-          <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+        {data && data.total_results === 0 && !loading && (
+          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             <Info className="size-4 shrink-0 mt-0.5" />
-            Running in demo mode. Add API keys in Settings to fetch live data.
+            No results from live APIs for this query. Reddit, Dev.to, and Hacker News
+            need no keys. Check the backend terminal for per-source logs.
           </div>
         )}
 
@@ -161,6 +164,10 @@ export function SearchPage() {
         {!loading && !error && data && (
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
             <div className="space-y-6 xl:col-span-2">
+              <SourcesStatusBar data={data} />
+              {data.wiki_summary && (
+                <WikipediaSummaryCard wiki={data.wiki_summary} />
+              )}
               <OpinionSummaryCard
                 data={data}
                 timeLabel={TIME_LABELS[filters.timeRange] ?? "Last 24 hours"}
