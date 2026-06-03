@@ -1,10 +1,11 @@
 import type { PlatformPulse } from "@/api/dashboard"
 
 const platformColors: Record<string, string> = {
-  twitter: "bg-sky-500",
   reddit: "bg-orange-600",
+  devto: "bg-violet-600",
+  hackernews: "bg-orange-700",
   youtube: "bg-red-600",
-  news: "bg-gray-600",
+  news: "bg-blue-600",
 }
 
 type PlatformPulsePanelProps = {
@@ -25,7 +26,20 @@ export function PlatformPulsePanel({ items }: PlatformPulsePanelProps) {
                 {p.label.charAt(0)}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-foreground">{p.label}</p>
+                <p className="text-sm font-medium text-foreground">
+                  {p.label}
+                  {p.live !== undefined && (
+                    <span
+                      className={
+                        p.live
+                          ? "ml-2 text-[10px] font-normal text-green-600"
+                          : "ml-2 text-[10px] font-normal text-gray-400"
+                      }
+                    >
+                      {p.live ? "● Live" : "● Demo"}
+                    </span>
+                  )}
+                </p>
                 <p className="text-xs text-muted-foreground">{p.mentions}</p>
               </div>
             </div>

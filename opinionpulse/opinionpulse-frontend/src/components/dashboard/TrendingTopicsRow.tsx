@@ -46,7 +46,9 @@ export function TrendingTopicsRow({ topics }: TrendingTopicsRowProps) {
               key={t.name}
               type="button"
               onClick={() =>
-                navigate(`/search?q=${encodeURIComponent(t.name.replace(/^#/, ""))}`)
+                navigate(
+                  `/search?q=${encodeURIComponent((t.query || t.name).replace(/^#/, ""))}`
+                )
               }
               className="min-w-[160px] shrink-0 rounded-[20px] border border-gray-200 bg-white px-4 py-3 text-left transition-all duration-150 hover:scale-[1.02] hover:shadow-md"
             >

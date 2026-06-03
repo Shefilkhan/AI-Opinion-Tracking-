@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query"
 import { Search, ThumbsDown, ThumbsUp, TrendingUp } from "lucide-react"
 import { getDashboardOverview } from "@/api/dashboard"
 import { DebateList } from "@/components/dashboard/DebateList"
+import { LiveDataIndicator } from "@/components/dashboard/LiveDataIndicator"
 import { MetricCard } from "@/components/dashboard/MetricCard"
 import { PlatformPulsePanel } from "@/components/dashboard/PlatformPulsePanel"
 import { RecentSearchChips } from "@/components/dashboard/RecentSearchChips"
@@ -31,6 +32,16 @@ export function DashboardPage() {
         <LoadingState label="Loading dashboard…" />
       ) : (
         <div className="flex flex-col gap-8">
+          <LiveDataIndicator
+            isLive={data.is_live ?? {}}
+            lastUpdated={data.last_updated}
+          />
+          {data.demo_mode && (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              Some feeds are empty — add API keys in backend{" "}
+              <code className="text-[11px]">.env.local</code> for full live coverage.
+            </p>
+          )}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <MetricCard
               value={data.stats.searches_today.value}

@@ -11,6 +11,8 @@ export type DashboardOverview = {
   debates: DebateItem[]
   platform_pulse: PlatformPulse[]
   demo_mode: boolean
+  is_live: Record<string, boolean>
+  last_updated?: string | null
 }
 
 type StatCard = {
@@ -26,6 +28,7 @@ export type TrendingTopic = {
   mentions: string
   sentiment: "positive" | "negative" | "mixed"
   trend: "up" | "down"
+  query?: string
 }
 
 export type DebateItem = {
@@ -37,6 +40,9 @@ export type DebateItem = {
   negative_pct: number
   time_ago: string
   query: string
+  source_url?: string
+  source_label?: string
+  thumbnail?: string | null
 }
 
 export type PlatformPulse = {
@@ -44,6 +50,7 @@ export type PlatformPulse = {
   label: string
   mentions: string
   positive_pct: number
+  live?: boolean
 }
 
 export async function getDashboardOverview(): Promise<DashboardOverview> {
