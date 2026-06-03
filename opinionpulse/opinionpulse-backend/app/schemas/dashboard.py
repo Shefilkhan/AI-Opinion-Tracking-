@@ -23,6 +23,7 @@ class TrendingTopicItem(BaseModel):
     mentions: str
     sentiment: Literal["positive", "negative", "mixed"]
     trend: Literal["up", "down"]
+    query: str = ""
 
 
 class DebateItem(BaseModel):
@@ -34,6 +35,9 @@ class DebateItem(BaseModel):
     negative_pct: int
     time_ago: str
     query: str
+    source_url: str = ""
+    source_label: str = ""
+    thumbnail: Optional[str] = None
 
 
 class PlatformPulseItem(BaseModel):
@@ -41,6 +45,7 @@ class PlatformPulseItem(BaseModel):
     label: str
     mentions: str
     positive_pct: int
+    live: bool = False
 
 
 class DashboardOverviewResponse(BaseModel):
@@ -49,3 +54,5 @@ class DashboardOverviewResponse(BaseModel):
     debates: list[DebateItem]
     platform_pulse: list[PlatformPulseItem]
     demo_mode: bool = False
+    is_live: dict[str, bool] = {}
+    last_updated: Optional[str] = None

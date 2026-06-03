@@ -1,7 +1,11 @@
 """Dashboard overview data (mock stats for opinion tracking hub)."""
 
-from app.services.search_mock_data import _seed
+import hashlib
 import random
+
+
+def _seed(label: str) -> int:
+    return int(hashlib.md5(label.lower().encode()).hexdigest()[:8], 16)
 
 
 def get_dashboard_overview() -> dict:
