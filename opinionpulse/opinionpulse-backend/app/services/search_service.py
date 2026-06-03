@@ -2,31 +2,135 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any
+from datetime import datetime, timezone
+from typing import Any, Callable
 
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.db.models import SearchHistory
-from app.services.search_mock_data import generate_mock_search
-from app.services.sentiment_analysis import apply_sentiment_to_results, calculate_sentiment_summary
+from app.services.keywords_utils import extract_keywords_from_results
+from app.services.platforms import (
+    get_wikipedia_summary,
+    search_currents,
+    search_devto,
+    search_gnews,
+    search_guardian,
+    search_hackernews,
+    search_news,
+    search_mediastack,
+    search_reddit,
+    search_youtube,
+)
+from app.services.platforms.platform_common import deduplicate_results, normalize_result
+from app.services.search_constants import SENTIMENT_TREND_24H
+from app.services.sentiment_analysis import calculate_sentiment_summary
 
 logger = logging.getLogger(__name__)
-settings = get_settings()
+
+NEWS_SOURCES = ("newsapi", "guardian", "mediastack", "currents", "gnews")
+TECH_SOURCES = ("devto", "hackernews")
 
 
-def _platforms_configured() -> dict[str, bool]:
+def apis_configured() -> dict[str, bool]:
+    s = get_settings()
     return {
-        "twitter": bool(getattr(settings, "twitter_bearer_token", "") or ""),
-        "reddit": bool(settings.reddit_client_id and settings.reddit_client_secret),
-        "youtube": bool(settings.youtube_api_key),
-        "news": bool(getattr(settings, "news_api_key", "") or ""),
+        "reddit": True,
+        "newsapi": bool(s.news_api_key.strip()),
+        "youtube": bool(s.youtube_api_key.strip()),
+        "guardian": bool(s.guardian_api_key.strip()),
+        "mediastack": bool(s.mediastack_api_key.strip()),
+        "currents": bool(s.currents_api_key.strip()),
+        "gnews": bool(s.gnews_api_key.strip()),
+        "devto": True,
+        "hackernews": True,
+        "wikipedia": True,
     }
 
 
-async def _fetch_platform(platform: str, query: str) -> list[dict[str, Any]]:
-    """Placeholder for live API fetch — returns empty until keys are wired."""
+def platforms_live_status() -> dict[str, bool]:
+    return apis_configured()
+
+
+def _source_enabled(name: str, configured: dict[str, bool]) -> bool:
+    if name in ("reddit", "devto", "hackernews", "wikipedia"):
+        return True
+    return configured.get(name, False)
+
+
+def _resolve_sources(platform_filter: str, configured: dict[str, bool]) -> list[str]:
+    pf = (platform_filter or "all").lower()
+    if pf == "reddit":
+        return ["reddit"]
+    if pf == "youtube":
+        return ["youtube"]
+    if pf == "news":
+        return [s for s in NEWS_SOURCES if _source_enabled(s, configured)]
+    if pf == "tech":
+        return list(TECH_SOURCES)
+    if pf == "all":
+        sources = ["reddit", "youtube", *TECH_SOURCES]
+        sources.extend(s for s in NEWS_SOURCES if _source_enabled(s, configured))
+        return sources
     return []
+
+
+def _fetcher_for(name: str) -> Callable[..., list[dict]] | None:
+    return {
+        "reddit": search_reddit,
+        "newsapi": search_news,
+        "youtube": search_youtube,
+        "guardian": search_guardian,
+        "mediastack": search_mediastack,
+        "currents": search_currents,
+        "gnews": search_gnews,
+        "devto": search_devto,
+        "hackernews": search_hackernews,
+    }.get(name)
+
+
+async def _fetch_source(
+    name: str, query: str, time_range: str
+) -> tuple[str, list[dict[str, Any]], str | None]:
+    fn = _fetcher_for(name)
+    if not fn:
+        return name, [], "unknown source"
+    try:
+        results = await asyncio.to_thread(fn, query, time_range)
+        return name, results, None
+    except ValueError as exc:
+        return name, [], str(exc)
+    except Exception as exc:
+        logger.error("❌ %s failed: %s", name, exc)
+        return name, [], str(exc)
+
+
+def _empty_response(
+    query: str,
+    configured: dict[str, bool],
+    wiki_summary: dict | None,
+    errors: list[str],
+    platform_filter: str,
+) -> dict[str, Any]:
+    logger.warning("⚠️ No live results for '%s' — returning empty list (no mock data)", query)
+    return {
+        "query": query,
+        "total_results": 0,
+        "sentiment_summary": {"positive": 0, "negative": 0, "neutral": 0},
+        "platforms_searched": [],
+        "platforms_live": configured,
+        "apis_configured": configured,
+        "demo_mode": False,
+        "peak_discussion": None,
+        "most_active_platform": None,
+        "results": [],
+        "trending_keywords": [],
+        "related_topics": [],
+        "sentiment_trend": SENTIMENT_TREND_24H,
+        "last_updated": datetime.now(timezone.utc).isoformat(),
+        "wiki_summary": wiki_summary,
+        "errors": errors or None,
+    }
 
 
 async def run_search(
@@ -36,50 +140,93 @@ async def run_search(
     sentiment: str,
     sort_by: str,
 ) -> dict[str, Any]:
-    configured = _platforms_configured()
-    any_live = any(configured.values())
+    configured = apis_configured()
+    sources = _resolve_sources(platform, configured)
 
-    if not any_live:
-        return generate_mock_search(query, platform, sentiment, time_range, sort_by)
+    logger.info('🔍 Searching for: "%s" sources=%s', query, sources)
+    print(f'🔍 Searching for: "{query}"')
 
-    platforms = (
-        [platform]
-        if platform and platform != "all"
-        else [p for p, ok in configured.items() if ok]
-    )
+    tasks = [_fetch_source(name, query, time_range) for name in sources]
+    settled = await asyncio.gather(*tasks)
 
-    tasks = [_fetch_platform(p, query) for p in platforms]
-    settled = await asyncio.gather(*tasks, return_exceptions=True)
     combined: list[dict[str, Any]] = []
-    for item in settled:
-        if isinstance(item, list):
-            combined.extend(item)
+    platforms_searched: list[str] = []
+    errors: list[str] = []
+
+    for name, results, err in settled:
+        if err and "not configured" in err.lower():
+            errors.append(f"{name}: API key missing")
+        elif err:
+            errors.append(f"{name}: {err}")
+        if results:
+            for row in results:
+                normalized = normalize_result(row, query)
+                if normalized:
+                    combined.append(normalized)
+            if results:
+                platforms_searched.append(name)
+
+    wiki_summary = await asyncio.to_thread(get_wikipedia_summary, query)
 
     if not combined:
-        data = generate_mock_search(query, platform, sentiment, time_range, sort_by)
-        data["demo_mode"] = True
-        return data
+        return _empty_response(query, configured, wiki_summary, errors, platform)
 
-    combined = apply_sentiment_to_results(combined)
+    combined = deduplicate_results(combined)
 
     if sentiment != "all":
-        combined = [r for r in combined if r.get("sentiment") == sentiment]
+        filtered = [r for r in combined if r.get("sentiment") == sentiment]
+        if filtered:
+            combined = filtered
 
-    combined.sort(key=lambda r: r.get("posted_at", ""), reverse=True)
-    mock_extra = generate_mock_search(query, platform, sentiment, time_range, sort_by)
+    if sort_by == "mentioned":
+        combined.sort(
+            key=lambda r: (r.get("engagement") or {}).get("likes", 0), reverse=True
+        )
+    elif sort_by == "viral":
+        combined.sort(
+            key=lambda r: (
+                (r.get("engagement") or {}).get("likes", 0)
+                + (r.get("engagement") or {}).get("shares", 0) * 2
+                + (r.get("engagement") or {}).get("views", 0) // 100
+            ),
+            reverse=True,
+        )
+    else:
+        combined.sort(key=lambda r: r.get("posted_at", ""), reverse=True)
+
+    summary = calculate_sentiment_summary(combined)
+    keywords = extract_keywords_from_results(combined)
+    related = [f"#{w.title()}" for w in query.split()[:4] if len(w) > 2]
+    related.extend([f"#{k['word'].title()}" for k in keywords[:3]])
 
     return {
         "query": query,
         "total_results": len(combined),
-        "sentiment_summary": calculate_sentiment_summary(combined),
-        "platforms_searched": platforms,
+        "sentiment_summary": summary,
+        "platforms_searched": platforms_searched,
+        "platforms_live": configured,
+        "apis_configured": configured,
         "demo_mode": False,
-        "peak_discussion": mock_extra.get("peak_discussion"),
-        "most_active_platform": platforms[0] if platforms else "twitter",
-        "results": combined[:30],
-        "trending_keywords": mock_extra["trending_keywords"],
-        "related_topics": mock_extra["related_topics"],
-        "sentiment_trend": mock_extra["sentiment_trend"],
+        "peak_discussion": datetime.now(timezone.utc).strftime("Today at %I:%M %p"),
+        "most_active_platform": max(
+            platforms_searched,
+            key=lambda p: sum(
+                1
+                for r in combined
+                if (p == "reddit" and r.get("platform") == "reddit")
+                or (p == "youtube" and r.get("platform") == "youtube")
+                or (p in TECH_SOURCES and r.get("platform") in ("devto", "hackernews"))
+                or (p in NEWS_SOURCES and r.get("platform") in ("news", "guardian"))
+            ),
+            default="reddit",
+        ),
+        "results": combined[:40],
+        "trending_keywords": keywords,
+        "related_topics": related[:8],
+        "sentiment_trend": SENTIMENT_TREND_24H,
+        "last_updated": datetime.now(timezone.utc).isoformat(),
+        "wiki_summary": wiki_summary,
+        "errors": errors if errors else None,
     }
 
 
