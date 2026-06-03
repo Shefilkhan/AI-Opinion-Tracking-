@@ -1,44 +1,51 @@
-from datetime import datetime
-from typing import List, Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel
 
 
-class RecentProjectItem(BaseModel):
-    id: int
+class DashboardStatCard(BaseModel):
+    value: str
+    subtitle: str
+    trend: str = ""
+    trend_positive: bool = True
+    progress: Optional[int] = None
+
+
+class DashboardStatsResponse(BaseModel):
+    searches_today: DashboardStatCard
+    topics_trending: DashboardStatCard
+    positive_sentiment: DashboardStatCard
+    negative_sentiment: DashboardStatCard
+
+
+class TrendingTopicItem(BaseModel):
     name: str
-    mentions_count: int
-    keywords_count: int
-    positive_percentage: float = 0.0
-    negative_percentage: float = 0.0
+    mentions: str
+    sentiment: Literal["positive", "negative", "mixed"]
+    trend: Literal["up", "down"]
 
 
-class LatestSentimentSnapshot(BaseModel):
-    project_id: int
-    project_name: str
-    positive: int
-    neutral: int
-    negative: int
-    average_score: float
-
-
-class DashboardSummaryResponse(BaseModel):
-    total_projects: int
-    total_mentions: int
-    total_analyzed: int
-    total_reports: int
-    recent_projects: List[RecentProjectItem]
-    latest_sentiment: Optional[LatestSentimentSnapshot] = None
-
-
-class TrendingNewsItem(BaseModel):
+class DebateItem(BaseModel):
+    id: str
     title: str
-    source: str
-    url: Optional[str] = None
-    published_at: Optional[datetime] = None
-    suggested_keyword: str
+    platform: str
+    summary: str
+    positive_pct: int
+    negative_pct: int
+    time_ago: str
+    query: str
 
 
-class TrendingNewsResponse(BaseModel):
-    items: List[TrendingNewsItem]
-    message: str
+class PlatformPulseItem(BaseModel):
+    platform: str
+    label: str
+    mentions: str
+    positive_pct: int
+
+
+class DashboardOverviewResponse(BaseModel):
+    stats: DashboardStatsResponse
+    trending_topics: list[TrendingTopicItem]
+    debates: list[DebateItem]
+    platform_pulse: list[PlatformPulseItem]
+    demo_mode: bool = False

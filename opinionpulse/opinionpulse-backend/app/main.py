@@ -6,23 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, text
 
-from app.api.routes import (
-    account,
-    alerts,
-    analytics,
-    auth,
-    chat,
-    collection,
-    dashboard,
-    reports,
-    health,
-    keywords,
-    mentions,
-    projects,
-    sentiment,
-    settings as settings_routes,
-    sources,
-)
+from app.api.routes import account, auth, dashboard, health, search, settings as settings_routes
 from app.core.config import get_settings
 from app.core.startup_checks import log_env_check
 from app.db import models  # noqa: F401 — register models with metadata
@@ -63,10 +47,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.app_name,
-    description="OpinionPulse API — opinion tracking and sentiment analysis",
-    version="0.1.0",
+    description="OpinionPulse API — social opinion tracking and search",
+    version="0.2.0",
     lifespan=lifespan,
 )
+
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
@@ -101,17 +86,8 @@ app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(account.router)
 app.include_router(dashboard.router)
+app.include_router(search.router)
 app.include_router(settings_routes.router)
-app.include_router(projects.router)
-app.include_router(keywords.router)
-app.include_router(sources.router)
-app.include_router(mentions.router)
-app.include_router(sentiment.router)
-app.include_router(analytics.router)
-app.include_router(collection.router)
-app.include_router(chat.router)
-app.include_router(reports.router)
-app.include_router(alerts.router)
 
 
 @app.get("/")

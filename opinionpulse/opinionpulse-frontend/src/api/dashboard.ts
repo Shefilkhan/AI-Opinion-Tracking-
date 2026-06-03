@@ -1,47 +1,51 @@
 import { apiRequest } from "@/api/client"
 
-export type RecentProject = {
-  id: number
+export type DashboardOverview = {
+  stats: {
+    searches_today: StatCard
+    topics_trending: StatCard
+    positive_sentiment: StatCard & { progress?: number }
+    negative_sentiment: StatCard & { progress?: number }
+  }
+  trending_topics: TrendingTopic[]
+  debates: DebateItem[]
+  platform_pulse: PlatformPulse[]
+  demo_mode: boolean
+}
+
+type StatCard = {
+  value: string
+  subtitle: string
+  trend: string
+  trend_positive: boolean
+  progress?: number
+}
+
+export type TrendingTopic = {
   name: string
-  mentions_count: number
-  keywords_count: number
-  positive_percentage: number
-  negative_percentage: number
+  mentions: string
+  sentiment: "positive" | "negative" | "mixed"
+  trend: "up" | "down"
 }
 
-export type LatestSentiment = {
-  project_id: number
-  project_name: string
-  positive: number
-  neutral: number
-  negative: number
-  average_score: number
-}
-
-export type DashboardSummary = {
-  total_projects: number
-  total_mentions: number
-  total_analyzed: number
-  total_reports: number
-  recent_projects: RecentProject[]
-  latest_sentiment: LatestSentiment | null
-}
-
-export type TrendingItem = {
+export type DebateItem = {
+  id: string
   title: string
-  source: string
-  url: string | null
-  published_at: string | null
-  suggested_keyword: string
+  platform: string
+  summary: string
+  positive_pct: number
+  negative_pct: number
+  time_ago: string
+  query: string
 }
 
-export function getDashboardSummary() {
-  return apiRequest<DashboardSummary>("/api/dashboard/summary", { auth: true })
+export type PlatformPulse = {
+  platform: string
+  label: string
+  mentions: string
+  positive_pct: number
 }
 
-export function getDashboardTrending() {
-  return apiRequest<{ items: TrendingItem[]; message: string }>(
-    "/api/dashboard/trending",
-    { auth: true }
-  )
+export async function getDashboardOverview(): Promise<DashboardOverview> {
+  return apiRequest<DashboardOverview>("/api/dashboard/overview", { auth: true })
 }

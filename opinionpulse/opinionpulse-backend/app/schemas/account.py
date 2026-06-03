@@ -25,8 +25,6 @@ class AccountPasswordUpdate(BaseModel):
 
 
 class AccountStatsResponse(BaseModel):
-    total_projects: int
-    total_mentions: int
-    total_analyzed: int
-    total_reports: int
-    total_chat_sessions: int
+    total_searches: int
+    total_results: int
+    saved_searches: int

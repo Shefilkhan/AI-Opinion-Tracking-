@@ -11,11 +11,9 @@ export type AccountProfile = {
 }
 
 export type AccountStats = {
-  total_projects: number
-  total_mentions: number
-  total_analyzed: number
-  total_reports: number
-  total_chat_sessions: number
+  total_searches: number
+  total_results: number
+  saved_searches: number
 }
 
 export function getAccountProfile() {

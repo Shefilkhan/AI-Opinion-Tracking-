@@ -2,15 +2,13 @@ import { useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import {
   Activity,
-  Bot,
   Bell,
   FileText,
   LayoutDashboard,
   LogOut,
   Menu,
-  MessageSquare,
+  Search,
   Settings,
-  FolderKanban,
   User,
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
@@ -26,15 +24,22 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 
-const navItems = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, active: true },
-  { label: "Projects", href: "/projects", icon: FolderKanban, active: true },
-  { label: "Mentions", href: "/mentions", icon: MessageSquare, active: true },
-  { label: "AI Assistant", href: "/projects", icon: Bot, active: true },
-  { label: "Reports", href: "/projects", icon: FileText, active: true },
-  { label: "Alerts", href: "/projects", icon: Bell, active: true },
-  { label: "Settings", href: "/settings", icon: Settings, active: true },
-  { label: "My Account", href: "/my-account", icon: User, active: true },
+type NavItem = {
+  label: string
+  href: string
+  icon: typeof LayoutDashboard
+}
+
+const mainNav: NavItem[] = [
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Search", href: "/search", icon: Search },
+  { label: "Reports", href: "/reports", icon: FileText },
+  { label: "Alerts", href: "/alerts", icon: Bell },
+]
+
+const accountNav: NavItem[] = [
+  { label: "Settings", href: "/settings", icon: Settings },
+  { label: "My Account", href: "/account", icon: User },
 ]
 
 function NavLinkItem({
@@ -42,22 +47,15 @@ function NavLinkItem({
   pathname,
   onNavigate,
 }: {
-  item: (typeof navItems)[0]
+  item: NavItem
   pathname: string
   onNavigate?: () => void
 }) {
   const Icon = item.icon
-  const isActive = (() => {
-    if (!item.active) return false
-    if (item.href === "/dashboard") return pathname === "/dashboard"
-    if (item.href === "/mentions") return pathname === "/mentions"
-    if (item.href === "/settings") return pathname.startsWith("/settings")
-    if (item.href === "/my-account") return pathname === "/my-account"
-    if (item.label === "Projects") {
-      return pathname === "/projects" || pathname.startsWith("/projects/")
-    }
-    return false
-  })()
+  const isActive =
+    item.href === "/settings"
+      ? pathname.startsWith("/settings")
+      : pathname === item.href || pathname.startsWith(`${item.href}/`)
 
   return (
     <Link
@@ -66,7 +64,7 @@ function NavLinkItem({
       className={cn(
         "flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors duration-150",
         isActive
-          ? "bg-muted text-foreground"
+          ? "bg-primary/10 text-primary"
           : "text-muted-foreground hover:bg-muted hover:text-foreground"
       )}
     >
@@ -76,11 +74,38 @@ function NavLinkItem({
   )
 }
 
+function NavGroup({
+  label,
+  items,
+  pathname,
+  onNavigate,
+}: {
+  label: string
+  items: NavItem[]
+  pathname: string
+  onNavigate?: () => void
+}) {
+  return (
+    <div className="space-y-1">
+      <p className="px-3 pb-1 pt-3 text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+        {label}
+      </p>
+      {items.map((item) => (
+        <NavLinkItem
+          key={item.href}
+          item={item}
+          pathname={pathname}
+          onNavigate={onNavigate}
+        />
+      ))}
+    </div>
+  )
+}
+
 type DashboardLayoutProps = {
   title: string
   subtitle?: string
   children: React.ReactNode
-  /** Hide the sticky page header (e.g. Settings provides its own header). */
   hidePageHeader?: boolean
 }
 
@@ -94,7 +119,7 @@ export function DashboardLayout({
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
 
   const initials = user?.name
     ?.split(" ")
@@ -102,8 +127,6 @@ export function DashboardLayout({
     .join("")
     .slice(0, 2)
     .toUpperCase()
-
-  const { logout } = useAuth()
 
   async function handleLogout() {
     await logout()
@@ -124,15 +147,19 @@ export function DashboardLayout({
           OpinionPulse
         </span>
       </Link>
-      <nav className="flex-1 space-y-0.5 overflow-y-auto p-3" aria-label="Main navigation">
-        {navItems.map((item) => (
-          <NavLinkItem
-            key={item.label}
-            item={item}
-            pathname={location.pathname}
-            onNavigate={() => setMobileOpen(false)}
-          />
-        ))}
+      <nav className="flex-1 overflow-y-auto p-3" aria-label="Main navigation">
+        <NavGroup
+          label="Main"
+          items={mainNav}
+          pathname={location.pathname}
+          onNavigate={() => setMobileOpen(false)}
+        />
+        <NavGroup
+          label="Account"
+          items={accountNav}
+          pathname={location.pathname}
+          onNavigate={() => setMobileOpen(false)}
+        />
       </nav>
       <div className="border-t border-gray-200 p-3 sm:p-4">
         {user ? (
@@ -163,7 +190,6 @@ export function DashboardLayout({
 
   return (
     <div className={cn("flex min-h-screen flex-col md:flex-row", pageShell)}>
-      {/* Desktop sidebar — hidden below md (768px) */}
       <aside className="hidden w-full shrink-0 flex-col border-b border-gray-200 bg-card md:flex md:w-56 md:border-b-0 md:border-r lg:w-60">
         {sidebar}
       </aside>

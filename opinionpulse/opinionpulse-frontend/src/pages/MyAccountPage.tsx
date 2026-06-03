@@ -139,11 +139,9 @@ export function MyAccountPage() {
             ) : (
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  ["Projects", statsQuery.data?.total_projects],
-                  ["Mentions", statsQuery.data?.total_mentions],
-                  ["Analyzed", statsQuery.data?.total_analyzed],
-                  ["Reports", statsQuery.data?.total_reports],
-                  ["Chat sessions", statsQuery.data?.total_chat_sessions],
+                  ["Searches", statsQuery.data?.total_searches],
+                  ["Results found", statsQuery.data?.total_results],
+                  ["Saved searches", statsQuery.data?.saved_searches],
                 ].map(([label, value]) => (
                   <div key={label as string}>
                     <p className="text-2xl font-bold text-foreground">{value ?? 0}</p>

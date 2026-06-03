@@ -42,6 +42,10 @@ class Settings(BaseSettings):
     reddit_max_posts_per_keyword: int = 10
     reddit_max_comments_per_post: int = 10
 
+    twitter_bearer_token: str = ""
+    news_api_key: str = ""
+    openai_api_key: str = ""
+
     email_provider: str = "smtp"
     # Preferred names (Gmail); also accepts SMTP_USER / SMTP_PASSWORD
     email_user: str = ""

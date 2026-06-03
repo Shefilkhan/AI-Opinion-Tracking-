@@ -1,64 +1,87 @@
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { getDashboardSummary, getDashboardTrending } from "@/api/dashboard"
-import { useAuth } from "@/contexts/AuthContext"
-import { getSettingsStatus } from "@/api/settings"
-import { DashboardHero } from "@/components/dashboard/DashboardHero"
-import { DashboardStats } from "@/components/dashboard/DashboardStats"
-import { GettingStartedChecklist } from "@/components/dashboard/GettingStartedChecklist"
-import { LatestSentimentSnapshot } from "@/components/dashboard/LatestSentimentSnapshot"
-import { RecentProjectsPanel } from "@/components/dashboard/RecentProjectsPanel"
-import { SourceStatusPanel } from "@/components/dashboard/SourceStatusPanel"
-import { TrendingNewsPanel } from "@/components/dashboard/TrendingNewsPanel"
+import { Search, ThumbsDown, ThumbsUp, TrendingUp } from "lucide-react"
+import { getDashboardOverview } from "@/api/dashboard"
+import { DebateList } from "@/components/dashboard/DebateList"
+import { MetricCard } from "@/components/dashboard/MetricCard"
+import { PlatformPulsePanel } from "@/components/dashboard/PlatformPulsePanel"
+import { RecentSearchChips } from "@/components/dashboard/RecentSearchChips"
+import { TrendingTopicsRow } from "@/components/dashboard/TrendingTopicsRow"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { LoadingState } from "@/components/ui/LoadingState"
+import {
+  getRecentSearches,
+  removeRecentSearch,
+} from "@/lib/recentSearchStorage"
 
 export function DashboardPage() {
-  const { user } = useAuth()
+  const [recent, setRecent] = useState(getRecentSearches)
 
-  const summaryQuery = useQuery({
-    queryKey: ["dashboard-summary"],
-    queryFn: getDashboardSummary,
+  const { data, isLoading } = useQuery({
+    queryKey: ["dashboard-overview"],
+    queryFn: getDashboardOverview,
   })
-
-  const trendingQuery = useQuery({
-    queryKey: ["dashboard-trending"],
-    queryFn: getDashboardTrending,
-  })
-
-  const statusQuery = useQuery({
-    queryKey: ["settings-status"],
-    queryFn: getSettingsStatus,
-  })
-
-  const summary = summaryQuery.data
 
   return (
     <DashboardLayout
       title="Dashboard"
-      subtitle="Your opinion intelligence hub"
+      subtitle="Trending opinions and social media pulse"
     >
-      {summaryQuery.isLoading ? (
+      {isLoading || !data ? (
         <LoadingState label="Loading dashboard…" />
       ) : (
-        <div className="flex flex-col gap-6 sm:gap-8">
-          <DashboardHero userName={user?.name} />
-
-          <DashboardStats summary={summary} />
-
-          <TrendingNewsPanel
-            items={trendingQuery.data?.items ?? []}
-            message={trendingQuery.data?.message}
-          />
-
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2">
-            <RecentProjectsPanel projects={summary?.recent_projects ?? []} />
-            <LatestSentimentSnapshot snapshot={summary?.latest_sentiment} />
+        <div className="flex flex-col gap-8">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <MetricCard
+              value={data.stats.searches_today.value}
+              subtitle={data.stats.searches_today.subtitle}
+              trend={data.stats.searches_today.trend}
+              trendPositive={data.stats.searches_today.trend_positive}
+              icon={Search}
+            />
+            <MetricCard
+              value={data.stats.topics_trending.value}
+              subtitle={data.stats.topics_trending.subtitle}
+              trend={data.stats.topics_trending.trend}
+              trendPositive={data.stats.topics_trending.trend_positive}
+              icon={TrendingUp}
+            />
+            <MetricCard
+              value={data.stats.positive_sentiment.value}
+              subtitle={data.stats.positive_sentiment.subtitle}
+              icon={ThumbsUp}
+              progress={data.stats.positive_sentiment.progress}
+              progressColor="green"
+            />
+            <MetricCard
+              value={data.stats.negative_sentiment.value}
+              subtitle={data.stats.negative_sentiment.subtitle}
+              icon={ThumbsDown}
+              progress={data.stats.negative_sentiment.progress}
+              progressColor="red"
+            />
           </div>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2">
-            <SourceStatusPanel status={statusQuery.data} />
-            <GettingStartedChecklist summary={summary} />
+          <TrendingTopicsRow topics={data.trending_topics} />
+
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
+            <div className="lg:col-span-3">
+              <DebateList debates={data.debates} />
+            </div>
+            <div className="lg:col-span-2">
+              <PlatformPulsePanel items={data.platform_pulse} />
+            </div>
           </div>
+
+          <section>
+            <h2 className="mb-3 text-lg font-semibold text-foreground">
+              Your Recent Searches
+            </h2>
+            <RecentSearchChips
+              items={recent}
+              onRemove={(q) => setRecent(removeRecentSearch(q))}
+            />
+          </section>
         </div>
       )}
     </DashboardLayout>

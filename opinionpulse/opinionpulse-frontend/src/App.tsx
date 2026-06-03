@@ -7,13 +7,9 @@ import { VerifyOtpPage } from "@/pages/auth/VerifyOtpPage"
 import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage"
 import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage"
 import { DashboardPage } from "@/pages/DashboardPage"
-import { ProjectsPage } from "@/pages/ProjectsPage"
-import { CreateProjectPage } from "@/pages/CreateProjectPage"
-import { ProjectDetailPage } from "@/pages/ProjectDetailPage"
-import { ProjectChatPage } from "@/pages/ProjectChatPage"
-import { ProjectReportsPage } from "@/pages/ProjectReportsPage"
-import { ProjectAlertsPage } from "@/pages/ProjectAlertsPage"
-import { MentionsPage } from "@/pages/MentionsPage"
+import { SearchPage } from "@/pages/SearchPage"
+import { ReportsPage } from "@/pages/ReportsPage"
+import { AlertsPage } from "@/pages/AlertsPage"
 import { SettingsPage, SettingsLegacyRedirect } from "@/pages/SettingsPage"
 import { MyAccountPage } from "@/pages/MyAccountPage"
 
@@ -60,10 +56,26 @@ function App() {
         }
       />
       <Route
-        path="/mentions"
+        path="/search"
         element={
           <ProtectedRoute>
-            <MentionsPage />
+            <SearchPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports"
+        element={
+          <ProtectedRoute>
+            <ReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/alerts"
+        element={
+          <ProtectedRoute>
+            <AlertsPage />
           </ProtectedRoute>
         }
       />
@@ -84,61 +96,17 @@ function App() {
         }
       />
       <Route
-        path="/my-account"
+        path="/account"
         element={
           <ProtectedRoute>
             <MyAccountPage />
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/projects"
-        element={
-          <ProtectedRoute>
-            <ProjectsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/projects/new"
-        element={
-          <ProtectedRoute>
-            <CreateProjectPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/projects/:id/chat"
-        element={
-          <ProtectedRoute>
-            <ProjectChatPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/projects/:id/reports"
-        element={
-          <ProtectedRoute>
-            <ProjectReportsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/projects/:id/alerts"
-        element={
-          <ProtectedRoute>
-            <ProjectAlertsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/projects/:id"
-        element={
-          <ProtectedRoute>
-            <ProjectDetailPage />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/my-account" element={<Navigate to="/account" replace />} />
+      <Route path="/mentions" element={<Navigate to="/search" replace />} />
+      <Route path="/projects" element={<Navigate to="/search" replace />} />
+      <Route path="/projects/*" element={<Navigate to="/search" replace />} />
     </Routes>
   )
 }

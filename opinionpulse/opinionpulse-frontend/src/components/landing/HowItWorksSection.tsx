@@ -8,7 +8,7 @@ export function HowItWorksSection() {
         <SectionHeader
           badge="How It Works"
           title="Five steps to actionable insights"
-          description="Set up a project in minutes and let OpinionPulse handle collection, analysis, and exploration."
+          description="Search any topic in seconds and let OpinionPulse aggregate sentiment across platforms."
         />
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
           {howItWorksSteps.map((step) => (

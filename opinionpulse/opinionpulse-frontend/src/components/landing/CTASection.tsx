@@ -18,15 +18,15 @@ export function CTASection() {
             Start Understanding Public Opinion Today
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-            Create your first tracking project and explore sentiment insights across
-            Reddit, YouTube, and news — no backend required for this demo.
+            Search any topic and explore sentiment insights across Twitter/X, Reddit,
+            YouTube, and news — demo mode works without API keys.
           </p>
           <Button
             render={<Link to="/auth/signup" />}
             size="lg"
             className={cn("mt-8 gap-2", btnPrimary)}
           >
-            Create Your First Tracking Project
+            Start Tracking Opinion
             <ArrowRight className="size-4" />
           </Button>
         </div>
