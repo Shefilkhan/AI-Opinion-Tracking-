@@ -28,11 +28,11 @@ export function Navbar() {
       className={cn(
         "fixed top-0 z-50 w-full transition-all duration-300 ease-out",
         scrolled
-          ? "border-b border-black/[0.08] bg-white/[0.85] shadow-[0_1px_20px_rgba(0,0,0,0.05)] backdrop-blur-[12px]"
-          : "border-b border-transparent bg-transparent"
+          ? "border-b border-gray-200 bg-white/95 shadow-[0_1px_8px_rgba(0,0,0,0.06)] backdrop-blur-[12px]"
+          : "border-b border-transparent bg-transparent shadow-none"
       )}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-8">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <Link
           to="/"
           className={cn(

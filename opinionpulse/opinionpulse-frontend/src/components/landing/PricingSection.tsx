@@ -9,7 +9,7 @@ export function PricingSection() {
       id="pricing"
       className="scroll-mt-24 border-t border-gray-100 bg-gradient-to-b from-purple-50/80 via-white to-white py-24"
     >
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
+      <div className="mx-auto max-w-6xl px-6">
         <ScrollReveal className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-semibold uppercase tracking-widest text-purple-600">
             Pricing

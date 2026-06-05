@@ -11,7 +11,7 @@ const headingClass =
 export function Footer() {
   return (
     <footer className="bg-[#0f0f1a] py-12 text-gray-400">
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
+      <div className="mx-auto max-w-6xl px-6">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-6">
           <div className="sm:col-span-2 lg:col-span-2">
             <Link to="/" className="flex items-center gap-2 text-sm font-semibold text-white">

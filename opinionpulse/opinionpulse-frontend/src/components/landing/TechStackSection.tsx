@@ -1,40 +1,39 @@
 import { techStackItems } from "@/data/landingData"
 import { ScrollReveal } from "@/components/landing/ScrollReveal"
-import { cn } from "@/lib/utils"
+import {
+  LandingContainer,
+  LandingLabel,
+  LandingSubtext,
+} from "@/components/landing/landingSection"
 
 export function TechStackSection() {
   return (
-    <section id="tech-stack" className="bg-white py-16">
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
+    <section id="tech-stack" className="bg-gray-50 py-16">
+      <LandingContainer>
         <ScrollReveal className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-widest text-gray-500">
-            Built With
-          </p>
-          <p className="mt-2 text-sm text-gray-600">
+          <LandingLabel>Built With</LandingLabel>
+          <LandingSubtext className="mt-0">
             Modern, reliable, open-source technology
-          </p>
+          </LandingSubtext>
         </ScrollReveal>
 
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-6 md:gap-8">
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           {techStackItems.map((item, i) => (
-            <ScrollReveal key={item.name} delay={i * 50}>
-              <div className="flex flex-col items-center gap-2">
-                <div
-                  className={cn(
-                    "flex size-14 items-center justify-center rounded-full text-sm font-bold transition-all duration-200 hover:scale-110",
-                    item.highlighted
-                      ? "bg-purple-600 text-white shadow-lg shadow-purple-500/30 md:size-16 md:text-base"
-                      : "bg-gray-100 text-gray-600 hover:bg-purple-100 hover:text-purple-700"
-                  )}
-                >
-                  {item.abbr}
-                </div>
-                <span className="text-xs text-gray-500">{item.name}</span>
+            <ScrollReveal key={item.name} delay={i * 40}>
+              <div
+                className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-200 ease-out hover:scale-[1.04] hover:border-purple-300 hover:bg-purple-50"
+              >
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: item.dotColor }}
+                  aria-hidden
+                />
+                <span className="text-sm font-medium text-gray-700">{item.name}</span>
               </div>
             </ScrollReveal>
           ))}
         </div>
-      </div>
+      </LandingContainer>
     </section>
   )
 }

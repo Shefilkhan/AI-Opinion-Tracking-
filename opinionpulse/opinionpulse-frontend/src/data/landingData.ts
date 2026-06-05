@@ -5,8 +5,11 @@ import {
   Bell,
   Bot,
   Brain,
+  CheckCircle,
   Database,
   Globe,
+  GraduationCap,
+  LayoutDashboard,
   MessagesSquare,
   Newspaper,
   Scale,
@@ -15,6 +18,7 @@ import {
   Sparkles,
   TrendingUp,
   Video,
+  Zap,
 } from "lucide-react"
 
 export const navLinks = [
@@ -43,58 +47,56 @@ export const features: {
   title: string
   description: string
   icon: LucideIcon
-  emoji: string
-  iconBg: string
-  highlighted?: boolean
+  containerBg: string
+  iconColor: string
 }[] = [
   {
-    emoji: "🔍",
     title: "Search Across 10 Sources",
     description:
       "Reddit, YouTube, Guardian, NewsAPI, Hacker News, Dev.to and more — searched simultaneously in seconds.",
     icon: Search,
-    iconBg: "bg-purple-100 text-purple-600",
+    containerBg: "bg-[#EDE9FE]",
+    iconColor: "text-[#7C3AED]",
   },
   {
-    emoji: "🤖",
     title: "AI-Powered Analysis",
     description:
-      "Claude AI reads all results and generates a clear summary of what people actually think — and why.",
+      "Groq-powered AI reads all results and generates a clear summary of what people actually think — and why.",
     icon: Brain,
-    iconBg: "bg-blue-100 text-blue-600",
-    highlighted: true,
+    containerBg: "bg-[#DBEAFE]",
+    iconColor: "text-[#2563EB]",
   },
   {
-    emoji: "⚖️",
     title: "Live Debate Detection",
     description:
       "Automatically identifies topics where opinions are sharply divided and presents both sides objectively.",
     icon: Scale,
-    iconBg: "bg-orange-100 text-orange-600",
+    containerBg: "bg-[#FEF3C7]",
+    iconColor: "text-[#D97706]",
   },
   {
-    emoji: "📈",
     title: "Sentiment Trend Prediction",
     description:
       "AI analyzes momentum and predicts where public opinion is heading over the next 7 days.",
     icon: TrendingUp,
-    iconBg: "bg-green-100 text-green-600",
+    containerBg: "bg-[#D1FAE5]",
+    iconColor: "text-[#059669]",
   },
   {
-    emoji: "📊",
     title: "Live Opinion Dashboard",
     description:
       "See trending debates, most discussed topics, and platform-by-platform sentiment — all updating live.",
-    icon: BarChart3,
-    iconBg: "bg-pink-100 text-pink-600",
+    icon: LayoutDashboard,
+    containerBg: "bg-[#FCE7F3]",
+    iconColor: "text-[#DB2777]",
   },
   {
-    emoji: "🔔",
     title: "Keyword Alerts",
     description:
       "Get notified when sentiment on any topic shifts significantly — before it becomes mainstream news.",
     icon: Bell,
-    iconBg: "bg-yellow-100 text-yellow-600",
+    containerBg: "bg-[#FEF9C3]",
+    iconColor: "text-[#CA8A04]",
   },
 ]
 
@@ -117,46 +119,46 @@ export const howItWorksSteps = [
     step: "03",
     title: "AI Generates Insights",
     description:
-      "Claude AI analyzes sentiment, detects debates, and predicts where opinion is heading next.",
+      "Groq AI analyzes sentiment, detects debates, and predicts where opinion is heading next.",
     emoji: "🤖",
   },
 ]
 
-export const techStackItems: {
-  name: string
-  abbr: string
-  highlighted?: boolean
-}[] = [
-  { name: "React", abbr: "React" },
-  { name: "FastAPI", abbr: "API" },
-  { name: "Python", abbr: "Py" },
-  { name: "Claude AI", abbr: "AI", highlighted: true },
-  { name: "MySQL", abbr: "SQL" },
-  { name: "Tailwind", abbr: "TW" },
-  { name: "Reddit API", abbr: "R" },
-  { name: "YouTube", abbr: "YT" },
-  { name: "Guardian", abbr: "G" },
-  { name: "NewsAPI", abbr: "N" },
+export const techStackItems: { name: string; dotColor: string }[] = [
+  { name: "React", dotColor: "#61DAFB" },
+  { name: "FastAPI", dotColor: "#009688" },
+  { name: "Python", dotColor: "#3776AB" },
+  { name: "Groq AI", dotColor: "#7C3AED" },
+  { name: "MySQL", dotColor: "#4479A1" },
+  { name: "Tailwind CSS", dotColor: "#06B6D4" },
+  { name: "Reddit API", dotColor: "#FF4500" },
+  { name: "YouTube API", dotColor: "#FF0000" },
+  { name: "Guardian API", dotColor: "#052962" },
+  { name: "NewsAPI", dotColor: "#2563EB" },
 ]
 
-export const socialProofCards = [
+export const socialProofCards: {
+  title: string
+  description: string
+  icon: LucideIcon
+}[] = [
   {
-    emoji: "📚",
     title: "Academic Research",
     description:
-      "Built as part of GUNI-SSRIP 2026 internship program at Conestoga College, Waterloo, Ontario.",
+      "Built as part of GUNI-SSRIP 2026 internship at Conestoga College, Waterloo, Ontario. Designed to meet academic research standards.",
+    icon: GraduationCap,
   },
   {
-    emoji: "🔬",
     title: "Novel Features",
     description:
-      "12 research-focused features including AI debate detection, trend prediction, and multi-source fusion.",
+      "AI debate detection, trend prediction, and multi-source fusion — features not found in standard opinion tracking tools.",
+    icon: Zap,
   },
   {
-    emoji: "🌐",
     title: "Real Data Only",
     description:
-      "Zero mock data in production. All results come from live APIs with real timestamps and real source links.",
+      "Zero mock data in production. All results come from live APIs with real timestamps, real authors, and real clickable source links.",
+    icon: CheckCircle,
   },
 ]
 

@@ -8,7 +8,8 @@ export function CTASection() {
     <section className="relative overflow-hidden bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 py-24">
       <ParticleBackground sentiment="positive" intensity={0.4} />
 
-      <div className="relative z-10 mx-auto max-w-3xl px-6 text-center">
+      <div className="relative z-10 mx-auto max-w-6xl px-6 text-center">
+        <div className="mx-auto max-w-3xl">
         <ScrollReveal delay={0}>
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-purple-400/30 bg-purple-400/10 px-4 py-1.5 text-sm font-medium text-purple-300">
             <span className="inline-block size-2 animate-pulse rounded-full bg-purple-400" />
@@ -83,6 +84,7 @@ export function CTASection() {
             </div>
           </div>
         </ScrollReveal>
+        </div>
       </div>
     </section>
   )

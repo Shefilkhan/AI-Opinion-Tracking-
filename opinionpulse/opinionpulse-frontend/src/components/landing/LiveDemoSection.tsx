@@ -5,12 +5,12 @@ export function LiveDemoSection() {
   return (
     <section
       id="demo"
-      className="relative overflow-hidden py-24"
+      className="relative overflow-hidden py-20"
       style={{
         background: "linear-gradient(135deg, #0f0f1a 0%, #1a0a2e 50%, #0d1117 100%)",
       }}
     >
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
+      <div className="mx-auto max-w-6xl px-6">
         <ScrollReveal className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
             See It In Action
