@@ -1,15 +1,16 @@
+# Environment files — never commit
 .env
 .env.local
 .env.production
 .env.development
+.env.staging
+.env*.local
 
-venv/
-.venv/
+# Python
 __pycache__/
-*.py[cod]
+*.pyc
 *.pyo
+.venv/
+venv/
 *.egg-info/
-.pytest_cache/
-.mypy_cache/
-
 .DS_Store
