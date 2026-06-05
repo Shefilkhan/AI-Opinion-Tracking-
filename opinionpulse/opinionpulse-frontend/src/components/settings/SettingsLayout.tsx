@@ -92,7 +92,7 @@ function SettingsLayoutInner() {
   }
 
   return (
-    <div className="settings-page mx-auto max-w-5xl px-6 py-8">
+    <div className="settings-page w-full">
       <div className="settings-header mb-6 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
@@ -129,7 +129,7 @@ function SettingsLayoutInner() {
           <UnsavedBanner />
           <div
             key={activeSection}
-            className="settings-section-animate mx-auto max-w-[640px] space-y-6"
+            className="settings-section-animate w-full max-w-3xl space-y-6"
           >
             <SettingsSectionContent section={activeSection} />
           </div>

@@ -1,4 +1,5 @@
 import type { SearchFilters } from "@/lib/api/types"
+import { proCard } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 type SearchFiltersBarProps = {
@@ -41,7 +42,7 @@ function FilterGroup({
 
 export function SearchFiltersBar({ filters, onChange }: SearchFiltersBarProps) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-[#2d2d44] dark:bg-[#1e1e30]">
+    <div className={cn(proCard, "flex flex-col gap-4 p-4 sm:p-5")}>
       <FilterGroup
         label="Platform"
         value={filters.platform}

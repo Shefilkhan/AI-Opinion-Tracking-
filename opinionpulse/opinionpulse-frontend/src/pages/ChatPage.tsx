@@ -106,8 +106,8 @@ export function ChatPage() {
   )
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-[#0f0f1a]">
-      <div className="flex w-72 flex-col border-r border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#13131f]">
+    <div className="flex h-screen w-full overflow-hidden bg-gray-50 dark:bg-[#0f0f1a]">
+      <div className="flex w-64 shrink-0 flex-col border-r border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#13131f] lg:w-72 xl:w-80">
         <div className="border-b border-gray-100 p-4 dark:border-[#2d2d44]">
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -203,10 +203,10 @@ export function ChatPage() {
         </div>
       </div>
 
-      <div className="relative flex flex-1 flex-col">
+      <div className="relative flex min-w-0 flex-1 flex-col">
         <ParticleBackground sentiment="neutral" intensity={0.2} />
-        <div className="relative z-10 mx-auto flex h-full w-full max-w-3xl flex-1 flex-col px-4 py-4">
-          <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-[#2d2d44] dark:bg-[#1e1e30] dark:shadow-black/30">
+        <div className="relative z-10 flex h-full w-full flex-1 flex-col p-4 sm:p-5 lg:p-6 xl:p-8">
+          <div className="mx-auto flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md dark:border-[#2d2d44] dark:bg-[#1e1e30] dark:shadow-black/40 xl:max-w-none">
             <ChatWindow
               mode="full"
               conversationId={activeConvId}

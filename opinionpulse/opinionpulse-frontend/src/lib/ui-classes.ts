@@ -2,6 +2,14 @@
 
 export const pageShell = "min-h-screen bg-background text-foreground transition-colors duration-200"
 
+/** Full-width content area padding used inside DashboardLayout */
+export const pageContent =
+  "w-full px-5 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7 xl:px-10 2xl:px-12"
+
+/** Professional card used across dashboard/search pages */
+export const proCard =
+  "rounded-2xl border border-gray-200/80 bg-white shadow-sm dark:border-[#2d2d44] dark:bg-[#1e1e30] dark:shadow-black/20"
+
 /** Lavender gradient shell for pages with particle background */
 export const pageShellParticles =
   "min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50/50 text-foreground transition-colors duration-200 dark:from-[#0f0f1a] dark:via-[#1a1a2e]/80 dark:to-[#16213e]/60"

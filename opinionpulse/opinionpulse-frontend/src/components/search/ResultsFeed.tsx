@@ -5,6 +5,7 @@ import {
   sentimentBadgeClass,
   sentimentBadgeLabel,
 } from "@/lib/api/sentiment"
+import { proCard } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 function timeAgo(iso: string): string {
@@ -55,7 +56,7 @@ export function ResultsFeed({ results }: ResultsFeedProps) {
   }
 
   return (
-    <ul className="divide-y divide-gray-200 rounded-xl border border-gray-100 bg-white dark:divide-[#2d2d44] dark:border-[#2d2d44] dark:bg-[#1e1e30]">
+    <ul className={cn(proCard, "divide-y divide-gray-100 dark:divide-[#2d2d44]")}>
       {results.map((r) => {
         const plat = platformBadge(r.platform, r.source_label)
         const views = r.engagement.views ?? 0

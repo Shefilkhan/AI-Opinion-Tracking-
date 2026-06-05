@@ -15,7 +15,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext"
 import { Skeleton } from "@/components/ui/Skeleton"
 import { cn } from "@/lib/utils"
-import { pageShell, sidebarSurface } from "@/lib/ui-classes"
+import { pageContent, pageShell, sidebarSurface } from "@/lib/ui-classes"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -65,7 +65,7 @@ function NavLinkItem({
       to={item.href}
       onClick={onNavigate}
       className={cn(
-        "flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors duration-150",
+        "flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors duration-150",
         isActive
           ? "bg-purple-50 font-medium text-purple-700 dark:bg-purple-500/10 dark:text-purple-300"
           : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
@@ -145,13 +145,13 @@ export function DashboardLayout({
     <>
       <Link
         to="/dashboard"
-        className="flex min-h-11 items-center gap-2 border-b border-gray-200 px-4 py-3 transition-opacity hover:opacity-80 dark:border-[#2d2d44] sm:px-5 sm:py-4"
+        className="flex min-h-14 items-center gap-2.5 border-b border-gray-200 px-4 py-3 transition-opacity hover:opacity-80 dark:border-[#2d2d44] sm:px-5"
         onClick={() => setMobileOpen(false)}
       >
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-purple-600 to-indigo-600 text-white">
           <Activity className="size-4" aria-hidden />
         </span>
-        <span className="truncate text-sm font-semibold tracking-tight text-foreground">
+        <span className="truncate text-sm font-bold tracking-tight text-foreground">
           OpinionPulse
         </span>
       </Link>
@@ -171,8 +171,8 @@ export function DashboardLayout({
       </nav>
       <div className="border-t border-gray-200 p-3 dark:border-white/10 sm:p-4">
         {user ? (
-          <div className="flex min-h-11 items-center gap-3 rounded-lg border border-gray-200 bg-card px-3 py-2 shadow-[var(--shadow-subtle)] dark:border-[#2d2d44]">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-medium text-foreground">
+          <div className="flex min-h-11 items-center gap-3 rounded-xl border border-gray-200 bg-card px-3 py-2.5 shadow-sm dark:border-[#2d2d44]">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-purple-100 text-xs font-semibold text-purple-700 dark:bg-purple-500/20 dark:text-purple-300">
               {initials || "?"}
             </span>
             <div className="min-w-0 flex-1">
@@ -182,10 +182,10 @@ export function DashboardLayout({
           </div>
         ) : (
           <div
-            className="flex min-h-11 items-center gap-3 rounded-lg border border-gray-200 bg-card px-3 py-2 dark:border-[#2d2d44]"
+            className="flex min-h-11 items-center gap-3 rounded-xl border border-gray-200 bg-card px-3 py-2.5 dark:border-[#2d2d44]"
             aria-hidden
           >
-            <Skeleton className="size-8 shrink-0 rounded-md" />
+            <Skeleton className="size-8 shrink-0 rounded-lg" />
             <div className="min-w-0 flex-1 space-y-1.5">
               <Skeleton className="h-3.5 w-24" />
               <Skeleton className="h-3 w-32" />
@@ -197,28 +197,28 @@ export function DashboardLayout({
   )
 
   return (
-    <div className={cn("flex min-h-screen flex-col md:flex-row", pageShell)}>
+    <div className={cn("flex min-h-screen w-full", pageShell)}>
       <aside
         className={cn(
-          "relative z-20 hidden w-full shrink-0 flex-col border-b backdrop-blur-sm md:flex md:w-56 md:border-b-0 md:border-r lg:w-60",
+          "relative z-20 hidden h-screen shrink-0 flex-col border-r md:flex md:w-60 lg:w-64",
           sidebarSurface
         )}
       >
         {sidebar}
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         {!hidePageHeader && (
           <header
             className={cn(
-              "sticky top-0 z-40 flex min-h-14 items-center justify-between gap-3 border-b px-4 py-2 backdrop-blur-sm sm:gap-4 sm:px-6 md:min-h-16 md:px-8",
+              "sticky top-0 z-40 flex min-h-[60px] shrink-0 items-center justify-between gap-4 border-b px-5 py-3 backdrop-blur-sm sm:px-6 lg:px-8 xl:px-10",
               sidebarSurface
             )}
           >
             <div className="flex min-w-0 flex-1 items-center gap-3">
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger
-                  className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-gray-200 text-foreground transition-colors hover:bg-muted dark:border-[#2d2d44] dark:hover:bg-white/5 md:hidden"
+                  className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-foreground transition-colors hover:bg-muted dark:border-[#2d2d44] dark:hover:bg-white/5 md:hidden"
                   aria-label="Open navigation menu"
                 >
                   <Menu className="size-5" aria-hidden />
@@ -234,37 +234,34 @@ export function DashboardLayout({
                 </SheetContent>
               </Sheet>
               <div className="min-w-0 flex-1">
-                <h1 className="truncate text-lg font-semibold tracking-tight text-foreground sm:text-xl md:text-2xl">
+                <h1 className="truncate text-xl font-bold tracking-tight text-foreground lg:text-2xl">
                   {title}
                 </h1>
                 {subtitle && (
-                  <p className="truncate text-sm font-normal text-muted-foreground">
-                    {subtitle}
-                  </p>
+                  <p className="truncate text-sm text-muted-foreground">{subtitle}</p>
                 )}
               </div>
             </div>
             <Button
               variant="outline"
               onClick={handleLogout}
-              className="h-11 shrink-0 gap-2 border-gray-200 px-3 text-gray-600 hover:bg-red-50 hover:text-red-600 dark:border-[#2d2d44] dark:text-gray-300 dark:hover:border-red-500/30 dark:hover:bg-red-500/10 dark:hover:text-red-400 sm:px-4 md:h-8"
+              className="h-9 shrink-0 gap-2 rounded-lg border-gray-200 px-3 text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 dark:border-[#2d2d44] dark:text-gray-300 dark:hover:border-red-500/30 dark:hover:bg-red-500/10 dark:hover:text-red-400 sm:px-4"
             >
               <LogOut className="size-4" aria-hidden />
               <span className="hidden sm:inline">Logout</span>
-              <span className="sr-only sm:hidden">Logout</span>
             </Button>
           </header>
         )}
         {hidePageHeader && (
           <div
             className={cn(
-              "sticky top-0 z-40 flex min-h-14 items-center border-b px-4 py-2 backdrop-blur-sm md:hidden md:px-8",
+              "sticky top-0 z-40 flex min-h-14 shrink-0 items-center border-b px-5 py-2 backdrop-blur-sm md:hidden lg:px-8",
               sidebarSurface
             )}
           >
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger
-                className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-gray-200 text-foreground transition-colors hover:bg-muted dark:border-[#2d2d44] dark:hover:bg-white/5"
+                className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-foreground transition-colors hover:bg-muted dark:border-[#2d2d44] dark:hover:bg-white/5"
                 aria-label="Open navigation menu"
               >
                 <Menu className="size-5" aria-hidden />
@@ -282,8 +279,8 @@ export function DashboardLayout({
           </div>
         )}
 
-        <main className="relative z-10 flex-1 px-4 py-4 sm:px-6 sm:py-6 md:px-8 md:py-8">
-          <div className="mx-auto w-full max-w-6xl">{children}</div>
+        <main className={cn("relative z-10 min-w-0 flex-1", pageContent)}>
+          {children}
         </main>
       </div>
     </div>

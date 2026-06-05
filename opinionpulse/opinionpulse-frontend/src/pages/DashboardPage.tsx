@@ -55,7 +55,7 @@ export function DashboardPage() {
           subtitle="Trending opinions and social media pulse"
         >
       {isLoading && !data ? (
-        <div className="flex flex-col gap-8">
+        <div className="flex w-full flex-col gap-6 lg:gap-8">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {[0, 1, 2, 3].map((i) => (
               <div
@@ -69,7 +69,7 @@ export function DashboardPage() {
           <MostDiscussed isLoading />
         </div>
       ) : data ? (
-        <div className="flex flex-col gap-8">
+        <div className="flex w-full flex-col gap-6 lg:gap-8">
           <LiveDataIndicator
             isLive={data.is_live ?? {}}
             lastUpdated={data.last_updated}
@@ -136,7 +136,7 @@ export function DashboardPage() {
             onRefresh={() => void refetch()}
           />
 
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-8">
             <div className="lg:col-span-3">
               <DebateList debates={data.debates} />
             </div>

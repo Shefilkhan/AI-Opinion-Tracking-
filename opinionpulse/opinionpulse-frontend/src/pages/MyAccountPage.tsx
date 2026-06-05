@@ -148,7 +148,7 @@ export function MyAccountPage() {
       <div className="relative min-h-full bg-gray-50 dark:bg-[#0f0f1a]">
         <ParticleBackground sentiment="neutral" intensity={0.15} />
 
-        <div className="relative z-10 mx-auto max-w-4xl px-6 py-8">
+        <div className="relative z-10 w-full">
           <div className="mb-8 flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Account</h1>
