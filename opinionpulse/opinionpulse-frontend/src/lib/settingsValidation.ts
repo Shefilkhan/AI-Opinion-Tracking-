@@ -1,3 +1,5 @@
+import { checkUsernameAvailable as apiCheckUsername } from "@/api/users"
+
 export type PasswordStrength = "weak" | "fair" | "strong"
 
 export function getPasswordStrength(password: string): PasswordStrength {
@@ -15,7 +17,7 @@ export function getPasswordStrength(password: string): PasswordStrength {
 
 export function validateUsername(username: string): string | null {
   const u = username.trim()
-  if (!u) return "Username is required."
+  if (!u) return null
   if (u.length < 3) return "Username must be at least 3 characters."
   if (u.length > 30) return "Username must be 30 characters or less."
   if (!/^[a-zA-Z0-9_]+$/.test(u)) return "Use only letters, numbers, and underscores."
@@ -27,9 +29,13 @@ export function validateBio(bio: string): string | null {
   return null
 }
 
-const TAKEN_USERNAMES = new Set(["admin", "opinionpulse", "support", "test", "user"])
-
 export async function checkUsernameAvailable(username: string): Promise<boolean> {
-  await new Promise((r) => setTimeout(r, 400))
-  return !TAKEN_USERNAMES.has(username.trim().toLowerCase())
+  const u = username.trim()
+  if (!u || validateUsername(u)) return false
+  try {
+    const res = await apiCheckUsername(u)
+    return res.available
+  } catch {
+    return false
+  }
 }

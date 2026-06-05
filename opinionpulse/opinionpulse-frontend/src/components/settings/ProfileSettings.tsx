@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { Upload } from "lucide-react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { Loader2, Upload } from "lucide-react"
 import { getCurrentUser } from "@/api/auth"
-import { updateAccountProfile } from "@/api/account"
+import { patchUserProfile, uploadUserAvatar } from "@/api/users"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { FieldError, FormField, SettingsPanel } from "@/components/settings/SettingsPanel"
 import { useRegisterSectionSave, useSectionDirty } from "@/components/settings/useSectionDirty"
 import { useToast } from "@/components/ui/toast"
+import { resolveMediaUrl } from "@/lib/formatUtils"
 import {
   loadUserSettings,
   saveSettingsSection,
@@ -21,12 +22,14 @@ import {
 import { cn } from "@/lib/utils"
 
 const inputClass =
-  "h-11 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm transition-colors duration-150 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+  "h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition-all duration-200 placeholder:text-gray-400 hover:bg-white focus:border-purple-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/30 dark:border-[#2d2d44] dark:bg-[#252538] dark:text-white dark:placeholder:text-gray-500 dark:hover:bg-[#2a2a40] dark:focus:bg-[#2a2a40]"
 
 export function ProfileSettings() {
   const { showToast } = useToast()
+  const queryClient = useQueryClient()
   const userQuery = useQuery({ queryKey: ["current-user"], queryFn: getCurrentUser })
   const [saving, setSaving] = useState(false)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [usernameStatus, setUsernameStatus] = useState<
     "idle" | "checking" | "available" | "taken"
@@ -37,8 +40,13 @@ export function ProfileSettings() {
     const user = userQuery.data
     return {
       ...stored,
-      fullName: user?.name ?? stored.fullName,
+      fullName: user?.full_name ?? user?.name ?? stored.fullName,
       email: user?.email ?? stored.email,
+      username: user?.username ?? stored.username ?? "",
+      bio: user?.bio ?? stored.bio ?? "",
+      avatarDataUrl: user?.avatar_url
+        ? resolveMediaUrl(user.avatar_url) ?? stored.avatarDataUrl
+        : stored.avatarDataUrl,
     }
   }, [userQuery.data])
 
@@ -48,10 +56,8 @@ export function ProfileSettings() {
 
   useEffect(() => {
     if (!userQuery.data) return
-    const next = buildInitial()
-    commitSaved(next)
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync once when user loads
-  }, [userQuery.data?.id])
+    commitSaved(buildInitial())
+  }, [userQuery.data, buildInitial, commitSaved])
 
   useEffect(() => {
     const u = draft.username.trim()
@@ -70,9 +76,13 @@ export function ProfileSettings() {
   const handleSave = useCallback(async () => {
     const nextErrors: Record<string, string> = {}
     if (!draft.fullName.trim()) nextErrors.fullName = "Full name is required."
-    const userErr = validateUsername(draft.username)
-    if (userErr) nextErrors.username = userErr
-    if (usernameStatus === "taken") nextErrors.username = "This username is taken."
+    const trimmedUsername = draft.username.trim()
+    if (trimmedUsername) {
+      const userErr = validateUsername(trimmedUsername)
+      if (userErr) nextErrors.username = userErr
+      if (usernameStatus === "taken")
+        nextErrors.username = "This username is taken."
+    }
     const bioErr = validateBio(draft.bio)
     if (bioErr) nextErrors.bio = bioErr
     setErrors(nextErrors)
@@ -80,33 +90,52 @@ export function ProfileSettings() {
 
     setSaving(true)
     try {
-      await updateAccountProfile({ name: draft.fullName.trim() })
+      await patchUserProfile({
+        full_name: draft.fullName.trim(),
+        username: draft.username.trim() || null,
+        bio: draft.bio.trim() || null,
+      })
       saveSettingsSection("profile", draft)
       commitSaved(draft)
-      showToast("Profile saved successfully.")
+      await queryClient.invalidateQueries({ queryKey: ["current-user"] })
+      await queryClient.invalidateQueries({ queryKey: ["account-profile"] })
+      showToast("Profile updated ✓")
     } catch {
       showToast("Could not save profile.", "error")
     } finally {
       setSaving(false)
     }
-  }, [draft, usernameStatus, commitSaved, showToast])
+  }, [draft, usernameStatus, commitSaved, showToast, queryClient])
 
   useRegisterSectionSave("profile", dirty, handleSave, discard)
 
-  function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
       setErrors((p) => ({ ...p, avatar: "Use JPG, PNG, or WebP." }))
       return
     }
-    const reader = new FileReader()
-    reader.onload = () => {
-      setDraft((p) => ({ ...p, avatarDataUrl: reader.result as string }))
-      setErrors((p) => ({ ...p, avatar: "" }))
+    setUploadingAvatar(true)
+    setErrors((p) => ({ ...p, avatar: "" }))
+    try {
+      const res = await uploadUserAvatar(file)
+      const url = resolveMediaUrl(res.avatar_url)
+      if (url) setDraft((p) => ({ ...p, avatarDataUrl: url }))
+      await queryClient.invalidateQueries({ queryKey: ["current-user"] })
+      showToast("Avatar updated ✓")
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : "Avatar upload failed",
+        "error"
+      )
+    } finally {
+      setUploadingAvatar(false)
+      e.target.value = ""
     }
-    reader.readAsDataURL(file)
   }
+
+  const avatarSrc = draft.avatarDataUrl
 
   return (
     <SettingsPanel
@@ -117,24 +146,26 @@ export function ProfileSettings() {
     >
       <FormField label="Profile photo" htmlFor="avatar-upload">
         <div className="flex items-center gap-4">
-          <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-muted">
-            {draft.avatarDataUrl ? (
-              <img
-                src={draft.avatarDataUrl}
-                alt=""
-                className="size-full object-cover"
-              />
+          <div className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-br from-purple-500 to-indigo-600">
+            {avatarSrc ? (
+              <img src={avatarSrc} alt="" className="size-full object-cover" />
             ) : (
-              <span className="text-lg font-medium text-muted-foreground">
+              <span className="text-lg font-bold text-white">
                 {draft.fullName.charAt(0).toUpperCase() || "?"}
               </span>
+            )}
+            {uploadingAvatar && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                <Loader2 size={20} className="animate-spin text-white" />
+              </div>
             )}
           </div>
           <label
             htmlFor="avatar-upload"
             className={cn(
-              "inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-md border border-gray-200 px-4 py-2 text-sm font-medium transition-colors duration-150",
-              "hover:bg-gray-100 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              "inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium transition-colors duration-200",
+              "hover:border-purple-300 hover:bg-purple-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/30",
+              uploadingAvatar && "pointer-events-none opacity-60"
             )}
           >
             <Upload className="size-4" aria-hidden />
@@ -146,6 +177,7 @@ export function ProfileSettings() {
             accept="image/jpeg,image/png,image/webp"
             className="sr-only"
             onChange={handleAvatarChange}
+            disabled={uploadingAvatar}
           />
         </div>
         <FieldError message={errors.avatar} />
@@ -175,7 +207,7 @@ export function ProfileSettings() {
         }
       >
         <div className="relative">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
             @
           </span>
           <Input
@@ -190,7 +222,7 @@ export function ProfileSettings() {
           />
         </div>
         {usernameStatus === "checking" && (
-          <p className="mt-1 text-xs text-muted-foreground">Checking availability…</p>
+          <p className="mt-1 text-xs text-gray-400">Checking availability…</p>
         )}
       </FormField>
 
@@ -201,12 +233,16 @@ export function ProfileSettings() {
             type="email"
             value={draft.email}
             readOnly
-            className={cn(inputClass, "flex-1 bg-muted")}
+            className={cn(inputClass, "flex-1 bg-gray-100")}
             aria-describedby="email-status"
           />
           <Badge
-            variant={userQuery.data?.is_email_verified ? "secondary" : "outline"}
             id="email-status"
+            className={
+              userQuery.data?.is_email_verified
+                ? "border-green-200 bg-green-100 text-green-700"
+                : "border-yellow-200 bg-yellow-100 text-yellow-700"
+            }
           >
             {userQuery.data?.is_email_verified ? "Verified" : "Unverified"}
           </Badge>
@@ -224,9 +260,7 @@ export function ProfileSettings() {
           className={inputClass}
           aria-invalid={!!errors.bio}
         />
-        <p className="mt-1 text-right text-xs text-muted-foreground">
-          {draft.bio.length}/160
-        </p>
+        <p className="mt-1 text-right text-xs text-gray-400">{draft.bio.length}/160</p>
       </FormField>
     </SettingsPanel>
   )

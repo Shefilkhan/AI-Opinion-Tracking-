@@ -4,10 +4,13 @@ import { removeToken, setToken } from "@/lib/authStore"
 export type User = {
   id: number
   name: string
+  full_name?: string
   email: string
   role: string
   is_email_verified?: boolean
   avatar_url?: string | null
+  username?: string | null
+  bio?: string | null
   created_at: string
   last_login_at?: string | null
 }

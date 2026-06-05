@@ -1,26 +1,19 @@
 import { apiRequest } from "@/api/client"
+import type { UserProfile, UserStats } from "@/api/users"
 
-export type AccountProfile = {
-  id: number
-  name: string
-  email: string
-  role: string
-  is_email_verified: boolean
-  created_at: string
-  last_login_at: string | null
-}
-
-export type AccountStats = {
-  total_searches: number
-  total_results: number
-  saved_searches: number
-}
+export type AccountProfile = UserProfile
+export type AccountStats = UserStats
 
 export function getAccountProfile() {
   return apiRequest<AccountProfile>("/api/account/profile", { auth: true })
 }
 
-export function updateAccountProfile(data: { name: string }) {
+export function updateAccountProfile(data: {
+  name?: string
+  full_name?: string
+  username?: string | null
+  bio?: string | null
+}) {
   return apiRequest<AccountProfile>("/api/account/profile", {
     method: "PUT",
     body: data,
