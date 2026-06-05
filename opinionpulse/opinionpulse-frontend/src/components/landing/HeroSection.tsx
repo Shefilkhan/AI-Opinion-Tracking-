@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 import { ArrowRight, Check, Play } from "lucide-react"
 import { trendingTopics } from "@/data/landingData"
 import { HeroPreviewCard } from "@/components/landing/HeroPreviewCard"
-import { ParticleBackground } from "@/components/ui/ParticleBackground"
+import ThreeBackground from "@/components/ui/ThreeBackground"
 
 export function HeroSection() {
   const [topicIndex, setTopicIndex] = useState(0)
@@ -37,23 +37,8 @@ export function HeroSection() {
   }, [])
 
   return (
-    <section className="relative min-h-screen overflow-hidden pt-16">
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(135deg, #0f0f1a 0%, #1a0a2e 30%, #0d1117 60%, #0f0f1a 100%)",
-        }}
-      />
-      <div
-        className="landing-orb-purple pointer-events-none absolute -left-[100px] -top-[100px] size-[600px]"
-        aria-hidden
-      />
-      <div
-        className="landing-orb-blue pointer-events-none absolute -bottom-[150px] -right-[100px] size-[600px]"
-        aria-hidden
-      />
-      <ParticleBackground sentiment="neutral" intensity={0.5} />
+    <section className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#0f0f1a] via-[#1a0a2e] to-[#0d1117] pt-16">
+      <ThreeBackground />
 
       <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 md:px-8 lg:grid-cols-[55%_45%] lg:py-24">
         <div>
