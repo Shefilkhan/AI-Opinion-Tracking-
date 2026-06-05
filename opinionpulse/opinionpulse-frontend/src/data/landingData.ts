@@ -280,11 +280,23 @@ export const footerLinks = {
     { label: "NewsAPI", href: "#" },
     { label: "Hacker News", href: "#" },
     { label: "Dev.to", href: "#" },
+    { label: "GNews", href: "#" },
+    { label: "Currents", href: "#" },
+    { label: "Mediastack", href: "#" },
   ],
   connect: [
-    { label: "GitHub", href: "https://github.com" },
-    { label: "LinkedIn", href: "https://linkedin.com" },
-    { label: "Email", href: "mailto:hello@opinionpulse.io" },
+    {
+      label: "GitHub",
+      href: "https://github.com/Shefilkhan/AI-Opinion-Tracking-",
+    },
+    { label: "LinkedIn", href: "https://linkedin.com/in/shefilkhan" },
+    { label: "Email", href: "mailto:shefilpathan@gmail.com" },
+  ],
+  project: [
+    "GUNI-SSRIP 2026",
+    "Conestoga College",
+    "Waterloo, Ontario",
+    "Academic Research",
   ],
 }
 
