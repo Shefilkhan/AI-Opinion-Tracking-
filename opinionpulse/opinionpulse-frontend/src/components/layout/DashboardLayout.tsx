@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  MessageCircle,
   Search,
   Settings,
   User,
@@ -14,7 +15,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext"
 import { Skeleton } from "@/components/ui/Skeleton"
 import { cn } from "@/lib/utils"
-import { pageShell } from "@/lib/ui-classes"
+import { pageShell, sidebarSurface } from "@/lib/ui-classes"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -28,11 +29,13 @@ type NavItem = {
   label: string
   href: string
   icon: typeof LayoutDashboard
+  badge?: string
 }
 
 const mainNav: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Search", href: "/search", icon: Search },
+  { label: "Ask Pulse AI", href: "/chat", icon: MessageCircle, badge: "AI" },
   { label: "Reports", href: "/reports", icon: FileText },
   { label: "Alerts", href: "/alerts", icon: Bell },
 ]
@@ -64,12 +67,17 @@ function NavLinkItem({
       className={cn(
         "flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors duration-150",
         isActive
-          ? "bg-primary/10 text-primary"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          ? "bg-purple-50 font-medium text-purple-700 dark:bg-purple-500/10 dark:text-purple-300"
+          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
       )}
     >
       <Icon className="size-4 shrink-0" aria-hidden />
       <span className="truncate">{item.label}</span>
+      {item.badge && (
+        <span className="ml-auto rounded-full bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-500/20 dark:text-purple-300">
+          {item.badge}
+        </span>
+      )}
     </Link>
   )
 }
@@ -137,7 +145,7 @@ export function DashboardLayout({
     <>
       <Link
         to="/dashboard"
-        className="flex min-h-11 items-center gap-2 border-b border-gray-200 px-4 py-3 transition-opacity hover:opacity-80 sm:px-5 sm:py-4"
+        className="flex min-h-11 items-center gap-2 border-b border-gray-200 px-4 py-3 transition-opacity hover:opacity-80 dark:border-[#2d2d44] sm:px-5 sm:py-4"
         onClick={() => setMobileOpen(false)}
       >
         <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
@@ -161,9 +169,9 @@ export function DashboardLayout({
           onNavigate={() => setMobileOpen(false)}
         />
       </nav>
-      <div className="border-t border-gray-200 p-3 sm:p-4">
+      <div className="border-t border-gray-200 p-3 dark:border-white/10 sm:p-4">
         {user ? (
-          <div className="flex min-h-11 items-center gap-3 rounded-lg border border-gray-200 bg-card px-3 py-2 shadow-[var(--shadow-subtle)]">
+          <div className="flex min-h-11 items-center gap-3 rounded-lg border border-gray-200 bg-card px-3 py-2 shadow-[var(--shadow-subtle)] dark:border-[#2d2d44]">
             <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-medium text-foreground">
               {initials || "?"}
             </span>
@@ -174,7 +182,7 @@ export function DashboardLayout({
           </div>
         ) : (
           <div
-            className="flex min-h-11 items-center gap-3 rounded-lg border border-gray-200 bg-card px-3 py-2"
+            className="flex min-h-11 items-center gap-3 rounded-lg border border-gray-200 bg-card px-3 py-2 dark:border-[#2d2d44]"
             aria-hidden
           >
             <Skeleton className="size-8 shrink-0 rounded-md" />
@@ -190,24 +198,34 @@ export function DashboardLayout({
 
   return (
     <div className={cn("flex min-h-screen flex-col md:flex-row", pageShell)}>
-      <aside className="relative z-20 hidden w-full shrink-0 flex-col border-b border-gray-200 bg-white/95 backdrop-blur-sm md:flex md:w-56 md:border-b-0 md:border-r lg:w-60">
+      <aside
+        className={cn(
+          "relative z-20 hidden w-full shrink-0 flex-col border-b backdrop-blur-sm md:flex md:w-56 md:border-b-0 md:border-r lg:w-60",
+          sidebarSurface
+        )}
+      >
         {sidebar}
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
         {!hidePageHeader && (
-          <header className="sticky top-0 z-40 flex min-h-14 items-center justify-between gap-3 border-b border-gray-200 bg-white/95 px-4 py-2 backdrop-blur-sm sm:gap-4 sm:px-6 md:min-h-16 md:px-8">
+          <header
+            className={cn(
+              "sticky top-0 z-40 flex min-h-14 items-center justify-between gap-3 border-b px-4 py-2 backdrop-blur-sm sm:gap-4 sm:px-6 md:min-h-16 md:px-8",
+              sidebarSurface
+            )}
+          >
             <div className="flex min-w-0 flex-1 items-center gap-3">
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger
-                  className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-gray-200 text-foreground transition-colors hover:bg-muted md:hidden"
+                  className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-gray-200 text-foreground transition-colors hover:bg-muted dark:border-[#2d2d44] dark:hover:bg-white/5 md:hidden"
                   aria-label="Open navigation menu"
                 >
                   <Menu className="size-5" aria-hidden />
                 </SheetTrigger>
                 <SheetContent
                   side="left"
-                  className="w-[min(100vw-1rem,18rem)] border-gray-200 bg-card p-0 sm:w-72"
+                  className="w-[min(100vw-1rem,18rem)] border-gray-200 bg-card p-0 dark:border-[#2d2d44] sm:w-72"
                 >
                   <SheetHeader className="sr-only">
                     <SheetTitle>Navigation</SheetTitle>
@@ -229,7 +247,7 @@ export function DashboardLayout({
             <Button
               variant="outline"
               onClick={handleLogout}
-              className="h-11 shrink-0 gap-2 px-3 sm:px-4 md:h-8"
+              className="h-11 shrink-0 gap-2 border-gray-200 px-3 text-gray-600 hover:bg-red-50 hover:text-red-600 dark:border-[#2d2d44] dark:text-gray-300 dark:hover:border-red-500/30 dark:hover:bg-red-500/10 dark:hover:text-red-400 sm:px-4 md:h-8"
             >
               <LogOut className="size-4" aria-hidden />
               <span className="hidden sm:inline">Logout</span>
@@ -238,10 +256,15 @@ export function DashboardLayout({
           </header>
         )}
         {hidePageHeader && (
-          <div className="sticky top-0 z-40 flex min-h-14 items-center border-b border-gray-200 bg-white/95 px-4 py-2 backdrop-blur-sm md:hidden md:px-8">
+          <div
+            className={cn(
+              "sticky top-0 z-40 flex min-h-14 items-center border-b px-4 py-2 backdrop-blur-sm md:hidden md:px-8",
+              sidebarSurface
+            )}
+          >
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger
-                className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-gray-200 text-foreground transition-colors hover:bg-muted"
+                className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-gray-200 text-foreground transition-colors hover:bg-muted dark:border-[#2d2d44] dark:hover:bg-white/5"
                 aria-label="Open navigation menu"
               >
                 <Menu className="size-5" aria-hidden />

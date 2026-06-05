@@ -46,7 +46,7 @@ export function AiOpinionSummaryCard({
 
   if (error) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
+      <div className="rounded-xl border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] p-6 text-center">
         <p className="text-sm text-muted-foreground">🤖 {error}</p>
         {onRetry && (
           <button

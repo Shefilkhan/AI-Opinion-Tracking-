@@ -10,7 +10,7 @@ export function KeywordsSidebar({ data }: KeywordsSidebarProps) {
 
   return (
     <aside className="space-y-6">
-      <div className="rounded-xl border border-gray-200 bg-white p-5">
+      <div className="rounded-xl border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] p-5">
         <h3 className="text-sm font-semibold text-foreground">Top Keywords</h3>
         <ol className="mt-3 space-y-2">
           {data.trending_keywords.map((k, i) => (
@@ -25,7 +25,7 @@ export function KeywordsSidebar({ data }: KeywordsSidebarProps) {
           ))}
         </ol>
       </div>
-      <div className="rounded-xl border border-gray-200 bg-white p-5">
+      <div className="rounded-xl border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] p-5">
         <h3 className="text-sm font-semibold text-foreground">Related Topics</h3>
         <div className="mt-3 flex flex-wrap gap-2">
           {data.related_topics.map((t) => (

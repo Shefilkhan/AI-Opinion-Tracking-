@@ -27,7 +27,7 @@ export function AiDebateAnalysisCard({
 }: AiDebateAnalysisCardProps) {
   if (loading) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white p-6">
+      <div className="rounded-xl border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] p-6">
         <p className="animate-pulse text-sm text-muted-foreground">
           ⚖️ AI is analyzing both sides of the debate…
         </p>
@@ -41,7 +41,7 @@ export function AiDebateAnalysisCard({
 
   if (error) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
+      <div className="rounded-xl border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] p-6 text-center">
         <p className="text-sm text-muted-foreground">🤖 {error}</p>
         {onRetry && (
           <button
@@ -63,7 +63,7 @@ export function AiDebateAnalysisCard({
   const intensity = debate.debate_intensity?.toUpperCase() ?? "MEDIUM"
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30]">
       <div className="border-b border-gray-100 bg-gray-50/80 px-5 py-4">
         <h3 className="text-[15px] font-semibold text-foreground">
           ⚖️ AI Debate Analysis

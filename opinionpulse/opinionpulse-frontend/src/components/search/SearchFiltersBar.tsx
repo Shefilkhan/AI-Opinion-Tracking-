@@ -28,8 +28,8 @@ function FilterGroup({
           className={cn(
             "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors duration-150",
             value === o.id
-              ? "border-primary bg-primary text-primary-foreground"
-              : "border-gray-200 bg-white text-muted-foreground hover:bg-gray-50"
+              ? "border-transparent bg-purple-600 text-white dark:bg-purple-700"
+              : "border-gray-200 bg-white text-gray-600 hover:border-purple-300 dark:border-[#2d2d44] dark:bg-[#1e1e30] dark:text-gray-300 dark:hover:border-purple-500"
           )}
         >
           {o.label}
@@ -41,7 +41,7 @@ function FilterGroup({
 
 export function SearchFiltersBar({ filters, onChange }: SearchFiltersBarProps) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4">
+    <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-[#2d2d44] dark:bg-[#1e1e30]">
       <FilterGroup
         label="Platform"
         value={filters.platform}

@@ -13,7 +13,7 @@ export function OpinionSummaryCard({ data, timeLabel }: OpinionSummaryCardProps)
   const neu = Math.round(s.neutral)
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-6">
+    <div className="rounded-xl border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] p-6">
       <h2 className="text-lg font-semibold text-foreground">
         Results for: &ldquo;{data.query}&rdquo;
       </h2>

@@ -137,7 +137,7 @@ export function SearchPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search for a topic, brand, or keyword..."
-                className="h-[54px] w-full rounded-xl border border-gray-200 bg-white py-2 pl-12 pr-28 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="h-[54px] w-full rounded-xl border border-gray-200 bg-white py-2 pl-12 pr-28 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/30 focus-visible:border-purple-500 dark:border-[#2d2d44] dark:bg-[#1e1e30] dark:text-white dark:placeholder:text-gray-500"
               />
               <Button
                 type="submit"
@@ -161,7 +161,7 @@ export function SearchPage() {
                   setQuery(s.query)
                   runSearch(s.query)
                 }}
-                className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium hover:border-primary hover:text-primary"
+                className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:border-purple-300 hover:text-purple-700 dark:border-[#2d2d44] dark:bg-[#1e1e30] dark:text-gray-300 dark:hover:border-purple-500 dark:hover:text-purple-300"
               >
                 {s.label}
               </button>
@@ -219,7 +219,7 @@ export function SearchPage() {
         )}
 
         {!loading && !error && data && data.results.length === 0 && (
-          <div className="rounded-xl border border-gray-200 bg-white p-12 text-center">
+          <div className="rounded-xl border border-gray-200 bg-white p-12 text-center dark:border-[#2d2d44] dark:bg-[#1e1e30]">
             <Search className="mx-auto size-12 text-muted-foreground/40" />
             <h3 className="mt-4 font-semibold">No results found</h3>
             <p className="mt-2 text-sm text-muted-foreground">

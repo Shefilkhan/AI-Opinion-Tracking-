@@ -62,7 +62,7 @@ export function ReportsPage() {
                 className={
                   range === r
                     ? "rounded-lg border border-primary bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-                    : "rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-muted-foreground"
+                    : "rounded-lg border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] px-4 py-2 text-sm text-muted-foreground"
                 }
               >
                 {r === "all" ? "All time" : `Last ${r} days`}
@@ -71,16 +71,16 @@ export function ReportsPage() {
           </div>
 
           {items.length === 0 ? (
-            <div className="rounded-xl border border-gray-200 bg-white p-12 text-center">
+            <div className="rounded-xl border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] p-12 text-center">
               <p className="font-medium text-foreground">No searches yet</p>
               <p className="mt-2 text-sm text-muted-foreground">
                 Run a search to see reports here.
               </p>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30]">
               <table className="w-full text-left text-sm">
-                <thead className="border-b border-gray-200 bg-gray-50">
+                <thead className="border-b border-gray-200 bg-gray-50 dark:border-[#2d2d44] dark:bg-[#252538]">
                   <tr>
                     <th className="px-4 py-3 font-medium">Query</th>
                     <th className="px-4 py-3 font-medium">Date</th>

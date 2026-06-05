@@ -24,8 +24,8 @@ export function SettingsPanel({
   showSave = true,
 }: SettingsPanelProps) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-5">
-      <div className="mb-6 border-b border-gray-200 pb-4">
+    <div className="rounded-lg border border-gray-200 bg-white p-5 dark:border-[#2d2d44] dark:bg-[#1e1e30]">
+      <div className="mb-6 border-b border-gray-200 pb-4 dark:border-[#2d2d44]">
         <h2 className="text-lg font-semibold tracking-tight text-foreground">{title}</h2>
         {description && (
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
@@ -33,7 +33,7 @@ export function SettingsPanel({
       </div>
       <div className="space-y-6">{children}</div>
       {showSave && onSave && (
-        <div className="mt-8 flex justify-end border-t border-gray-200 pt-6">
+        <div className="mt-8 flex justify-end border-t border-gray-200 pt-6 dark:border-[#2d2d44]">
           <Button
             type="button"
             onClick={onSave}

@@ -106,7 +106,7 @@ function SettingsLayoutInner() {
           type="button"
           variant="outline"
           onClick={handleLogout}
-          className="h-10 shrink-0 gap-2 px-4"
+          className="h-10 shrink-0 gap-2 border-gray-200 px-4 text-gray-600 hover:bg-red-50 hover:text-red-600 dark:border-[#2d2d44] dark:text-gray-300 dark:hover:bg-red-500/10 dark:hover:text-red-400"
         >
           <LogOut className="size-4" aria-hidden />
           Logout

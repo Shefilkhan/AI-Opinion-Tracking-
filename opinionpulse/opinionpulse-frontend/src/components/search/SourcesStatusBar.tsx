@@ -26,7 +26,7 @@ export function SourcesStatusBar({ data }: SourcesStatusBarProps) {
   )
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600 dark:border-[#2d2d44] dark:bg-[#1e1e30] dark:text-gray-300">
       <span className="font-medium text-gray-500">Sources:</span>
       {entries.map((key) => {
         const hasKey = configured[key] !== false

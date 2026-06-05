@@ -22,7 +22,7 @@ export function RecentSearchChips({ items, onRemove }: RecentSearchChipsProps) {
       {items.map((q) => (
         <span
           key={q}
-          className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white py-1.5 pl-3 pr-1 text-sm"
+          className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white py-1.5 pl-3 pr-1 text-sm dark:border-[#2d2d44] dark:bg-[#1e1e30]"
         >
           <button
             type="button"

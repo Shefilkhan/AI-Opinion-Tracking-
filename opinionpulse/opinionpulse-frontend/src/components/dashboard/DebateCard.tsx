@@ -34,7 +34,7 @@ export function DebateCard({ debate }: DebateCardProps) {
   return (
     <article
       className={cn(
-        "rounded-xl border border-gray-200 bg-white p-5 transition-all duration-150",
+        "rounded-xl border border-gray-200 bg-white p-5 transition-all duration-150 dark:border-[#2d2d44] dark:bg-[#1e1e30]",
         "hover:scale-[1.01] hover:shadow-md"
       )}
     >

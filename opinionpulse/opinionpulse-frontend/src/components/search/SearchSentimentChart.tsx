@@ -40,7 +40,7 @@ function ChartTooltip({
 }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs shadow-md">
+    <div className="rounded-lg border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] px-3 py-2 text-xs shadow-md">
       <p className="font-medium text-foreground">{label}</p>
       {payload.map((p) => (
         <p key={p.name} style={{ color: p.color }}>
@@ -62,7 +62,7 @@ export function SearchSentimentChart({ data }: SearchSentimentChartProps) {
   }))
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5">
+    <div className="rounded-xl border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] p-5">
       <h3 className="mb-4 text-sm font-semibold text-foreground">
         Sentiment Trend — Last 24 Hours
       </h3>

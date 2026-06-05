@@ -76,7 +76,7 @@ export function LiveDebates({
       {isLoading ? (
         <LiveDebatesSkeleton />
       ) : debates.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-200 py-12 text-center">
+        <div className="rounded-xl border border-dashed border-gray-200 py-12 text-center dark:border-[#2d2d44]">
           <p className="text-2xl" aria-hidden>
             💬
           </p>

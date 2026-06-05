@@ -60,11 +60,11 @@ export function DashboardPage() {
             {[0, 1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-28 animate-pulse rounded-xl bg-gray-100"
+                className="h-28 animate-pulse rounded-xl bg-gray-100 dark:bg-[#252538]"
               />
             ))}
           </div>
-          <div className="h-36 animate-pulse rounded-xl bg-gray-100" />
+          <div className="h-36 animate-pulse rounded-xl bg-gray-100 dark:bg-[#252538]" />
           <LiveDebates isLoading />
           <MostDiscussed isLoading />
         </div>

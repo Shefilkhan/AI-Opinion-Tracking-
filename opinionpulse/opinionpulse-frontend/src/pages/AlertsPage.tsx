@@ -63,7 +63,7 @@ export function AlertsPage() {
       subtitle="Get notified when sentiment spikes on keywords you care about"
     >
       <div className="mx-auto max-w-2xl space-y-8">
-        <div className="rounded-xl border border-gray-200 bg-white p-6">
+        <div className="rounded-xl border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] p-6">
           <h2 className="text-sm font-semibold text-foreground">New alert</h2>
           <p className="mt-1 text-xs text-muted-foreground">
             Backend delivery is coming soon — rules are saved locally for now.
@@ -108,7 +108,7 @@ export function AlertsPage() {
         </div>
 
         {alerts.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-200 bg-white p-12 text-center">
+          <div className="rounded-xl border border-dashed border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] p-12 text-center">
             <Bell className="mx-auto size-10 text-muted-foreground/50" />
             <p className="mt-4 font-medium">Set up your first alert</p>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -120,7 +120,7 @@ export function AlertsPage() {
             {alerts.map((a) => (
               <li
                 key={a.id}
-                className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-5 py-4"
+                className="flex items-center justify-between rounded-xl border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] px-5 py-4"
               >
                 <div>
                   <p className="font-medium text-foreground">{a.keyword}</p>

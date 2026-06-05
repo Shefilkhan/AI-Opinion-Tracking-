@@ -32,7 +32,7 @@ export function TrendingTopicsRow({ topics }: TrendingTopicsRowProps) {
         <button
           type="button"
           onClick={() => scroll("left")}
-          className="absolute -left-2 top-1/2 z-10 hidden size-8 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm md:flex"
+          className="absolute -left-2 top-1/2 z-10 hidden size-8 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm dark:border-[#2d2d44] dark:bg-[#1e1e30] md:flex"
           aria-label="Scroll left"
         >
           <ChevronLeft className="size-4" />
@@ -50,7 +50,7 @@ export function TrendingTopicsRow({ topics }: TrendingTopicsRowProps) {
                   `/search?q=${encodeURIComponent((t.query || t.name).replace(/^#/, ""))}`
                 )
               }
-              className="min-w-[160px] shrink-0 rounded-[20px] border border-gray-200 bg-white px-4 py-3 text-left transition-all duration-150 hover:scale-[1.02] hover:shadow-md"
+              className="min-w-[160px] shrink-0 rounded-[20px] border border-gray-100 bg-white px-4 py-3 text-left transition-all duration-150 hover:scale-[1.02] hover:shadow-md dark:border-[#2d2d44] dark:bg-[#1e1e30] dark:hover:shadow-black/30"
             >
               <p className="font-semibold text-foreground">{t.name}</p>
               <p className="mt-1 text-xs text-muted-foreground">{t.mentions} mentions</p>
@@ -77,7 +77,7 @@ export function TrendingTopicsRow({ topics }: TrendingTopicsRowProps) {
         <button
           type="button"
           onClick={() => scroll("right")}
-          className="absolute -right-2 top-1/2 z-10 hidden size-8 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm md:flex"
+          className="absolute -right-2 top-1/2 z-10 hidden size-8 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm dark:border-[#2d2d44] dark:bg-[#1e1e30] md:flex"
           aria-label="Scroll right"
         >
           <ChevronRight className="size-4" />

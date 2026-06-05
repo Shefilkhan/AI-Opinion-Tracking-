@@ -14,7 +14,7 @@ type PlatformPulsePanelProps = {
 
 export function PlatformPulsePanel({ items }: PlatformPulsePanelProps) {
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-5">
+    <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-[#2d2d44] dark:bg-[#1e1e30]">
       <h2 className="mb-4 text-lg font-semibold text-foreground">Social Media Pulse</h2>
       <ul className="space-y-5">
         {items.map((p) => (
