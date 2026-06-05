@@ -1,9 +1,15 @@
+.env
+.env.local
+.env.production
+.env.development
+
 venv/
 .venv/
 __pycache__/
 *.py[cod]
-.env
-.env.local
+*.pyo
 *.egg-info/
 .pytest_cache/
 .mypy_cache/
+
+.DS_Store

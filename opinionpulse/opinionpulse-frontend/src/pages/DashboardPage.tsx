@@ -1,41 +1,86 @@
-import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useEffect, useState } from "react"
 import { Search, ThumbsDown, ThumbsUp, TrendingUp } from "lucide-react"
-import { getDashboardOverview } from "@/api/dashboard"
+import { useDashboard } from "@/hooks/useDashboard"
+import {
+  ParticleBackground,
+  type ParticleSentiment,
+} from "@/components/ui/ParticleBackground"
+import { pageShellParticles } from "@/lib/ui-classes"
+import { AiInsightOfTheDay } from "@/components/dashboard/AiInsightOfTheDay"
 import { DebateList } from "@/components/dashboard/DebateList"
 import { LiveDataIndicator } from "@/components/dashboard/LiveDataIndicator"
+import { LiveDebates } from "@/components/dashboard/LiveDebates"
 import { MetricCard } from "@/components/dashboard/MetricCard"
+import { MostDiscussed } from "@/components/dashboard/MostDiscussed"
 import { PlatformPulsePanel } from "@/components/dashboard/PlatformPulsePanel"
 import { RecentSearchChips } from "@/components/dashboard/RecentSearchChips"
 import { TrendingTopicsRow } from "@/components/dashboard/TrendingTopicsRow"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
-import { LoadingState } from "@/components/ui/LoadingState"
 import {
   getRecentSearches,
   removeRecentSearch,
 } from "@/lib/recentSearchStorage"
+import { getSelectedPlan, planDisplayName } from "@/lib/planStorage"
 
 export function DashboardPage() {
   const [recent, setRecent] = useState(getRecentSearches)
+  const selectedPlan = getSelectedPlan()
+  const [overallSentiment, setOverallSentiment] =
+    useState<ParticleSentiment>("neutral")
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["dashboard-overview"],
-    queryFn: getDashboardOverview,
-  })
+  const { data, isLoading, isFetching, refetch } = useDashboard()
+
+  useEffect(() => {
+    if (!data) {
+      setOverallSentiment("neutral")
+      return
+    }
+    const positive = data.stats.positive_sentiment.progress ?? 50
+    const negative = data.stats.negative_sentiment.progress ?? 30
+    if (positive > 60) setOverallSentiment("positive")
+    else if (negative > 60) setOverallSentiment("negative")
+    else setOverallSentiment("neutral")
+  }, [data])
 
   return (
-    <DashboardLayout
-      title="Dashboard"
-      subtitle="Trending opinions and social media pulse"
-    >
-      {isLoading || !data ? (
-        <LoadingState label="Loading dashboard…" />
-      ) : (
+    <div className={pageShellParticles}>
+      <ParticleBackground
+        key={overallSentiment}
+        sentiment={overallSentiment}
+        intensity={0.35}
+      />
+      <div className="relative z-10">
+        <DashboardLayout
+          title="Dashboard"
+          subtitle="Trending opinions and social media pulse"
+        >
+      {isLoading && !data ? (
+        <div className="flex flex-col gap-8">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {[0, 1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-28 animate-pulse rounded-xl bg-gray-100"
+              />
+            ))}
+          </div>
+          <div className="h-36 animate-pulse rounded-xl bg-gray-100" />
+          <LiveDebates isLoading />
+          <MostDiscussed isLoading />
+        </div>
+      ) : data ? (
         <div className="flex flex-col gap-8">
           <LiveDataIndicator
             isLive={data.is_live ?? {}}
             lastUpdated={data.last_updated}
           />
+          {selectedPlan && (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+              🚧 Payment processing coming soon. You have full{" "}
+              <strong>{planDisplayName(selectedPlan)}</strong> access during our
+              beta.
+            </p>
+          )}
           {data.demo_mode && (
             <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
               Some feeds are empty — add API keys in backend{" "}
@@ -75,6 +120,22 @@ export function DashboardPage() {
 
           <TrendingTopicsRow topics={data.trending_topics} />
 
+          <AiInsightOfTheDay />
+
+          <LiveDebates
+            debates={data.live_debates ?? []}
+            isRefreshing={isFetching}
+            lastUpdated={data.last_updated}
+            onRefresh={() => void refetch()}
+          />
+
+          <MostDiscussed
+            items={data.most_discussed ?? []}
+            isRefreshing={isFetching}
+            lastUpdated={data.last_updated}
+            onRefresh={() => void refetch()}
+          />
+
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
             <div className="lg:col-span-3">
               <DebateList debates={data.debates} />
@@ -94,7 +155,9 @@ export function DashboardPage() {
             />
           </section>
         </div>
-      )}
-    </DashboardLayout>
+      ) : null}
+        </DashboardLayout>
+      </div>
+    </div>
   )
 }

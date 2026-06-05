@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, text
 
-from app.api.routes import account, auth, dashboard, health, search, settings as settings_routes
+from app.api.routes import account, ai, auth, dashboard, health, search, settings as settings_routes
 from app.core.config import get_settings
 from app.core.startup_checks import log_env_check
 from app.db import models  # noqa: F401 — register models with metadata
@@ -87,6 +87,7 @@ app.include_router(auth.router)
 app.include_router(account.router)
 app.include_router(dashboard.router)
 app.include_router(search.router)
+app.include_router(ai.router)
 app.include_router(settings_routes.router)
 
 

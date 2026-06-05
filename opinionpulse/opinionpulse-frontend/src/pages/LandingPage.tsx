@@ -1,31 +1,27 @@
 import { Navbar } from "@/components/landing/Navbar"
 import { HeroSection } from "@/components/landing/HeroSection"
-import { ProblemSection } from "@/components/landing/ProblemSection"
-import { SolutionSection } from "@/components/landing/SolutionSection"
+import { LiveStatsBar } from "@/components/landing/LiveStatsBar"
 import { FeaturesSection } from "@/components/landing/FeaturesSection"
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection"
-import { ChatbotPreview } from "@/components/landing/ChatbotPreview"
-import { DashboardPreview } from "@/components/landing/DashboardPreview"
+import { LiveDemoSection } from "@/components/landing/LiveDemoSection"
 import { TechStackSection } from "@/components/landing/TechStackSection"
+import { SocialProofSection } from "@/components/landing/SocialProofSection"
 import { PricingSection } from "@/components/landing/PricingSection"
 import { CTASection } from "@/components/landing/CTASection"
 import { Footer } from "@/components/landing/Footer"
-import { pageMesh } from "@/lib/ui-classes"
-import { cn } from "@/lib/utils"
 
 export function LandingPage() {
   return (
-    <div className={cn("min-h-screen text-foreground", pageMesh)}>
+    <div className="min-h-screen text-foreground">
       <Navbar />
       <main>
         <HeroSection />
-        <ProblemSection />
-        <SolutionSection />
+        <LiveStatsBar />
         <FeaturesSection />
         <HowItWorksSection />
-        <ChatbotPreview />
-        <DashboardPreview />
+        <LiveDemoSection />
         <TechStackSection />
+        <SocialProofSection />
         <PricingSection />
         <CTASection />
       </main>

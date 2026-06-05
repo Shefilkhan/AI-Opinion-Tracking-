@@ -5,6 +5,10 @@ __pycache__/
 venv/
 .venv/
 .env
+.env.local
+.env.*.local
+.env.development
+.env.production
 *.egg-info/
 .pytest_cache/
 .mypy_cache/

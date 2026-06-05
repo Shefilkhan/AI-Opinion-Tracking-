@@ -48,7 +48,9 @@ class Settings(BaseSettings):
     currents_api_key: str = ""
     gnews_api_key: str = ""
     openai_api_key: str = ""
+    anthropic_api_key: str = ""
     cache_duration_seconds: int = 300
+    ai_cache_duration_seconds: int = 600
 
     email_provider: str = "smtp"
     # Preferred names (Gmail); also accepts SMTP_USER / SMTP_PASSWORD

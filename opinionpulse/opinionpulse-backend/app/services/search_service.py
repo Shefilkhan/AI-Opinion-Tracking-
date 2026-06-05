@@ -230,6 +230,37 @@ async def run_search(
     }
 
 
+async def search_all_platforms(
+    query: str,
+    time_range: str = "24h",
+    platform: str = "all",
+    fetch_timeout: float = 6.0,
+) -> list[dict[str, Any]]:
+    """Search all enabled platforms for a topic; used by dashboard widgets."""
+    configured = apis_configured()
+    sources = _resolve_sources(platform, configured)
+
+    async def fetch_one(name: str) -> tuple[str, list[dict[str, Any]], str | None]:
+        try:
+            return await asyncio.wait_for(
+                _fetch_source(name, query, time_range),
+                timeout=fetch_timeout,
+            )
+        except asyncio.TimeoutError:
+            logger.warning("⏱️ %s timed out for '%s'", name, query)
+            return name, [], "timeout"
+
+    settled = await asyncio.gather(*[fetch_one(n) for n in sources])
+    combined: list[dict[str, Any]] = []
+    for _name, results, _err in settled:
+        if results:
+            for row in results:
+                normalized = normalize_result(row, query)
+                if normalized:
+                    combined.append(normalized)
+    return deduplicate_results(combined)
+
+
 def record_search_history(
     db: Session,
     user_id: int,

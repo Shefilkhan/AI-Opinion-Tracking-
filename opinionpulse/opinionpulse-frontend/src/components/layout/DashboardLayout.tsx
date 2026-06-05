@@ -190,13 +190,13 @@ export function DashboardLayout({
 
   return (
     <div className={cn("flex min-h-screen flex-col md:flex-row", pageShell)}>
-      <aside className="hidden w-full shrink-0 flex-col border-b border-gray-200 bg-card md:flex md:w-56 md:border-b-0 md:border-r lg:w-60">
+      <aside className="relative z-20 hidden w-full shrink-0 flex-col border-b border-gray-200 bg-white/95 backdrop-blur-sm md:flex md:w-56 md:border-b-0 md:border-r lg:w-60">
         {sidebar}
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
         {!hidePageHeader && (
-          <header className="sticky top-0 z-40 flex min-h-14 items-center justify-between gap-3 border-b border-gray-200 bg-card/80 px-4 py-2 backdrop-blur-sm sm:gap-4 sm:px-6 md:min-h-16 md:px-8">
+          <header className="sticky top-0 z-40 flex min-h-14 items-center justify-between gap-3 border-b border-gray-200 bg-white/95 px-4 py-2 backdrop-blur-sm sm:gap-4 sm:px-6 md:min-h-16 md:px-8">
             <div className="flex min-w-0 flex-1 items-center gap-3">
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger
@@ -238,7 +238,7 @@ export function DashboardLayout({
           </header>
         )}
         {hidePageHeader && (
-          <div className="sticky top-0 z-40 flex min-h-14 items-center border-b border-gray-200 bg-card/80 px-4 py-2 backdrop-blur-sm md:hidden md:px-8">
+          <div className="sticky top-0 z-40 flex min-h-14 items-center border-b border-gray-200 bg-white/95 px-4 py-2 backdrop-blur-sm md:hidden md:px-8">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger
                 className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-gray-200 text-foreground transition-colors hover:bg-muted"
@@ -259,7 +259,7 @@ export function DashboardLayout({
           </div>
         )}
 
-        <main className="flex-1 px-4 py-4 sm:px-6 sm:py-6 md:px-8 md:py-8">
+        <main className="relative z-10 flex-1 px-4 py-4 sm:px-6 sm:py-6 md:px-8 md:py-8">
           <div className="mx-auto w-full max-w-6xl">{children}</div>
         </main>
       </div>

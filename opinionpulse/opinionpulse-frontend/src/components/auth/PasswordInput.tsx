@@ -1,8 +1,7 @@
 import { useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { authInputClass } from "@/lib/auth/authUi"
 import { cn } from "@/lib/utils"
-import { inputSurface } from "@/lib/ui-classes"
 
 type PasswordInputProps = {
   id: string
@@ -13,6 +12,7 @@ type PasswordInputProps = {
   "aria-invalid"?: boolean
   "aria-describedby"?: string
   autoComplete?: string
+  success?: boolean
 }
 
 export function PasswordInput({
@@ -24,12 +24,13 @@ export function PasswordInput({
   "aria-invalid": ariaInvalid,
   "aria-describedby": ariaDescribedby,
   autoComplete,
+  success,
 }: PasswordInputProps) {
   const [visible, setVisible] = useState(false)
 
   return (
     <div className="relative">
-      <Input
+      <input
         id={id}
         type={visible ? "text" : "password"}
         value={value}
@@ -39,16 +40,16 @@ export function PasswordInput({
         autoComplete={autoComplete}
         aria-invalid={ariaInvalid}
         aria-describedby={ariaDescribedby}
-        className={cn(inputSurface, "pr-11")}
+        className={cn(authInputClass({ error: ariaInvalid, success }), "pr-11")}
       />
       <button
         type="button"
-        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-2 text-muted-foreground hover:bg-gray-100 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-gray-400 transition-colors hover:text-gray-600"
         onClick={() => setVisible((v) => !v)}
         aria-label={visible ? "Hide password" : "Show password"}
         tabIndex={-1}
       >
-        {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+        {visible ? <EyeOff size={16} /> : <Eye size={16} />}
       </button>
     </div>
   )

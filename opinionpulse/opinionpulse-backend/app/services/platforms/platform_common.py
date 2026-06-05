@@ -5,6 +5,9 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 from typing import Any
+
+import requests
+
 from app.services.sentiment_analysis import analyze_sentiment
 
 logger = logging.getLogger(__name__)

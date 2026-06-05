@@ -2,6 +2,10 @@
 
 export const pageShell = "min-h-screen bg-background text-foreground"
 
+/** Lavender gradient shell for pages with particle background */
+export const pageShellParticles =
+  "min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50/50 text-foreground"
+
 export const cardSurface =
   "rounded-lg border border-gray-200 bg-card text-card-foreground shadow-[var(--shadow-subtle)]"
 

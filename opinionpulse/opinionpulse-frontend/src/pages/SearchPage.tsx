@@ -1,9 +1,15 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { Info, Loader2, Search } from "lucide-react"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import {
+  ParticleBackground,
+  type ParticleSentiment,
+} from "@/components/ui/ParticleBackground"
+import { pageShellParticles } from "@/lib/ui-classes"
 import { Button } from "@/components/ui/button"
 import { KeywordsSidebar } from "@/components/search/KeywordsSidebar"
+import { AiInsightsSection } from "@/components/search/AiInsightsSection"
 import { OpinionSummaryCard } from "@/components/search/OpinionSummaryCard"
 import { ResultsFeed } from "@/components/search/ResultsFeed"
 import { SearchFiltersBar } from "@/components/search/SearchFiltersBar"
@@ -88,8 +94,32 @@ export function SearchPage() {
     runSearch(query)
   }
 
+  const particleSentiment = useMemo((): ParticleSentiment => {
+    const s = data?.sentiment_summary
+    if (!s || !hasSearched) return "neutral"
+    if (s.positive > 50) return "positive"
+    if (s.negative > 40) return "negative"
+    return "neutral"
+  }, [data?.sentiment_summary, hasSearched])
+
+  const particleIntensity = loading
+    ? 0.5
+    : hasSearched
+      ? 0.4
+      : 0.25
+
   return (
-    <DashboardLayout title="Search" subtitle="Track public opinion across social media">
+    <div className={pageShellParticles}>
+      <ParticleBackground
+        key={particleSentiment}
+        sentiment={particleSentiment}
+        intensity={particleIntensity}
+      />
+      <div className="relative z-10">
+        <DashboardLayout
+          title="Search"
+          subtitle="Track public opinion across social media"
+        >
       <div className="mx-auto max-w-6xl space-y-8">
         <section className="text-center">
           <h2 className="text-2xl font-semibold text-foreground">Track Public Opinion</h2>
@@ -172,6 +202,7 @@ export function SearchPage() {
                 data={data}
                 timeLabel={TIME_LABELS[filters.timeRange] ?? "Last 24 hours"}
               />
+              <AiInsightsSection data={data} timeRange={filters.timeRange} />
               <SearchSentimentChart data={data} />
               <ResultsFeed results={data.results} />
             </div>
@@ -204,6 +235,8 @@ export function SearchPage() {
           </div>
         )}
       </div>
-    </DashboardLayout>
+        </DashboardLayout>
+      </div>
+    </div>
   )
 }

@@ -18,6 +18,7 @@ from app.services.platforms import (
     get_trending_reddit,
     get_trending_youtube,
 )
+from app.services.dashboard_debates_service import get_dashboard_extras
 from app.services.search_service import platforms_live_status
 from app.services.sentiment_analysis import calculate_sentiment_summary
 
@@ -177,6 +178,12 @@ def get_dashboard_overview(db: Session | None = None) -> dict[str, Any]:
         },
     ]
 
+    try:
+        live_debates, most_discussed = get_dashboard_extras()
+    except Exception as exc:
+        logger.error("Dashboard extras failed: %s", exc)
+        live_debates, most_discussed = [], []
+
     return {
         "stats": {
             "searches_today": {
@@ -208,6 +215,8 @@ def get_dashboard_overview(db: Session | None = None) -> dict[str, Any]:
         },
         "trending_topics": trending,
         "debates": debates,
+        "live_debates": live_debates,
+        "most_discussed": most_discussed,
         "platform_pulse": platform_pulse,
         "demo_mode": not any(
             [reddit_data, news_data, youtube_data]

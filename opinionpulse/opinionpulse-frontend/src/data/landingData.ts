@@ -4,14 +4,13 @@ import {
   BarChart3,
   Bell,
   Bot,
+  Brain,
   Database,
-  FileText,
   Globe,
-  Hash,
-  MessageSquare,
   MessagesSquare,
   Newspaper,
-  Radio,
+  Scale,
+  Search,
   Server,
   Sparkles,
   TrendingUp,
@@ -23,154 +22,214 @@ export const navLinks = [
   { label: "How It Works", href: "#how-it-works" },
   { label: "Tech Stack", href: "#tech-stack" },
   { label: "Demo", href: "#demo" },
-  { label: "Pricing", href: "#pricing" },
+  { label: "Pricing", href: "/pricing" },
 ] as const
 
-export const problemCards: {
-  title: string
-  description: string
-  icon: LucideIcon
-}[] = [
-  {
-    title: "Too many opinions to read",
-    description:
-      "Thousands of comments across Reddit threads, YouTube videos, and news articles make manual review slow and overwhelming.",
-    icon: MessagesSquare,
-  },
-  {
-    title: "Hard to detect negative sentiment early",
-    description:
-      "Critical backlash often spreads before teams notice recurring complaints or emerging risks.",
-    icon: AlertTriangle,
-  },
-  {
-    title: "No single dashboard for all sources",
-    description:
-      "Insights stay scattered across platforms, making it difficult to compare sentiment in one place.",
-    icon: BarChart3,
-  },
-]
+export const trendingTopics = [
+  "Bitcoin",
+  "Climate Change",
+  "Artificial Intelligence",
+  "Elections 2024",
+] as const
 
-export const solutionCards: {
-  title: string
-  description: string
-  icon: LucideIcon
-}[] = [
-  {
-    title: "Collect public data",
-    description:
-      "Gather discussions from Reddit, YouTube comments, and GDELT news/media into one pipeline.",
-    icon: Database,
-  },
-  {
-    title: "Analyze sentiment",
-    description:
-      "Classify opinions as positive, negative, or neutral using NLP and ML models.",
-    icon: Sparkles,
-  },
-  {
-    title: "Detect trending topics",
-    description:
-      "Surface rising keywords, complaints, and conversation themes automatically.",
-    icon: TrendingUp,
-  },
-  {
-    title: "Ask chatbot questions",
-    description:
-      "Query the AI Opinion Assistant for summaries, comparisons, and actionable insights.",
-    icon: Bot,
-  },
-]
+export const liveStats = [
+  { value: 10, suffix: "+", label: "Data Sources Connected" },
+  { value: 100, suffix: "K+", label: "Posts Analyzed Daily" },
+  { value: 3, suffix: "", label: "AI Features Built-in" },
+  { value: 99, suffix: "%", label: "Uptime Guaranteed" },
+] as const
 
 export const features: {
   title: string
   description: string
   icon: LucideIcon
+  emoji: string
+  iconBg: string
+  highlighted?: boolean
 }[] = [
   {
-    title: "Reddit opinion tracking",
-    description: "Monitor subreddit discussions and thread sentiment by keyword.",
-    icon: MessageSquare,
+    emoji: "🔍",
+    title: "Search Across 10 Sources",
+    description:
+      "Reddit, YouTube, Guardian, NewsAPI, Hacker News, Dev.to and more — searched simultaneously in seconds.",
+    icon: Search,
+    iconBg: "bg-purple-100 text-purple-600",
   },
   {
-    title: "YouTube comment sentiment",
-    description: "Analyze viewer reactions and comment tone on video content.",
-    icon: Video,
+    emoji: "🤖",
+    title: "AI-Powered Analysis",
+    description:
+      "Claude AI reads all results and generates a clear summary of what people actually think — and why.",
+    icon: Brain,
+    iconBg: "bg-blue-100 text-blue-600",
+    highlighted: true,
   },
   {
-    title: "GDELT news/media tracking",
-    description: "Track global news narratives and media mentions at scale.",
-    icon: Newspaper,
+    emoji: "⚖️",
+    title: "Live Debate Detection",
+    description:
+      "Automatically identifies topics where opinions are sharply divided and presents both sides objectively.",
+    icon: Scale,
+    iconBg: "bg-orange-100 text-orange-600",
   },
   {
-    title: "Sentiment detection",
-    description: "Positive, negative, and neutral classification for every mention.",
-    icon: Sparkles,
+    emoji: "📈",
+    title: "Sentiment Trend Prediction",
+    description:
+      "AI analyzes momentum and predicts where public opinion is heading over the next 7 days.",
+    icon: TrendingUp,
+    iconBg: "bg-green-100 text-green-600",
   },
   {
-    title: "AI Opinion Assistant",
-    description: "Ask natural-language questions about public opinion trends.",
-    icon: Bot,
-  },
-  {
-    title: "Mention feed",
-    description: "Browse recent mentions with source, date, and sentiment labels.",
-    icon: Radio,
-  },
-  {
-    title: "Sentiment charts",
-    description: "Visualize sentiment shifts over time with interactive charts.",
+    emoji: "📊",
+    title: "Live Opinion Dashboard",
+    description:
+      "See trending debates, most discussed topics, and platform-by-platform sentiment — all updating live.",
     icon: BarChart3,
+    iconBg: "bg-pink-100 text-pink-600",
   },
   {
-    title: "Keyword tracking",
-    description: "Follow brands, products, or topics across all connected sources.",
-    icon: Hash,
-  },
-  {
-    title: "Alerts",
-    description: "Get notified when negative sentiment spikes or keywords trend.",
+    emoji: "🔔",
+    title: "Keyword Alerts",
+    description:
+      "Get notified when sentiment on any topic shifts significantly — before it becomes mainstream news.",
     icon: Bell,
-  },
-  {
-    title: "Reports",
-    description: "Export summaries for research, coursework, or stakeholder reviews.",
-    icon: FileText,
+    iconBg: "bg-yellow-100 text-yellow-600",
   },
 ]
 
 export const howItWorksSteps = [
   {
-    step: 1,
-    title: "Create a project",
-    description: "Set up a tracking workspace for your brand, topic, or research question.",
+    step: "01",
+    title: "Search Any Topic",
+    description:
+      "Type any keyword, brand, person, or event. OpinionPulse searches 10 sources simultaneously.",
+    emoji: "🔍",
   },
   {
-    step: 2,
-    title: "Add keywords",
-    description: "Define the terms, products, or entities you want to monitor.",
+    step: "02",
+    title: "We Gather Live Data",
+    description:
+      "Real posts, articles, and videos are fetched from Reddit, YouTube, NewsAPI, and 7 more sources.",
+    emoji: "📡",
   },
   {
-    step: 3,
-    title: "Select sources",
-    description: "Choose Reddit, YouTube, GDELT news, or any combination.",
+    step: "03",
+    title: "AI Generates Insights",
+    description:
+      "Claude AI analyzes sentiment, detects debates, and predicts where opinion is heading next.",
+    emoji: "🤖",
+  },
+]
+
+export const techStackItems: {
+  name: string
+  abbr: string
+  highlighted?: boolean
+}[] = [
+  { name: "React", abbr: "React" },
+  { name: "FastAPI", abbr: "API" },
+  { name: "Python", abbr: "Py" },
+  { name: "Claude AI", abbr: "AI", highlighted: true },
+  { name: "MySQL", abbr: "SQL" },
+  { name: "Tailwind", abbr: "TW" },
+  { name: "Reddit API", abbr: "R" },
+  { name: "YouTube", abbr: "YT" },
+  { name: "Guardian", abbr: "G" },
+  { name: "NewsAPI", abbr: "N" },
+]
+
+export const socialProofCards = [
+  {
+    emoji: "📚",
+    title: "Academic Research",
+    description:
+      "Built as part of GUNI-SSRIP 2026 internship program at Conestoga College, Waterloo, Ontario.",
   },
   {
-    step: 4,
-    title: "Collect and analyze data",
-    description: "OpinionPulse ingests public data and runs sentiment analysis automatically.",
+    emoji: "🔬",
+    title: "Novel Features",
+    description:
+      "12 research-focused features including AI debate detection, trend prediction, and multi-source fusion.",
   },
   {
-    step: 5,
-    title: "View dashboard and ask chatbot",
-    description: "Explore charts, mentions, and chat with the AI Opinion Assistant.",
+    emoji: "🌐",
+    title: "Real Data Only",
+    description:
+      "Zero mock data in production. All results come from live APIs with real timestamps and real source links.",
+  },
+]
+
+export const pricingPlans = [
+  {
+    name: "Free Local Demo",
+    price: "$0",
+    description: "Run OpinionPulse locally with live API integrations.",
+    features: ["10 data sources", "AI summaries", "Local development"],
+    highlighted: false,
+  },
+  {
+    name: "Student Project",
+    price: "Academic",
+    description: "Built for final-year coursework and portfolio showcases.",
+    features: ["Full feature prototype", "Research-ready UI", "Documentation friendly"],
+    highlighted: true,
+  },
+  {
+    name: "Future SaaS Plan",
+    price: "Coming soon",
+    description: "Planned subscription tiers for teams and businesses.",
+    features: ["Multi-user workspaces", "Advanced alerts", "Enterprise reports"],
+    highlighted: false,
+  },
+]
+
+/** @deprecated Legacy sections — kept for unused preview components */
+export const problemCards = [
+  {
+    title: "Too many opinions to read",
+    description: "Thousands of comments across platforms make manual review overwhelming.",
+    icon: MessagesSquare,
+  },
+  {
+    title: "Hard to detect negative sentiment early",
+    description: "Critical backlash often spreads before teams notice emerging risks.",
+    icon: AlertTriangle,
+  },
+  {
+    title: "No single dashboard for all sources",
+    description: "Insights stay scattered, making comparison difficult.",
+    icon: BarChart3,
+  },
+]
+
+export const solutionCards = [
+  {
+    title: "Collect public data",
+    description: "Gather discussions from Reddit, YouTube, and news into one pipeline.",
+    icon: Database,
+  },
+  {
+    title: "Analyze sentiment",
+    description: "Classify opinions as positive, negative, or neutral using NLP.",
+    icon: Sparkles,
+  },
+  {
+    title: "Detect trending topics",
+    description: "Surface rising keywords and conversation themes automatically.",
+    icon: TrendingUp,
+  },
+  {
+    title: "Ask AI questions",
+    description: "Query Claude for summaries, comparisons, and actionable insights.",
+    icon: Bot,
   },
 ]
 
 export const chatbotMock = {
-  userMessage: "What are people saying about Netflix pricing?",
+  userMessage: "What are people saying about AI regulation?",
   assistantMessage:
-    "Most opinions are negative. Common complaints include price increases, account sharing limits, and reduced value compared to competitors.",
+    "Opinions are divided. Supporters cite innovation benefits; critics emphasize safety and job impacts.",
 }
 
 export const dashboardStats = {
@@ -192,48 +251,18 @@ export const sentimentChartData = [
   { date: "Sun", positive: 42, neutral: 27, negative: 31 },
 ]
 
-export const heroPreviewStats = [
-  { label: "Positive", value: 42, color: "bg-success", widthClass: "w-[42%]" },
-  { label: "Neutral", value: 27, color: "bg-muted-foreground/30", widthClass: "w-[27%]" },
-  { label: "Negative", value: 31, color: "bg-destructive", widthClass: "w-[31%]" },
-]
-
 export const techStack: {
   name: string
   description: string
   icon: LucideIcon
 }[] = [
-  { name: "React + Vite", description: "Modern frontend with fast dev experience", icon: Globe },
-  { name: "FastAPI", description: "Python API for data collection and NLP", icon: Server },
-  { name: "XAMPP MySQL", description: "Relational storage for projects and mentions", icon: Database },
-  { name: "Python NLP", description: "Sentiment analysis and text processing", icon: Sparkles },
-  { name: "Reddit API", description: "Public discussion and thread monitoring", icon: MessageSquare },
-  { name: "YouTube API", description: "Comment and engagement tracking", icon: Video },
-  { name: "GDELT API", description: "Global news and media event data", icon: Newspaper },
-]
-
-export const pricingPlans = [
-  {
-    name: "Free Local Demo",
-    price: "$0",
-    description: "Run OpinionPulse locally with mock and sample data.",
-    features: ["Landing page demo", "Mock dashboard", "Local development"],
-    highlighted: false,
-  },
-  {
-    name: "Student Project",
-    price: "Academic",
-    description: "Built for final-year coursework and portfolio showcases.",
-    features: ["Full feature prototype", "Research-ready UI", "Documentation friendly"],
-    highlighted: true,
-  },
-  {
-    name: "Future SaaS Plan",
-    price: "Coming soon",
-    description: "Planned subscription tiers for teams and businesses.",
-    features: ["Multi-user workspaces", "Advanced alerts", "Enterprise reports"],
-    highlighted: false,
-  },
+  { name: "React + Vite", description: "Modern frontend", icon: Globe },
+  { name: "FastAPI", description: "Python API", icon: Server },
+  { name: "MySQL", description: "Data storage", icon: Database },
+  { name: "Claude AI", description: "AI analysis", icon: Sparkles },
+  { name: "Reddit API", description: "Discussions", icon: Search },
+  { name: "YouTube API", description: "Video comments", icon: Video },
+  { name: "NewsAPI", description: "Headlines", icon: Newspaper },
 ]
 
 export const footerLinks = {
@@ -241,11 +270,26 @@ export const footerLinks = {
     { label: "Features", href: "#features" },
     { label: "How It Works", href: "#how-it-works" },
     { label: "Demo", href: "#demo" },
-    { label: "Pricing", href: "#pricing" },
-  ],
-  resources: [
     { label: "Tech Stack", href: "#tech-stack" },
-    { label: "Dashboard", href: "/dashboard" },
-    { label: "Sign Up", href: "/auth/signup" },
+    { label: "Pricing", href: "/pricing" },
+  ],
+  sources: [
+    { label: "Reddit", href: "#" },
+    { label: "YouTube", href: "#" },
+    { label: "The Guardian", href: "#" },
+    { label: "NewsAPI", href: "#" },
+    { label: "Hacker News", href: "#" },
+    { label: "Dev.to", href: "#" },
+  ],
+  connect: [
+    { label: "GitHub", href: "https://github.com" },
+    { label: "LinkedIn", href: "https://linkedin.com" },
+    { label: "Email", href: "mailto:hello@opinionpulse.io" },
   ],
 }
+
+export const heroPreviewStats = [
+  { label: "Positive", value: 42, color: "bg-green-400" },
+  { label: "Neutral", value: 27, color: "bg-gray-400" },
+  { label: "Negative", value: 31, color: "bg-red-400" },
+]

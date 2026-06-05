@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom"
+import { Clock, Loader2 } from "lucide-react"
 import { ApiError } from "@/api/client"
 import {
   resendOtp,
@@ -8,14 +9,12 @@ import {
   type AuthResponse,
   type OtpType,
 } from "@/api/auth"
-import { AuthLayout } from "@/components/auth/AuthLayout"
+import { AuthSplitLayout } from "@/components/auth/AuthSplitLayout"
 import { DevOtpBanner } from "@/components/auth/DevOtpBanner"
 import { OtpInput } from "@/components/auth/OtpInput"
-import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
 import { useAuth } from "@/contexts/AuthContext"
 import { maskEmail } from "@/lib/auth/maskEmail"
-import { btnPrimary } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 const OTP_SECONDS = 120
@@ -165,53 +164,60 @@ export function VerifyOtpPage() {
   const footerLabel = isPasswordReset ? "Use a different email" : "Back to sign in"
 
   return (
-    <AuthLayout
-      title={isPasswordReset ? "Verify reset code" : "Check your email"}
-      subtitle={
-        isPasswordReset
-          ? `Enter the code we sent to ${maskEmail(email)} to reset your password.`
-          : `We sent a 6-digit code to ${maskEmail(email)}`
-      }
-      footerText="Wrong account?"
-      footerLink={footerLink}
-      footerLinkLabel={footerLabel}
-    >
+    <AuthSplitLayout variant="otp">
       <form onSubmit={handleVerify} className="space-y-5">
-        {import.meta.env.DEV && devOtp ? (
-          <DevOtpBanner code={devOtp} />
-        ) : null}
+        <div className="mb-6">
+          <h2 className="mb-1 text-2xl font-bold text-gray-900">
+            {isPasswordReset ? "Verify reset code" : "Enter verification code"}
+          </h2>
+          <p className="text-sm text-gray-500">
+            {isPasswordReset
+              ? `Code sent to ${maskEmail(email)} to reset your password.`
+              : `We sent a 6-digit code to ${maskEmail(email)}`}
+          </p>
+        </div>
+
+        {import.meta.env.DEV && devOtp ? <DevOtpBanner code={devOtp} /> : null}
 
         <OtpInput
           value={code}
           onChange={setCode}
           onComplete={handleOtpComplete}
           disabled={loading || expired}
+          hasError={Boolean(error)}
         />
 
-        <p
+        <div
           className={cn(
-            "text-center text-sm",
-            expired
-              ? "text-destructive"
-              : timerUrgent
-                ? "text-destructive font-medium"
-                : "text-muted-foreground"
+            "flex items-center justify-center gap-2",
+            timerUrgent && secondsLeft > 0 && "animate-pulse"
           )}
         >
-          {expired
-            ? "Code expired"
-            : `Code expires in ${formatTime(secondsLeft)}`}
-        </p>
+          <Clock
+            size={14}
+            className={cn(
+              expired || timerUrgent ? "text-red-400" : "text-gray-400"
+            )}
+          />
+          <span
+            className={cn(
+              "font-mono text-sm font-medium",
+              expired || timerUrgent ? "text-red-500" : "text-gray-500"
+            )}
+          >
+            {expired ? "Code expired" : formatTime(secondsLeft)}
+          </span>
+        </div>
 
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-sm text-gray-500">
           {resendCooldown > 0 ? (
             <>Resend code in {formatTime(resendCooldown)}</>
           ) : resendCount >= MAX_RESENDS ? (
-            <span className="text-destructive">Resend limit reached for this session.</span>
+            <span className="text-red-600">Resend limit reached for this session.</span>
           ) : (
             <button
               type="button"
-              className="font-medium text-primary hover:underline"
+              className="font-medium text-purple-600 hover:underline"
               onClick={handleResend}
             >
               Didn&apos;t receive the code? Resend
@@ -222,30 +228,36 @@ export function VerifyOtpPage() {
         {error && (
           <p
             role="alert"
-            className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+            className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
           >
             {error}
           </p>
         )}
 
-        <Button
+        <button
           type="submit"
-          disabled={loading || code.length !== 6}
-          className={cn("w-full min-h-11", btnPrimary)}
+          disabled={loading || code.length !== 6 || expired}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:scale-[1.02] hover:from-purple-500 hover:to-indigo-500 hover:shadow-lg hover:shadow-purple-200 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {loading
-            ? "Please wait…"
-            : isPasswordReset
-              ? "Continue"
-              : "Verify Code"}
-        </Button>
+          {loading ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              Please wait…
+            </>
+          ) : isPasswordReset ? (
+            "Continue"
+          ) : (
+            "Verify Code"
+          )}
+        </button>
 
-        <p className="text-center text-sm">
-          <Link to="/auth/signin" className="text-primary hover:underline">
-            Back to sign in
+        <p className="text-center text-sm text-gray-500">
+          Wrong account?{" "}
+          <Link to={footerLink} className="font-medium text-purple-600 hover:underline">
+            {footerLabel}
           </Link>
         </p>
       </form>
-    </AuthLayout>
+    </AuthSplitLayout>
   )
 }

@@ -38,3 +38,13 @@ def cached(key: str, fetcher: Callable[[], T], ttl_seconds: Optional[int] = None
     value = fetcher()
     cache_set(key, value, ttl_seconds)
     return value
+
+
+def get_cached(key: str) -> Optional[Any]:
+    """Alias for cache_get (AI service compatibility)."""
+    return cache_get(key)
+
+
+def set_cached(key: str, value: Any, duration: Optional[int] = None) -> None:
+    """Alias for cache_set with explicit TTL in seconds."""
+    cache_set(key, value, duration)

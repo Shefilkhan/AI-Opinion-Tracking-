@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useSearchParams } from "react-router-dom"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { LandingPage } from "@/pages/LandingPage"
+import { PricingPage } from "@/pages/PricingPage"
 import { SignInPage } from "@/pages/auth/SignInPage"
 import { SignUpPage } from "@/pages/auth/SignUpPage"
 import { VerifyOtpPage } from "@/pages/auth/VerifyOtpPage"
@@ -29,6 +30,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/pricing" element={<PricingPage />} />
 
       <Route path="/auth/signup" element={<SignUpPage />} />
       <Route path="/auth/signin" element={<SignInPage />} />

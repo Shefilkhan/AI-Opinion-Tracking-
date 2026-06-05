@@ -4,10 +4,10 @@ import { cn } from "@/lib/utils"
 type OtpInputProps = {
   value: string
   onChange: (value: string) => void
-  /** Fired when all 6 digits are filled (paste or typing the last digit). */
   onComplete?: (code: string) => void
   disabled?: boolean
   autoFocus?: boolean
+  hasError?: boolean
 }
 
 const LENGTH = 6
@@ -18,6 +18,7 @@ export function OtpInput({
   onComplete,
   disabled,
   autoFocus = true,
+  hasError = false,
 }: OtpInputProps) {
   const inputsRef = useRef<(HTMLInputElement | null)[]>([])
   const [digits, setDigits] = useState<string[]>(
@@ -77,7 +78,10 @@ export function OtpInput({
 
   return (
     <div
-      className="flex justify-center gap-2"
+      className={cn(
+        "flex justify-center gap-2",
+        hasError && "auth-shake"
+      )}
       role="group"
       aria-label="6-digit verification code"
     >
@@ -95,9 +99,12 @@ export function OtpInput({
           disabled={disabled}
           aria-label={`Digit ${index + 1} of 6`}
           className={cn(
-            "h-14 w-12 rounded-lg border border-gray-200 bg-white text-center text-2xl font-semibold text-foreground",
-            "transition-colors duration-150 hover:bg-gray-50",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            "h-14 w-12 rounded-xl border-2 bg-gray-50 text-center text-xl font-bold text-gray-900 caret-transparent",
+            "outline-none transition-all duration-200",
+            "focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-500/20",
+            digit && !hasError && "border-purple-500 bg-purple-50 text-purple-700",
+            hasError && "border-red-400 bg-red-50",
+            !digit && !hasError && "border-gray-200"
           )}
           onChange={(e) => handleChange(index, e.target.value)}
           onKeyDown={(e) => handleKeyDown(index, e)}
