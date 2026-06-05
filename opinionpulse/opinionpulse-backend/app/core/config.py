@@ -48,6 +48,8 @@ class Settings(BaseSettings):
     currents_api_key: str = ""
     gnews_api_key: str = ""
     openai_api_key: str = ""
+    ai_provider: str = "groq"
+    groq_api_key: str = ""
     anthropic_api_key: str = ""
     cache_duration_seconds: int = 300
     ai_cache_duration_seconds: int = 600

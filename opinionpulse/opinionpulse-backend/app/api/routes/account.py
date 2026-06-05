@@ -1,16 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
+from app.services.user_profile_service import validate_username
 from app.core.security import hash_password, verify_password
 from app.db.database import get_db
-from app.db.models import SavedSearch, SearchHistory, User
+from app.db.models import User
 from app.schemas.account import (
     AccountPasswordUpdate,
     AccountProfileResponse,
     AccountProfileUpdate,
     AccountStatsResponse,
+)
+from app.services.user_profile_service import (
+    apply_profile_updates,
+    get_user_stats,
+    profile_to_response,
 )
 
 router = APIRouter(prefix="/api/account", tags=["account"])
@@ -18,7 +23,7 @@ router = APIRouter(prefix="/api/account", tags=["account"])
 
 @router.get("/profile", response_model=AccountProfileResponse)
 def get_profile(current_user: User = Depends(get_current_user)):
-    return AccountProfileResponse.model_validate(current_user)
+    return profile_to_response(current_user)
 
 
 @router.put("/profile", response_model=AccountProfileResponse)
@@ -27,10 +32,33 @@ def update_profile(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    current_user.name = payload.name.strip()
+    data = payload.model_dump(exclude_unset=True)
+    if not data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No valid fields to update",
+        )
+
+    if "username" in data and data["username"]:
+        validate_username(data["username"])
+        existing = (
+            db.query(User)
+            .filter(
+                User.username == data["username"].strip(),
+                User.id != current_user.id,
+            )
+            .first()
+        )
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username already taken",
+            )
+
+    apply_profile_updates(current_user, data)
     db.commit()
     db.refresh(current_user)
-    return AccountProfileResponse.model_validate(current_user)
+    return profile_to_response(current_user)
 
 
 @router.put("/password")
@@ -59,24 +87,4 @@ def get_account_stats(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    total_searches = (
-        db.query(SearchHistory)
-        .filter(SearchHistory.user_id == current_user.id)
-        .count()
-    )
-    total_results = (
-        db.query(func.coalesce(func.sum(SearchHistory.results_count), 0))
-        .filter(SearchHistory.user_id == current_user.id)
-        .scalar()
-        or 0
-    )
-    saved_searches = (
-        db.query(SavedSearch)
-        .filter(SavedSearch.user_id == current_user.id)
-        .count()
-    )
-    return AccountStatsResponse(
-        total_searches=total_searches,
-        total_results=int(total_results),
-        saved_searches=saved_searches,
-    )
+    return get_user_stats(db, current_user)

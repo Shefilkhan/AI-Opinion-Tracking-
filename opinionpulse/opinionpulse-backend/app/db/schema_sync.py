@@ -100,3 +100,58 @@ def ensure_users_schema(engine: Engine) -> None:
             conn.execute(
                 text("ALTER TABLE users ADD COLUMN lock_until DATETIME NULL")
             )
+
+        columns = {col["name"] for col in inspector.get_columns("users")}
+
+        if "username" not in columns:
+            conn.execute(
+                text("ALTER TABLE users ADD COLUMN username VARCHAR(30) NULL")
+            )
+        if "bio" not in columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN bio TEXT NULL"))
+
+
+REQUIRED_CHAT_COLUMNS = {
+    "id",
+    "user_id",
+    "conversation_id",
+    "role",
+    "content",
+    "metadata_json",
+    "created_at",
+}
+
+
+def ensure_chat_messages_schema(engine: Engine) -> None:
+    """Drop and recreate chat_messages if schema is missing required columns."""
+    inspector = inspect(engine)
+    table_names = inspector.get_table_names()
+
+    if "chat_messages" in table_names:
+        columns = {col["name"] for col in inspector.get_columns("chat_messages")}
+        if REQUIRED_CHAT_COLUMNS.issubset(columns):
+            return
+
+    with engine.begin() as conn:
+        conn.execute(text("DROP TABLE IF EXISTS chat_messages"))
+        conn.execute(
+            text(
+                """
+                CREATE TABLE chat_messages (
+                    id VARCHAR(36) PRIMARY KEY,
+                    user_id INT NOT NULL,
+                    conversation_id VARCHAR(64) NOT NULL,
+                    role VARCHAR(20) NOT NULL,
+                    content TEXT NOT NULL,
+                    metadata_json JSON NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_user_conv (user_id, conversation_id),
+                    INDEX idx_user_id (user_id),
+                    INDEX idx_conversation_id (conversation_id),
+                    INDEX idx_created (created_at),
+                    CONSTRAINT fk_chat_messages_user
+                        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+                """
+            )
+        )

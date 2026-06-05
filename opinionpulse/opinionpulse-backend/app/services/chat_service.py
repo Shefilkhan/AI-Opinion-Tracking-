@@ -1,474 +1,468 @@
-import json
+"""Pulse AI — Groq (Llama 3.3 70B) chat with live platform data."""
+
+from __future__ import annotations
+
+import asyncio
+import logging
+import os
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
-from sqlalchemy import or_
-from sqlalchemy.orm import Session, joinedload
+from app.core.config import get_settings
+from app.services.cache_utils import get_cached, set_cached
+from app.services.platforms.wikipedia import get_wikipedia_summary
+from app.services.search_service import search_all_platforms
 
-from app.db.models import ChatMessage, ChatSession, Keyword, Mention, SentimentResult
-from app.services.analytics_service import get_source_sentiment, get_top_mentions
-from app.services.sentiment_service import (
-    get_project_sentiment_summary as sentiment_summary,
-    get_project_sentiment_trends,
-)
+logger = logging.getLogger(__name__)
 
-STOPWORDS = {
-    "a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
-    "have", "has", "had", "do", "does", "did", "will", "would", "could",
-    "should", "may", "might", "must", "shall", "can", "need", "dare",
-    "ought", "used", "to", "of", "in", "for", "on", "with", "at", "by",
-    "from", "as", "into", "through", "during", "before", "after", "above",
-    "below", "between", "under", "again", "further", "then", "once",
-    "here", "there", "when", "where", "why", "how", "all", "each", "few",
-    "more", "most", "other", "some", "such", "no", "nor", "not", "only",
-    "own", "same", "so", "than", "too", "very", "just", "and", "but",
-    "if", "or", "because", "until", "while", "about", "against", "what",
-    "which", "who", "whom", "this", "that", "these", "those", "am", "i",
-    "you", "he", "she", "it", "we", "they", "me", "my", "your", "our",
-    "their", "his", "her", "its", "tell", "give", "show", "know", "get",
-}
+GROQ_MODEL = "llama-3.3-70b-versatile"
+ANTHROPIC_MODEL = "claude-sonnet-4-20250514"
+AI_TIMEOUT_SECONDS = 25.0
 
-SOURCE_NAMES = {
-    "reddit": "Reddit",
-    "youtube": "YouTube",
-    "gdelt": "GDELT",
-    "hackernews": "Hacker News",
-    "manual": "Manual",
-}
+_settings = get_settings()
+AI_PROVIDER = os.getenv("AI_PROVIDER", _settings.ai_provider or "groq").lower()
 
+groq_client = None
+anthropic_client = None
 
-def detect_intent(question: str) -> str:
-    q = question.lower()
-    if any(
-        w in q
-        for w in (
-            "complaint",
-            "complaints",
-            "dislike",
-            "negative",
-            "bad",
-            "issue",
-            "problem",
-            "hate",
-            "worst",
-            "angry",
-            "frustrat",
-        )
-    ):
-        return "complaints"
-    if any(
-        w in q
-        for w in (
-            "like",
-            "positive",
-            "good",
-            "love",
-            "best",
-            "praise",
-            "enjoy",
-            "favor",
-        )
-    ):
-        return "positive_points"
-    if any(w in q for w in ("compare", "comparison", " vs ", " versus ", "reddit vs", "youtube vs")):
-        return "comparison"
-    if "reddit" in q and ("youtube" in q or "gdelt" in q):
-        return "comparison"
-    if any(w in q for w in ("trend", "changing", "improving", "worse", "over time", "timeline")):
-        return "trend"
-    if any(w in q for w in ("top mention", "strongest", "most negative", "most positive")):
-        return "top_mentions"
-    if "reddit" in q or "youtube" in q or "gdelt" in q or "hackernews" in q:
-        return "source_specific"
-    if any(
-        w in q
-        for w in (
-            "what are people saying",
-            "what do people",
-            "summarize",
-            "summary",
-            "overall",
-            "public opinion",
-            "opinion",
-            "saying about",
-        )
-    ):
-        return "summary"
-    if any(w in q for w in ("mostly positive", "mostly negative", "positive or negative")):
-        return "summary"
-    return "unknown"
+if AI_PROVIDER == "groq" or os.getenv("GROQ_API_KEY") or _settings.groq_api_key.strip():
+    try:
+        from groq import Groq
+
+        _groq_key = os.getenv("GROQ_API_KEY", _settings.groq_api_key).strip()
+        if _groq_key:
+            groq_client = Groq(api_key=_groq_key)
+            logger.info("Groq AI client initialized (free tier)")
+    except Exception as exc:
+        logger.error("Groq init failed: %s", exc)
+
+_anthropic_key = os.getenv("ANTHROPIC_API_KEY", _settings.anthropic_api_key).strip()
+if _anthropic_key:
+    try:
+        import anthropic
+
+        anthropic_client = anthropic.Anthropic(api_key=_anthropic_key)
+        logger.info("Anthropic Claude client initialized (fallback)")
+    except Exception as exc:
+        logger.error("Anthropic init failed: %s", exc)
+
+SYSTEM_PROMPT = """You are Pulse AI, an intelligent assistant for OpinionPulse
+— a social media public opinion tracking platform.
+
+You have access to real-time data from Reddit, YouTube,
+NewsAPI, Guardian, HackerNews, Dev.to, and Wikipedia.
+
+When answering:
+- Be specific and data-driven
+- Cite real numbers and sources when available
+- Give sentiment percentages when relevant
+- Keep responses clear and well-structured
+- Use bullet points for lists
+- Use markdown formatting (bold, bullets)
+
+IMPORTANT: You MUST end every single response with
+exactly this format on its own line at the very end:
+
+SUGGESTIONS: ["first suggestion here", "second suggestion here", "third suggestion here"]
+
+Example:
+SUGGESTIONS: ["What do people think about Bitcoin?", "Show me AI sentiment trends", "Compare climate change opinions"]
+
+This line is required in every response. Never skip it.
+Each suggestion should be a relevant follow-up search the user might explore next.
+
+Tone: Professional but friendly.
+Like a smart research assistant who has just
+read 100 social media posts for you.
+
+Never say you don't have access to real-time data.
+Never make up statistics — only use provided data.
+Never mention being Llama or any other model name.
+You are Pulse AI, powered by OpinionPulse technology."""
 
 
-def extract_keywords_from_question(
-    db: Session, project_id: int, question: str
-) -> List[str]:
-    keywords = (
-        db.query(Keyword).filter(Keyword.project_id == project_id).all()
-    )
-    q_lower = question.lower()
-    matched = [kw.keyword for kw in keywords if kw.keyword.lower() in q_lower]
-    if matched:
-        return matched
-
-    tokens = re.findall(r"[a-z0-9]+", q_lower)
-    important = [t for t in tokens if t not in STOPWORDS and len(t) > 2]
-    return important[:5]
-
-
-def _mention_query(db: Session, project_id: int):
-    return (
-        db.query(Mention)
-        .options(joinedload(Mention.sentiment_result))
-        .filter(Mention.project_id == project_id)
-    )
-
-
-def _filter_by_keywords(query, keywords: List[str]):
-    if not keywords:
-        return query
-    clauses = [Mention.text.ilike(f"%{kw}%") for kw in keywords]
-    return query.filter(or_(*clauses))
-
-
-def _mention_to_supporting(m: Mention) -> Dict[str, Any]:
-    sr = m.sentiment_result
-    return {
-        "id": m.id,
-        "source": m.source,
-        "text": m.text[:500],
-        "sentiment_label": sr.sentiment_label if sr else "unknown",
-        "sentiment_score": float(sr.sentiment_score) if sr else 0.0,
-        "url": m.url,
-        "author": m.author,
-    }
-
-
-def get_relevant_mentions(
-    db: Session,
-    project_id: int,
-    question: str,
-    intent: str,
-    limit: int = 8,
-) -> Tuple[List[Mention], List[str]]:
-    keywords = extract_keywords_from_question(db, project_id, question)
-    q_lower = question.lower()
-
-    query = _mention_query(db, project_id)
-    query = query.join(
-        SentimentResult, Mention.id == SentimentResult.mention_id
-    )
-
-    if intent == "complaints":
-        query = query.filter(SentimentResult.sentiment_label == "negative")
-        query = query.order_by(SentimentResult.sentiment_score.asc())
-    elif intent == "positive_points":
-        query = query.filter(SentimentResult.sentiment_label == "positive")
-        query = query.order_by(SentimentResult.sentiment_score.desc())
-    elif intent == "top_mentions" and "negative" in q_lower:
-        query = query.filter(SentimentResult.sentiment_label == "negative")
-        query = query.order_by(SentimentResult.sentiment_score.asc())
-    elif intent == "top_mentions":
-        query = query.order_by(SentimentResult.sentiment_score.desc())
-    elif intent == "source_specific":
-        for src in ("reddit", "youtube", "gdelt", "hackernews", "manual"):
-            if src in q_lower:
-                query = query.filter(Mention.source == src)
-                break
-    else:
-        query = query.order_by(SentimentResult.sentiment_score.desc())
-
-    query = _filter_by_keywords(query, keywords)
-    mentions = query.limit(limit).all()
-
-    if len(mentions) < 3 and intent in ("summary", "unknown", "comparison", "trend"):
-        fallback = (
-            _mention_query(db, project_id)
-            .join(SentimentResult, Mention.id == SentimentResult.mention_id)
-            .order_by(SentimentResult.sentiment_score.desc())
-            .limit(limit)
-            .all()
-        )
-        seen = {m.id for m in mentions}
-        for m in fallback:
-            if m.id not in seen:
-                mentions.append(m)
-                seen.add(m.id)
-            if len(mentions) >= limit:
-                break
-
-    sources = sorted({m.source for m in mentions})
-    return mentions, sources
-
-
-def _truncate(text: str, max_len: int = 120) -> str:
-    text = text.strip().replace("\n", " ")
-    if len(text) <= max_len:
-        return text
-    return text[: max_len - 3] + "..."
-
-
-def _themes_from_mentions(mentions: List[Mention], label: str) -> List[str]:
-    items = [m for m in mentions if m.sentiment_result and m.sentiment_result.sentiment_label == label]
-    themes = []
-    for m in items[:4]:
-        themes.append(f"- {_truncate(m.text)}")
-    return themes
-
-
-def _format_source_comparison(db: Session, project_id: int) -> str:
-    rows = get_source_sentiment(db, project_id)
-    lines = ["Source comparison:", ""]
-    for row in rows:
-        if row["total"] == 0:
-            continue
-        name = SOURCE_NAMES.get(row["source"], row["source"])
-        tone = "neutral"
-        if row["positive"] > row["negative"]:
-            tone = "more positive discussion"
-        elif row["negative"] > row["positive"]:
-            tone = "more negative discussion"
-        lines.append(f"{name}:")
-        lines.append(f"- {row['total']} analyzed mentions ({tone})")
-        lines.append(f"- Positive: {row['positive']}, Neutral: {row['neutral']}, Negative: {row['negative']}")
-        lines.append("")
-    if len(lines) <= 2:
-        return "Not enough source-specific data to compare yet."
-    return "\n".join(lines).strip()
-
-
-def _format_trend(db: Session, project_id: int, summary: Dict[str, Any]) -> str:
-    trends = get_project_sentiment_trends(db, project_id)
-    if not trends:
-        return (
-            f"Overall sentiment across {summary['total_analyzed']} analyzed mentions: "
-            f"{summary['positive']} positive, {summary['neutral']} neutral, "
-            f"{summary['negative']} negative (average score {summary['average_score']:+.2f})."
-        )
-    lines = [
-        "Sentiment trend by day:",
-        "",
+def should_fetch_data(message: str) -> bool:
+    message_lower = message.lower()
+    data_triggers = [
+        "what do people think",
+        "opinion on",
+        "sentiment",
+        "trending",
+        "popular",
+        "people say",
+        "public thinks",
+        "what is",
+        "tell me about",
+        "analyze",
+        "thoughts on",
+        "how do people feel",
+        "reaction to",
+        "debate",
+        "predict",
+        "forecast",
+        "trend",
+        "search for",
+        "find",
+        "show me",
+        "what about",
+        "latest",
+        "news about",
+        "compare",
+        "vs",
+        "versus",
+        "reddit",
+        "youtube",
+        "social media",
     ]
-    for day in trends[-5:]:
-        lines.append(
-            f"- {day['date']}: +{day['positive']} / ~{day['neutral']} / -{day['negative']} "
-            f"(avg {day['average_score']:+.2f})"
-        )
-    lines.append("")
-    lines.append(
-        f"Across all analyzed data: {summary['positive']} positive, "
-        f"{summary['neutral']} neutral, {summary['negative']} negative."
-    )
-    return "\n".join(lines)
+    return any(trigger in message_lower for trigger in data_triggers)
 
 
-def generate_answer(db: Session, project_id: int, question: str) -> Dict[str, Any]:
-    total_mentions = db.query(Mention).filter(Mention.project_id == project_id).count()
-    if total_mentions == 0:
-        return {
-            "answer": (
-                "I do not have any collected mentions for this project yet. "
-                "Please collect data from Reddit, YouTube, or GDELT first."
-            ),
-            "intent": "unknown",
-            "sources_used": [],
-            "sentiment": {"positive": 0, "neutral": 0, "negative": 0},
-            "supporting_mentions": [],
-        }
+def extract_search_query(message: str) -> str:
+    prefixes = [
+        "what do people think about ",
+        "what is the opinion on ",
+        "tell me about ",
+        "search for ",
+        "find information about ",
+        "what is the sentiment on ",
+        "how do people feel about ",
+        "what are people saying about ",
+        "latest news on ",
+        "show me ",
+        "analyze ",
+        "what about ",
+        "predict where ",
+        "compare opinions on ",
+    ]
 
-    summary = sentiment_summary(db, project_id)
-    if summary["total_analyzed"] == 0:
-        return {
-            "answer": (
-                "I found mentions for this project, but they have not been analyzed yet. "
-                "Please click Analyze Sentiment first so I can answer with sentiment insights."
-            ),
-            "intent": "unknown",
-            "sources_used": [],
-            "sentiment": {"positive": 0, "neutral": 0, "negative": 0},
-            "supporting_mentions": [],
-        }
+    query = message.strip().rstrip("?!.")
+    query_lower = query.lower()
 
-    intent = detect_intent(question)
-    if intent == "unknown":
-        intent = "summary"
+    for prefix in prefixes:
+        if query_lower.startswith(prefix):
+            query = query[len(prefix) :]
+            break
 
-    mentions, sources_used = get_relevant_mentions(db, project_id, question, intent)
-    supporting = [_mention_to_supporting(m) for m in mentions[:8]]
+    if " vs " in query.lower() or " versus " in query.lower():
+        return query.strip()
 
-    pos_pct = summary["positive_percentage"]
-    neg_pct = summary["negative_percentage"]
-    overall = "mixed"
-    if pos_pct > neg_pct + 10:
-        overall = "mostly positive"
-    elif neg_pct > pos_pct + 10:
-        overall = "mostly negative"
-    else:
-        overall = "mixed"
+    words = query.split()
+    if len(words) > 6:
+        query = " ".join(words[:6])
 
-    source_list = ", ".join(SOURCE_NAMES.get(s, s) for s in sorted(set(sources_used))) or "your sources"
+    return query.strip() if len(query) > 2 else message[:60]
 
-    if intent == "complaints":
-        neg_mentions = [m for m in mentions if m.sentiment_result and m.sentiment_result.sentiment_label == "negative"]
-        themes = _themes_from_mentions(neg_mentions or mentions, "negative")
-        answer = (
-            f"The main negative opinions from {summary['negative']} negative mentions "
-            f"(of {summary['total_analyzed']} analyzed) include:\n\n"
-            + ("\n".join(themes) if themes else "- General dissatisfaction in collected comments.")
-            + f"\n\nMost negative discussion appears across {source_list}."
-        )
-    elif intent == "positive_points":
-        pos_themes = _themes_from_mentions(mentions, "positive")
-        answer = (
-            f"Users are mostly positive across {summary['positive']} positive mentions:\n\n"
-            + ("\n".join(pos_themes) if pos_themes else "- Positive themes in collected feedback.")
-            + f"\n\nStrongest positive signals often come from {source_list}."
-        )
-    elif intent == "comparison":
-        answer = _format_source_comparison(db, project_id)
-    elif intent == "trend":
-        answer = _format_trend(db, project_id, summary)
-    elif intent == "top_mentions":
-        top = get_top_mentions(db, project_id, limit=3)
-        lines = ["Notable mentions from your analyzed data:", ""]
-        for item in top["top_negative"][:2]:
-            lines.append(f"- [{item['source']}] {item['text'][:200]} (score {item['sentiment_score']:+.2f})")
-        for item in top["top_positive"][:2]:
-            lines.append(f"- [{item['source']}] {item['text'][:200]} (score {item['sentiment_score']:+.2f})")
-        answer = "\n".join(lines)
-    else:
-        pos_themes = _themes_from_mentions(mentions, "positive")
-        neg_themes = _themes_from_mentions(mentions, "negative")
-        answer = (
-            f"Based on {summary['total_analyzed']} analyzed mentions across {source_list}, "
-            f"public opinion is {overall}.\n\n"
-            f"Positive themes ({summary['positive']} mentions, {pos_pct:.0f}%):\n"
-            + ("\n".join(pos_themes) if pos_themes else "- Some favorable comments in the data.")
-            + f"\n\nNegative themes ({summary['negative']} mentions, {neg_pct:.0f}%):\n"
-            + ("\n".join(neg_themes) if neg_themes else "- Some concerns in the data.")
-            + f"\n\nOverall average sentiment score: {summary['average_score']:+.2f}."
-        )
 
+def extract_comparison_queries(message: str) -> list[str]:
+    lower = message.lower()
+    for sep in (" vs ", " versus ", " vs. ", " compare ", " compared to "):
+        if sep in lower:
+            parts = re.split(re.escape(sep.strip()), message, maxsplit=1, flags=re.I)
+            if len(parts) == 2:
+                left = extract_search_query(parts[0].replace("compare", "").strip())
+                right = extract_search_query(parts[1].strip())
+                if left and right:
+                    return [left, right]
+    return []
+
+
+def extract_suggestions(response_text: str) -> list[str]:
+    patterns = [
+        r"SUGGESTIONS:\s*\[([^\]]+)\]",
+        r"suggestions:\s*\[([^\]]+)\]",
+        r"\*\*Suggested searches:\*\*\s*\[([^\]]+)\]",
+        r"Suggested searches:\s*\[([^\]]+)\]",
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, response_text, re.IGNORECASE | re.DOTALL)
+        if not match:
+            continue
+        suggestions_str = match.group(1)
+        suggestions = re.findall(r'["\']([^"\']+)["\']', suggestions_str)
+        if not suggestions:
+            suggestions = [
+                s.strip().strip("\"'")
+                for s in suggestions_str.split(",")
+            ]
+        result = [s.strip() for s in suggestions if len(s.strip()) > 3][:3]
+        if result:
+            return result
+
+    return []
+
+
+def clean_response_text(response: str) -> str:
+    return re.sub(
+        r"\n?SUGGESTIONS:\s*\[[^\]]+\]",
+        "",
+        response,
+        flags=re.IGNORECASE,
+    ).strip()
+
+
+def _sentiment_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
+    total = len(results)
+    if total == 0:
+        return {"positive": 0, "negative": 0, "neutral": 0, "total": 0}
+    positive = len([r for r in results if r.get("sentiment") == "positive"])
+    negative = len([r for r in results if r.get("sentiment") == "negative"])
+    neutral = total - positive - negative
     return {
-        "answer": answer.strip(),
-        "intent": intent,
-        "sources_used": sources_used,
-        "sentiment": {
-            "positive": summary["positive"],
-            "neutral": summary["neutral"],
-            "negative": summary["negative"],
-        },
-        "supporting_mentions": supporting,
+        "positive": round((positive / total) * 100),
+        "negative": round((negative / total) * 100),
+        "neutral": round((neutral / total) * 100),
+        "total": total,
     }
 
 
-def _session_title(question: str) -> str:
-    title = question.strip()
-    if len(title) > 60:
-        return title[:57] + "..."
-    return title or "Chat session"
+def _build_context_data(
+    search_query: str,
+    fetched_results: list[dict[str, Any]],
+    sentiment_summary: dict[str, Any],
+    wiki_summary: dict | None,
+) -> str:
+    if not fetched_results:
+        return ""
+
+    top_results = fetched_results[:15]
+    context_lines = []
+    for r in top_results:
+        engagement = r.get("engagement") or {}
+        likes = engagement.get("likes", 0) if isinstance(engagement, dict) else 0
+        context_lines.append(
+            f"[{r.get('platform', '').upper()}] "
+            f"{r.get('author', 'Unknown')} — "
+            f"{r.get('title', '')}: "
+            f"{str(r.get('content', ''))[:150]} "
+            f"(sentiment: {r.get('sentiment', 'neutral')}, likes: {likes})"
+        )
+
+    wiki_text = "Not available"
+    if wiki_summary and isinstance(wiki_summary, dict):
+        wiki_text = str(wiki_summary.get("summary", ""))[:300]
+
+    return f"""
+REAL-TIME DATA FETCHED FOR "{search_query}":
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total results: {len(fetched_results)} posts/articles
+Time range: Last 7 days
+
+SENTIMENT BREAKDOWN:
+  Positive: {sentiment_summary.get('positive', 0)}%
+  Negative: {sentiment_summary.get('negative', 0)}%
+  Neutral:  {sentiment_summary.get('neutral', 0)}%
+
+TOP POSTS & ARTICLES:
+{chr(10).join(context_lines)}
+
+WIKIPEDIA CONTEXT:
+{wiki_text}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Use this real data to give a specific, accurate answer.
+"""
 
 
-def save_chat_interaction(
-    db: Session,
-    user_id: int,
-    project_id: int,
-    session_id: Optional[int],
-    question: str,
-    answer: Dict[str, Any],
-) -> ChatSession:
-    if session_id:
-        session = (
-            db.query(ChatSession)
-            .filter(
-                ChatSession.id == session_id,
-                ChatSession.user_id == user_id,
-                ChatSession.project_id == project_id,
+def _call_groq(messages: list[dict[str, str]], system_prompt: str) -> str:
+    if groq_client is None:
+        raise RuntimeError("GROQ_API_KEY not configured")
+    formatted_messages = [{"role": "system", "content": system_prompt}] + messages
+    response = groq_client.chat.completions.create(
+        model=GROQ_MODEL,
+        messages=formatted_messages,
+        max_tokens=1024,
+        temperature=0.7,
+        stream=False,
+    )
+    return response.choices[0].message.content or ""
+
+
+def _call_anthropic(messages: list[dict[str, str]], system_prompt: str) -> str:
+    if anthropic_client is None:
+        raise RuntimeError("ANTHROPIC_API_KEY not configured")
+    response = anthropic_client.messages.create(
+        model=ANTHROPIC_MODEL,
+        max_tokens=1024,
+        system=system_prompt,
+        messages=messages,
+    )
+    return response.content[0].text
+
+
+async def call_ai_provider(
+    messages: list[dict[str, str]],
+    system_prompt: str,
+) -> str:
+    """Call Groq first, fall back to Anthropic if available."""
+
+    if groq_client:
+        try:
+            result = await asyncio.wait_for(
+                asyncio.to_thread(_call_groq, messages, system_prompt),
+                timeout=AI_TIMEOUT_SECONDS,
             )
-            .first()
-        )
-        if not session:
-            raise ValueError("Chat session not found")
-    else:
-        session = ChatSession(
-            user_id=user_id,
-            project_id=project_id,
-            title=_session_title(question),
-        )
-        db.add(session)
-        db.flush()
+            logger.info("Groq response received")
+            return result
+        except Exception as exc:
+            logger.error("Groq API error: %s", exc)
 
-    user_msg = ChatMessage(
-        session_id=session.id,
-        role="user",
-        content=question.strip(),
-    )
-    db.add(user_msg)
-
-    metadata = {
-        "sentiment": answer.get("sentiment"),
-        "supporting_mentions": answer.get("supporting_mentions"),
-    }
-    assistant_msg = ChatMessage(
-        session_id=session.id,
-        role="assistant",
-        content=answer["answer"],
-        sources_used=json.dumps(answer.get("sources_used", [])),
-        intent=answer.get("intent"),
-        metadata_json=json.dumps(metadata),
-    )
-    db.add(assistant_msg)
-    db.commit()
-    db.refresh(session)
-    return session
-
-
-def message_to_response(msg: ChatMessage) -> Dict[str, Any]:
-    sources_used = None
-    sentiment = None
-    supporting = None
-    if msg.sources_used:
+    if anthropic_client:
         try:
-            sources_used = json.loads(msg.sources_used)
-        except json.JSONDecodeError:
-            sources_used = []
-    if msg.metadata_json:
-        try:
-            meta = json.loads(msg.metadata_json)
-            sentiment = meta.get("sentiment")
-            supporting = meta.get("supporting_mentions")
-        except json.JSONDecodeError:
-            pass
-    return {
-        "id": msg.id,
-        "session_id": msg.session_id,
-        "role": msg.role,
-        "content": msg.content,
-        "sources_used": sources_used,
-        "intent": msg.intent,
-        "sentiment": sentiment,
-        "supporting_mentions": supporting,
-        "created_at": msg.created_at,
-    }
+            result = await asyncio.wait_for(
+                asyncio.to_thread(_call_anthropic, messages, system_prompt),
+                timeout=AI_TIMEOUT_SECONDS,
+            )
+            logger.info("Anthropic fallback response received")
+            return result
+        except Exception as exc:
+            logger.error("Anthropic fallback error: %s", exc)
+
+    raise RuntimeError(
+        "No AI provider configured. Add GROQ_API_KEY to .env.local"
+    )
 
 
-def session_to_response(session: ChatSession, include_messages: bool = True) -> Dict[str, Any]:
-    data = {
-        "id": session.id,
-        "user_id": session.user_id,
-        "project_id": session.project_id,
-        "title": session.title,
-        "created_at": session.created_at,
-        "messages": [],
-    }
-    if include_messages:
-        messages = (
-            db_messages_sorted(session.messages)
-            if hasattr(session, "messages")
-            else []
+async def process_chat_message(
+    message: str,
+    conversation_history: list[dict[str, str]],
+    user_id: int | None = None,
+) -> dict[str, Any]:
+    del user_id
+
+    context_data = ""
+    fetched_results: list[dict[str, Any]] = []
+    sentiment_summary: dict[str, Any] = {}
+    wiki_summary: dict | None = None
+    search_query: str | None = None
+
+    if should_fetch_data(message):
+        compare_queries = extract_comparison_queries(message)
+        queries = compare_queries or (
+            [extract_search_query(message)] if extract_search_query(message) else []
         )
-        data["messages"] = [message_to_response(m) for m in messages]
-    return data
 
+        if queries:
+            search_query = " vs ".join(queries) if len(queries) > 1 else queries[0]
+            logger.info("Pulse AI fetching data for: %s", search_query)
 
-def db_messages_sorted(messages: List[ChatMessage]) -> List[ChatMessage]:
-    return sorted(messages, key=lambda m: m.created_at)
+            blocks: list[str] = []
+            for q in queries:
+                cache_key = f"chat_data_{q.lower().replace(' ', '_')}"
+                cached = get_cached(cache_key)
+
+                if cached:
+                    logger.info("Cache hit for: %s", q)
+                    results = cached.get("results", [])
+                    sentiment = cached.get("sentiment", {})
+                    wiki = cached.get("wiki")
+                else:
+                    results = []
+                    sentiment = {}
+                    wiki = None
+                    try:
+                        results = await search_all_platforms(q, "7d")
+                        sentiment = _sentiment_summary(results)
+                        try:
+                            wiki = await asyncio.to_thread(get_wikipedia_summary, q)
+                        except Exception as wiki_err:
+                            logger.debug("Wikipedia skip: %s", wiki_err)
+
+                        set_cached(
+                            cache_key,
+                            {
+                                "results": results,
+                                "sentiment": sentiment,
+                                "wiki": wiki,
+                            },
+                            duration=300,
+                        )
+                        logger.info(
+                            "Fetched %s results for '%s'",
+                            len(results),
+                            q,
+                        )
+                    except Exception as fetch_err:
+                        logger.error("Data fetch failed: %s", fetch_err)
+
+                fetched_results.extend(results)
+                if wiki and not wiki_summary:
+                    wiki_summary = wiki
+                if results:
+                    blocks.append(_build_context_data(q, results, sentiment, wiki))
+
+            sentiment_summary = _sentiment_summary(fetched_results)
+            context_data = "\n".join(blocks)
+
+    messages_for_ai: list[dict[str, str]] = []
+    for msg in conversation_history[-8:]:
+        if msg.get("role") in ("user", "assistant"):
+            messages_for_ai.append(
+                {"role": msg["role"], "content": str(msg["content"])[:800]}
+            )
+
+    current_content = message
+    if context_data:
+        current_content = f"{context_data}\n\nUser's question: {message}"
+
+    messages_for_ai.append({"role": "user", "content": current_content})
+
+    try:
+        ai_response = await call_ai_provider(messages_for_ai, SYSTEM_PROMPT)
+        suggestions = extract_suggestions(ai_response)
+        clean_response = clean_response_text(ai_response)
+
+        return {
+            "message": clean_response,
+            "suggestions": suggestions,
+            "data_used": {
+                "query": search_query,
+                "results_count": len(fetched_results),
+                "sentiment": sentiment_summary,
+                "platforms": list(
+                    {
+                        r.get("platform", "")
+                        for r in fetched_results
+                        if r.get("platform")
+                    }
+                ),
+            },
+            "wiki_summary": wiki_summary,
+            "has_real_data": len(fetched_results) > 0,
+        }
+    except Exception as ai_error:
+        logger.error("AI provider error: %s", ai_error)
+        error_msg = str(ai_error)
+
+        if "GROQ_API_KEY" in error_msg or "No AI provider" in error_msg:
+            friendly_msg = (
+                "Pulse AI needs an API key to respond.\n\n"
+                "Add `GROQ_API_KEY` to your backend `.env.local` "
+                "file.\n\nGet a free key at: console.groq.com"
+            )
+        elif "rate_limit" in error_msg.lower():
+            friendly_msg = (
+                "Too many requests. Please wait a moment and try again."
+            )
+        elif "invalid_api_key" in error_msg.lower():
+            friendly_msg = (
+                "Invalid API key. Please check your GROQ_API_KEY in .env.local"
+            )
+        else:
+            friendly_msg = (
+                "I encountered an issue processing your request. "
+                "Please try again in a moment."
+            )
+
+        return {
+            "message": friendly_msg,
+            "suggestions": [],
+            "data_used": {
+                "query": search_query,
+                "results_count": len(fetched_results),
+                "sentiment": sentiment_summary,
+                "platforms": [],
+            },
+            "wiki_summary": wiki_summary,
+            "has_real_data": len(fetched_results) > 0,
+            "error": error_msg,
+        }

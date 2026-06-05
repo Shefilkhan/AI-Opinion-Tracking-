@@ -23,6 +23,8 @@ def log_env_check() -> None:
             "EMAIL_APP_PASSWORD": bool(s.email_app_password or s.smtp_password),
             "SMTP_HOST": s.smtp_host,
             "EMAIL_CONFIGURED": s.email_configured,
+            "AI_PROVIDER": s.ai_provider,
+            "GROQ_API_KEY": bool(s.groq_api_key.strip()),
             "ANTHROPIC_API_KEY": bool(s.anthropic_api_key.strip()),
             "APP_ENV": s.app_env,
         },

@@ -6,7 +6,9 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
+    JSON,
     String,
     Text,
     func,
@@ -25,6 +27,10 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
+    username: Mapped[Optional[str]] = mapped_column(
+        String(30), unique=True, nullable=True, index=True
+    )
+    bio: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[str] = mapped_column(String(50), default="user", nullable=False)
@@ -62,6 +68,9 @@ class User(Base):
         back_populates="user", cascade="all, delete-orphan"
     )
     saved_searches: Mapped[list["SavedSearch"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    pulse_chat_messages: Mapped[list["PulseChatMessage"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
 
@@ -145,3 +154,27 @@ class SavedSearch(Base):
     )
 
     user: Mapped["User"] = relationship(back_populates="saved_searches")
+
+
+class PulseChatMessage(Base):
+    __tablename__ = "chat_messages"
+    __table_args__ = (
+        Index("idx_user_conv", "user_id", "conversation_id"),
+        Index("idx_created", "created_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    conversation_id: Mapped[str] = mapped_column(
+        String(64), nullable=False, index=True
+    )
+    role: Mapped[str] = mapped_column(String(20), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    metadata_json: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    user: Mapped["User"] = relationship(back_populates="pulse_chat_messages")

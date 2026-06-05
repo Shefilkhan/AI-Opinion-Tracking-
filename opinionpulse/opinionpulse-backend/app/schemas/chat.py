@@ -65,3 +65,39 @@ class ChatSessionResponse(BaseModel):
 
 class ChatSessionListResponse(BaseModel):
     sessions: List[ChatSessionResponse]
+
+
+class PulseChatMessageRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=500)
+    conversation_id: Optional[str] = None
+
+
+class PulseChatDataUsed(BaseModel):
+    query: Optional[str] = None
+    results_count: int = 0
+    sentiment: dict = Field(default_factory=dict)
+    platforms: List[str] = Field(default_factory=list)
+
+
+class PulseChatMessageResponse(BaseModel):
+    conversation_id: str
+    message: str
+    suggestions: List[str] = Field(default_factory=list)
+    data_used: PulseChatDataUsed = Field(default_factory=PulseChatDataUsed)
+    wiki_summary: Optional[dict] = None
+    has_real_data: bool = False
+
+
+class PulseConversationSummary(BaseModel):
+    conversation_id: str
+    started_at: datetime
+    message_count: int
+    first_message: str = ""
+
+
+class PulseConversationListResponse(BaseModel):
+    conversations: List[PulseConversationSummary]
+
+
+class PulseConversationMessagesResponse(BaseModel):
+    messages: List[dict]

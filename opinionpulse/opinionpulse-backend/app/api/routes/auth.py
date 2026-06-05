@@ -437,7 +437,9 @@ def reset_password(
 
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
-    return UserResponse.model_validate(current_user)
+    from app.schemas.user import user_to_response
+
+    return user_to_response(current_user)
 
 
 @router.post("/logout", response_model=AuthSuccessResponse)

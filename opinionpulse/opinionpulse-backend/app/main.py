@@ -1,17 +1,30 @@
 import logging
 from contextlib import asynccontextmanager
 
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import create_engine, text
 
-from app.api.routes import account, ai, auth, dashboard, health, search, settings as settings_routes
+from app.api.routes import (
+    account,
+    ai,
+    auth,
+    chat,
+    dashboard,
+    health,
+    search,
+    settings as settings_routes,
+    users,
+)
 from app.core.config import get_settings
 from app.core.startup_checks import log_env_check
 from app.db import models  # noqa: F401 — register models with metadata
 from app.db.database import Base, engine
-from app.db.schema_sync import ensure_users_schema
+from app.db.schema_sync import ensure_chat_messages_schema, ensure_users_schema
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -42,6 +55,8 @@ async def lifespan(app: FastAPI):
         ensure_database_exists()
         Base.metadata.create_all(bind=engine)
         ensure_users_schema(engine)
+    ensure_chat_messages_schema(engine)
+    logger.info("chat_messages table ready")
     yield
 
 
@@ -88,7 +103,13 @@ app.include_router(account.router)
 app.include_router(dashboard.router)
 app.include_router(search.router)
 app.include_router(ai.router)
+app.include_router(chat.router)
+app.include_router(users.router)
 app.include_router(settings_routes.router)
+
+_uploads = Path(__file__).resolve().parent.parent / "uploads"
+_uploads.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(_uploads)), name="uploads")
 
 
 @app.get("/")
