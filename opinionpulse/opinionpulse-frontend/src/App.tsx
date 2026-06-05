@@ -13,6 +13,8 @@ import { ReportsPage } from "@/pages/ReportsPage"
 import { AlertsPage } from "@/pages/AlertsPage"
 import { SettingsPage, SettingsLegacyRedirect } from "@/pages/SettingsPage"
 import { MyAccountPage } from "@/pages/MyAccountPage"
+import { ChatPage } from "@/pages/ChatPage"
+import { ChatBubble } from "@/components/chat/ChatBubble"
 
 function LegacyVerifyRedirect({ type }: { type: "signup" | "login" }) {
   const [searchParams] = useSearchParams()
@@ -28,6 +30,7 @@ function LegacyVerifyRedirect({ type }: { type: "signup" | "login" }) {
 
 function App() {
   return (
+    <>
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/pricing" element={<PricingPage />} />
@@ -62,6 +65,14 @@ function App() {
         element={
           <ProtectedRoute>
             <SearchPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/chat"
+        element={
+          <ProtectedRoute>
+            <ChatPage />
           </ProtectedRoute>
         }
       />
@@ -110,6 +121,8 @@ function App() {
       <Route path="/projects" element={<Navigate to="/search" replace />} />
       <Route path="/projects/*" element={<Navigate to="/search" replace />} />
     </Routes>
+    <ChatBubble />
+    </>
   )
 }
 
