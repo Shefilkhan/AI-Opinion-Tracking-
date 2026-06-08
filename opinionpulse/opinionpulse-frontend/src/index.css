@@ -350,6 +350,148 @@ body {
   animation: chat-slide-up 0.3s ease forwards;
 }
 
+/* ── Glow Card Effect ─────────────────────────────── */
+
+.glow-card {
+  position: relative;
+  border-radius: 16px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  --mouse-x: 50%;
+  --mouse-y: 50%;
+  --glow-opacity: 0;
+  --glow-color: 139, 92, 246;
+  --glow-size: 200px;
+}
+
+.glow-card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: radial-gradient(
+    var(--glow-size) circle at var(--mouse-x) var(--mouse-y),
+    rgba(var(--glow-color), 0.8),
+    rgba(99, 102, 241, 0.4) 30%,
+    transparent 60%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: var(--glow-opacity);
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.glow-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    120px circle at var(--mouse-x) var(--mouse-y),
+    rgba(var(--glow-color), 0.06),
+    transparent 70%
+  );
+  opacity: var(--glow-opacity);
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glow-card-content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+}
+
+.glow-card-content > * {
+  position: relative;
+  z-index: 2;
+}
+
+.glow-card-dark {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  --glow-color: 167, 139, 250;
+}
+
+.glow-card-dark::before {
+  background: radial-gradient(
+    var(--glow-size) circle at var(--mouse-x) var(--mouse-y),
+    rgba(var(--glow-color), 0.6),
+    rgba(139, 92, 246, 0.3) 30%,
+    transparent 60%
+  );
+}
+
+.glow-card-dark::after {
+  background: radial-gradient(
+    120px circle at var(--mouse-x) var(--mouse-y),
+    rgba(var(--glow-color), 0.1),
+    transparent 70%
+  );
+}
+
+.glow-card-pricing {
+  --glow-size: 250px;
+}
+
+.glow-card-pricing::before {
+  background: radial-gradient(
+    var(--glow-size) circle at var(--mouse-x) var(--mouse-y),
+    rgba(var(--glow-color), 0.9),
+    rgba(99, 102, 241, 0.5) 30%,
+    transparent 60%
+  );
+}
+
+.glow-card-pro::before {
+  background: radial-gradient(
+    250px circle at var(--mouse-x) var(--mouse-y),
+    rgba(168, 85, 247, 0.9),
+    rgba(99, 102, 241, 0.6) 25%,
+    rgba(59, 130, 246, 0.4) 45%,
+    transparent 65%
+  );
+}
+
+.cards-grid {
+  --active: 0;
+}
+
+.cards-grid .glow-card:not(:hover) {
+  transition: opacity 0.3s ease;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .glow-card::before,
+  .glow-card::after {
+    transition: opacity 0.25s ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow-card::before,
+  .glow-card::after {
+    transition: none;
+  }
+}
+
+@media (hover: none) {
+  .glow-card::before,
+  .glow-card::after {
+    display: none;
+  }
+}
+
 @media print {
   body {
     background: var(--card) !important;

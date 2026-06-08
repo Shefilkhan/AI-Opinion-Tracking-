@@ -2,6 +2,7 @@ import { Link } from "react-router-dom"
 import { Check, X } from "lucide-react"
 import type { PlanId, PricingPlan } from "@/data/pricingData"
 import { planPrices, ENTERPRISE_EMAIL } from "@/data/pricingData"
+import GlowCard from "@/components/ui/GlowCard"
 import { saveSelectedPlan } from "@/lib/planStorage"
 import { cn } from "@/lib/utils"
 
@@ -86,29 +87,25 @@ export function PricingCard({ plan, isAnnual }: PricingCardProps) {
         </div>
       )}
 
-      <div
+      <GlowCard
+        glowColor={isPro ? "168, 85, 247" : "139, 92, 246"}
         className={cn(
-          "flex h-full flex-col rounded-[20px] bg-white p-8 shadow-lg transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-          isPro
-            ? "border-2 border-transparent bg-white shadow-xl shadow-purple-200/60 md:scale-105 [background:linear-gradient(white,white)_padding-box,linear-gradient(135deg,#7c3aed,#3b82f6)_border-box] hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-purple-200"
-            : "border border-gray-200 hover:-translate-y-1 hover:border-gray-300 hover:shadow-xl",
-          isEnterprise && "hover:border-gray-400"
+          "glow-card-pricing flex h-full flex-col rounded-[20px] p-8 shadow-lg transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+          isPro &&
+            "glow-card-pro shadow-xl shadow-purple-200/60 md:scale-105 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-purple-200",
+          !isPro && "hover:-translate-y-1 hover:shadow-xl"
         )}
       >
-        {plan.badge && plan.badgePosition === "corner" && (
-          <span className="absolute right-6 top-6 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
-            {plan.badge}
-          </span>
+        {plan.badge && plan.badgePosition === "corner" ? (
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
+            <span className="shrink-0 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+              {plan.badge}
+            </span>
+          </div>
+        ) : (
+          <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
         )}
-
-        <h3
-          className={cn(
-            "text-xl font-bold",
-            isEnterprise ? "text-gray-900" : "text-gray-900"
-          )}
-        >
-          {plan.name}
-        </h3>
         <PriceDisplay planId={plan.id} isAnnual={isAnnual} />
         <p className="mt-3 text-sm text-gray-600">{plan.tagline}</p>
 
@@ -150,7 +147,7 @@ export function PricingCard({ plan, isAnnual }: PricingCardProps) {
             )}
           </p>
         )}
-      </div>
+      </GlowCard>
     </div>
   )
 }

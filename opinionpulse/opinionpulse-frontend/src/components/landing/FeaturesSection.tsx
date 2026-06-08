@@ -6,6 +6,7 @@ import {
   LandingLabel,
   LandingSubtext,
 } from "@/components/landing/landingSection"
+import GlowCard from "@/components/ui/GlowCard"
 import { cn } from "@/lib/utils"
 
 export function FeaturesSection() {
@@ -22,16 +23,18 @@ export function FeaturesSection() {
           </LandingSubtext>
         </ScrollReveal>
 
-        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="cards-grid mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature, i) => {
             const Icon = feature.icon
+            const glowColor = i < 3 ? "139, 92, 246" : "59, 130, 246"
             return (
               <ScrollReveal key={feature.title} delay={i * 80}>
-                <div
+                <GlowCard
+                  glowColor={glowColor}
                   className={cn(
-                    "group flex h-full min-h-[220px] flex-col rounded-2xl border border-gray-200 bg-white p-7",
+                    "flex h-full min-h-[220px] flex-col p-7",
                     "shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-all duration-[250ms] ease-out",
-                    "hover:-translate-y-1 hover:border-purple-300 hover:shadow-[0_12px_32px_rgba(0,0,0,0.10)]"
+                    "hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(0,0,0,0.10)]"
                   )}
                 >
                   <div
@@ -46,7 +49,7 @@ export function FeaturesSection() {
                     {feature.title}
                   </h3>
                   <p className="text-sm leading-[1.65] text-gray-500">{feature.description}</p>
-                </div>
+                </GlowCard>
               </ScrollReveal>
             )
           })}

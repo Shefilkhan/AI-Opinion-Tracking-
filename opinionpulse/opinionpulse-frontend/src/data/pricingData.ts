@@ -84,7 +84,7 @@ export const pricingPlans: PricingPlan[] = [
     id: "enterprise",
     name: "Enterprise",
     tagline: "For organizations, universities, and research teams",
-    badge: "🏢 For Teams",
+    badge: "For Teams",
     badgePosition: "corner",
     features: [
       { text: "Everything in Pro", included: true },

@@ -29,7 +29,7 @@ export function PricingPlansGrid({
         <BillingToggle isAnnual={isAnnual} onChange={setIsAnnual} />
       </div>
 
-      <div className="mt-12 grid items-start gap-8 lg:grid-cols-3 lg:gap-6">
+      <div className="cards-grid mt-12 grid items-start gap-8 lg:grid-cols-3 lg:gap-6">
         {pricingPlans.map((plan) => (
           <div key={plan.id} className={orderClass(plan.id)}>
             <PricingCard plan={plan} isAnnual={isAnnual} />
