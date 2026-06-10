@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+from urllib.parse import quote
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, Response, status
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -32,6 +34,13 @@ from app.schemas.user import UserResponse
 from app.services import otp_service
 from app.services.auth_log_service import log_auth_event
 from app.services.auth_rate_limit import rate_limit_by_email, rate_limit_by_ip
+from app.services.google_auth_service import get_or_create_google_user
+from app.services.google_oauth_service import (
+    build_authorization_url,
+    exchange_code_for_user,
+    is_google_oauth_configured,
+    parse_oauth_state,
+)
 from app.services.session_service import create_user_session, revoke_token_session
 from app.api.deps import extract_request_token
 from app.core.auth_errors import raise_auth_error
@@ -440,6 +449,72 @@ def get_me(current_user: User = Depends(get_current_user)):
     from app.schemas.user import user_to_response
 
     return user_to_response(current_user)
+
+
+@router.get("/google")
+def google_login(
+    redirect: str = Query("/dashboard", description="Frontend path after sign-in"),
+):
+    if not is_google_oauth_configured():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                "Google sign-in is not configured. Set GOOGLE_CLIENT_ID and "
+                "GOOGLE_CLIENT_SECRET in the backend .env file."
+            ),
+        )
+    return RedirectResponse(build_authorization_url(redirect), status_code=302)
+
+
+@router.get("/google/callback")
+def google_callback(
+    request: Request,
+    db: Session = Depends(get_db),
+    code: Optional[str] = Query(None),
+    state: Optional[str] = Query(None),
+    error: Optional[str] = Query(None),
+):
+    frontend = settings.frontend_url.rstrip("/")
+
+    if error:
+        return RedirectResponse(
+            f"{frontend}/auth/signin?error={quote(error)}",
+            status_code=302,
+        )
+
+    if not code or not state:
+        return RedirectResponse(
+            f"{frontend}/auth/signin?error={quote('Missing Google authorization code')}",
+            status_code=302,
+        )
+
+    try:
+        redirect_path = parse_oauth_state(state)
+        profile = exchange_code_for_user(code)
+        user = get_or_create_google_user(db, profile)
+        token_response = _build_token_response(user, request, db)
+        log_auth_event(
+            "google_signin",
+            email=user.email,
+            user_id=user.id,
+            request=request,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        log_auth_event("google_signin_failed", request=request, extra=str(exc))
+        return RedirectResponse(
+            f"{frontend}/auth/signin?error={quote('Google sign-in failed. Please try again.')}",
+            status_code=302,
+        )
+
+    response = RedirectResponse(
+        f"{frontend}/auth/google/callback?redirect={quote(redirect_path)}"
+        f"#token={token_response.access_token}",
+        status_code=302,
+    )
+    set_auth_cookie(response, token_response.access_token)
+    return response
 
 
 @router.post("/logout", response_model=AuthSuccessResponse)

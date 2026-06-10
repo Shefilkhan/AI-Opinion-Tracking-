@@ -1,16 +1,16 @@
 import { useMemo } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ArrowRight, Check, CheckCircle, Circle, Loader2 } from "lucide-react"
 import { ApiError } from "@/api/client"
 import { signUpUser } from "@/api/auth"
 import { getApiErrorMessage } from "@/lib/apiErrorMessage"
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton"
 import { PasswordInput } from "@/components/auth/PasswordInput"
 import {
   authInputClass,
   authLabelClass,
-  GoogleIcon,
   STRENGTH_HEX,
   STRENGTH_LABELS,
 } from "@/lib/auth/authUi"
@@ -23,6 +23,8 @@ import { cn } from "@/lib/utils"
 
 export function SignUpForm() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const redirect = searchParams.get("redirect") ?? "/dashboard"
   const {
     register,
     control,
@@ -274,15 +276,7 @@ export function SignUpForm() {
         <div className="h-px flex-1 bg-gray-200" />
       </div>
 
-      <button
-        type="button"
-        disabled
-        title="Google OAuth — coming soon"
-        className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-3 text-sm font-medium text-gray-700 transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm disabled:opacity-60"
-      >
-        <GoogleIcon />
-        Continue with Google
-      </button>
+      <GoogleSignInButton redirect={redirect} />
 
       <p className="text-center text-xs text-gray-400">
         By creating an account you agree to our terms. No credit card required for

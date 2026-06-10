@@ -10,6 +10,7 @@ This project uses **React (Vite) + FastAPI + MySQL**, not Next.js/Prisma. The au
 | `/auth/signin` | `POST /api/auth/signin` (alias `/login`) |
 | `/auth/verify-otp` | `POST /api/auth/verify-otp` |
 | `/auth/forgot-password` → `/auth/verify-otp?type=password_reset` → `/auth/reset-password` | `POST /api/auth/forgot-password`, `POST /api/auth/verify-password-reset-otp`, `POST /api/auth/reset-password` |
+| Continue with Google | `GET /api/auth/google` → Google → `GET /api/auth/google/callback` → `/auth/google/callback` |
 | Protected: `/dashboard`, `/settings`, … | `GET /api/auth/me`, `POST /api/auth/logout` |
 
 Legacy `/login`, `/signup`, `/verify-*-otp` redirect to the `/auth/*` paths.
@@ -33,6 +34,9 @@ Pydantic loads **both** `.env` and `.env.local` (use `.env.local` for Gmail secr
 | `SMTP_FROM_EMAIL` | Optional | Defaults to `EMAIL_USER` |
 | `SMTP_FROM_NAME` | Optional | `OpinionPulse` |
 | `FRONTEND_URL` | Optional | `http://localhost:5173` (CORS already allows this origin) |
+| `GOOGLE_CLIENT_ID` | For Google sign-in | [Google Cloud Console](https://console.cloud.google.com/) → Credentials → OAuth 2.0 Client ID (Web) |
+| `GOOGLE_CLIENT_SECRET` | For Google sign-in | Same OAuth client |
+| `GOOGLE_REDIRECT_URI` | Optional | `http://127.0.0.1:8000/api/auth/google/callback` (must match Google Console exactly) |
 | `AUTH_COOKIE_SECURE` | Production | `true` when using HTTPS |
 | `APP_ENV` | Optional | `development` enables dev OTP in API when SMTP is missing |
 

@@ -1,4 +1,4 @@
-import { apiRequest } from "@/api/client"
+import { apiRequest, getApiBaseUrl } from "@/api/client"
 import { removeToken, setToken } from "@/lib/authStore"
 
 export type User = {
@@ -119,6 +119,12 @@ export async function resendRegisterOtp(email: string) {
 
 export async function resendLoginOtp(email: string) {
   return resendOtp(email, "login")
+}
+
+export function getGoogleAuthUrl(redirect = "/dashboard"): string {
+  const base = getApiBaseUrl()
+  const params = new URLSearchParams({ redirect })
+  return `${base}/api/auth/google?${params.toString()}`
 }
 
 export async function signInUser(data: LoginData): Promise<LoginPendingResponse> {

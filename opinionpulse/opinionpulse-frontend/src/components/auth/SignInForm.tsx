@@ -5,13 +5,15 @@ import { ArrowRight, Loader2 } from "lucide-react"
 import { signInUser } from "@/api/auth"
 import { getApiErrorMessage } from "@/lib/apiErrorMessage"
 import { PasswordInput } from "@/components/auth/PasswordInput"
-import { authInputClass, authLabelClass, GoogleIcon } from "@/lib/auth/authUi"
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton"
+import { authInputClass, authLabelClass } from "@/lib/auth/authUi"
 import { signInSchema, type SignInFormValues } from "@/lib/validations/auth"
 
 export function SignInForm() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const redirect = searchParams.get("redirect") ?? "/dashboard"
+  const oauthError = searchParams.get("error")
 
   const {
     register,
@@ -54,12 +56,12 @@ export function SignInForm() {
         </p>
       )}
 
-      {errors.root && !showAttemptsBanner && (
+      {(oauthError || (errors.root && !showAttemptsBanner)) && (
         <p
           role="alert"
           className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
         >
-          {errors.root.message}
+          {oauthError ?? errors.root?.message}
         </p>
       )}
 
@@ -147,15 +149,7 @@ export function SignInForm() {
         <div className="h-px flex-1 bg-gray-200" />
       </div>
 
-      <button
-        type="button"
-        disabled
-        title="Google OAuth — coming soon"
-        className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-3 text-sm font-medium text-gray-700 transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm disabled:opacity-60"
-      >
-        <GoogleIcon />
-        Continue with Google
-      </button>
+      <GoogleSignInButton redirect={redirect} />
     </form>
   )
 }
