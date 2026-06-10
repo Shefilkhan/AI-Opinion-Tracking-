@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     auth_cookie_name: str = "opinionpulse_token"
     auth_cookie_secure: bool = False
 
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_redirect_uri: str = ""
+
     youtube_api_key: str = ""
     youtube_max_videos_per_keyword: int = 3
     youtube_max_comments_per_video: int = 20
@@ -95,8 +99,8 @@ class Settings(BaseSettings):
 
     @property
     def expose_dev_otp_in_api(self) -> bool:
-        """Return OTP in API when SMTP is missing (local dev only)."""
-        return self.app_env == "development" and not self.email_configured
+        """Never expose OTP in API responses; codes are email-only."""
+        return False
 
     @property
     def database_url(self) -> str:
@@ -110,3 +114,9 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def reload_settings() -> Settings:
+    """Clear cached settings after .env changes (e.g. new API keys)."""
+    get_settings.cache_clear()
+    return get_settings()

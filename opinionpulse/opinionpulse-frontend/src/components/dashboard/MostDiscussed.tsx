@@ -2,6 +2,7 @@ import { Loader2, Minus, RefreshCw, TrendingDown, TrendingUp } from "lucide-reac
 import { useNavigate } from "react-router-dom"
 import type { MostDiscussedItem } from "@/api/dashboard"
 import { platformBadge } from "@/lib/api/sentiment"
+import { sectionTitle } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 type MostDiscussedProps = {
@@ -52,11 +53,11 @@ function TrendIcon({ trend }: { trend: MostDiscussedItem["trend"] }) {
 
 function MostDiscussedSkeleton() {
   return (
-    <ul className="divide-y divide-gray-200">
+    <ul className="divide-y divide-border">
       {Array.from({ length: 8 }).map((_, i) => (
         <li key={i} className="py-4">
           <div
-            className="h-5 animate-pulse rounded bg-gray-100"
+            className="h-5 animate-pulse rounded bg-muted"
             style={{ width: `${70 - i * 5}%` }}
           />
         </li>
@@ -84,7 +85,7 @@ export function MostDiscussed({
   return (
     <section>
       <div className="mb-1 flex flex-wrap items-center gap-2">
-        <h2 className="text-lg font-semibold text-foreground">
+        <h2 className={sectionTitle}>
           📈 Most Discussed This Week
         </h2>
         {isRefreshing && (
@@ -95,7 +96,7 @@ export function MostDiscussed({
             type="button"
             onClick={onRefresh}
             disabled={isRefreshing}
-            className="ml-auto rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
+            className="ml-auto rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             aria-label="Refresh most discussed"
           >
             <RefreshCw className={cn("size-4", isRefreshing && "animate-spin")} />
@@ -116,7 +117,7 @@ export function MostDiscussed({
           </p>
         </div>
       ) : (
-        <ul className="divide-y divide-gray-200">
+        <ul className="divide-y divide-border">
           {items.map((item, index) => {
             const rank = index + 1
             const pos = item.sentiment.positive
@@ -131,11 +132,11 @@ export function MostDiscussed({
                     navigate(`/search?q=${encodeURIComponent(query)}`)
                   }
                   className={cn(
-                    "flex w-full flex-wrap items-center gap-3 py-4 text-left transition-colors hover:bg-gray-50/80",
+                    "flex w-full flex-wrap items-center gap-3 py-4 text-left transition-colors hover:bg-accent/50",
                     rankBorder(rank)
                   )}
                 >
-                  <span className="w-8 shrink-0 text-[28px] font-bold leading-none text-gray-300">
+                  <span className="w-8 shrink-0 text-[28px] font-bold leading-none text-muted-foreground/40">
                     #{rank}
                   </span>
                   <span className="text-xl" aria-hidden>
@@ -147,7 +148,7 @@ export function MostDiscussed({
                     </p>
                     <div className="mt-2 flex flex-wrap items-center gap-3">
                       <div
-                        className="h-1.5 w-[100px] overflow-hidden rounded-full bg-gray-100"
+                        className="h-1.5 w-[100px] overflow-hidden rounded-full bg-muted"
                         title={`${pos}% positive`}
                       >
                         <div
@@ -164,7 +165,7 @@ export function MostDiscussed({
                         {pos}% pos
                       </span>
                     </div>
-                    <p className="mt-1.5 text-[13px] text-gray-500">
+                    <p className="mt-1.5 text-[13px] text-muted-foreground">
                       {item.total_mentions.toLocaleString()} mentions •{" "}
                       <span className="inline-flex items-center gap-1">
                         {platforms.slice(0, 4).map((p) => {

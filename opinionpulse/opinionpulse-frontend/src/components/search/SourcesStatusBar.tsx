@@ -29,7 +29,7 @@ export function SourcesStatusBar({ data }: SourcesStatusBarProps) {
 
   return (
     <div className={cn(proCard, "flex flex-wrap items-center gap-2 px-4 py-3")}>
-      <span className="mr-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+      <span className="mr-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Sources
       </span>
       {entries.map((key) => {
@@ -45,7 +45,7 @@ export function SourcesStatusBar({ data }: SourcesStatusBarProps) {
               gotResults
                 ? "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400"
                 : !hasKey
-                  ? "bg-gray-100 text-gray-500 dark:bg-[#252538] dark:text-gray-500"
+                  ? "bg-muted text-muted-foreground"
                   : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
             )}
           >

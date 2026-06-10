@@ -41,9 +41,7 @@ export function SignupPage() {
         email: email.trim(),
         password,
       })
-      navigate(`/verify-register-otp?email=${encodeURIComponent(res.email)}`, {
-        state: { devOtpCode: res.dev_otp_code ?? undefined },
-      })
+      navigate(`/verify-register-otp?email=${encodeURIComponent(res.email)}`)
     } catch (err) {
       const message =
         err instanceof ApiError

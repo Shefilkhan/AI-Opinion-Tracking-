@@ -28,10 +28,10 @@ import {
   type AccountSettingsState,
 } from "@/lib/userSettingsStore"
 import { getPasswordStrength } from "@/lib/settingsValidation"
+import { inputSurface } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
-const inputClass =
-  "h-11 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm transition-colors duration-150 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+const inputClass = cn(inputSurface, "h-11 w-full rounded-lg px-3 py-2")
 
 type PasswordForm = {
   current: string
@@ -126,7 +126,7 @@ export function AccountSettings() {
         saving={saving}
         saveLabel="Save account preferences"
       >
-        <div className="space-y-4 rounded-lg border border-gray-200 p-4">
+        <div className="space-y-4 rounded-lg border border-border p-4">
           <h3 className="text-sm font-semibold text-foreground">Change password</h3>
           <FormField label="Current password" htmlFor="current-pw" error={passwordErrors.current}>
             <Input
@@ -187,7 +187,7 @@ export function AccountSettings() {
           </Button>
         </div>
 
-        <div className="space-y-3 rounded-lg border border-gray-200 p-4">
+        <div className="space-y-3 rounded-lg border border-border p-4">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-foreground">
@@ -206,7 +206,7 @@ export function AccountSettings() {
               }
               className={cn(
                 "relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500",
-                draft.twoFactorEnabled ? "bg-primary" : "bg-gray-200"
+                draft.twoFactorEnabled ? "bg-primary" : "bg-muted"
               )}
             >
               <span
@@ -230,7 +230,7 @@ export function AccountSettings() {
           {draft.connectedAccounts.map((acc) => (
             <div
               key={acc.provider}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 p-4"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-4"
             >
               <div className="flex items-center gap-3">
                 {acc.provider === "github" ? (
@@ -258,7 +258,7 @@ export function AccountSettings() {
         </div>
 
         {statusQuery.data && (
-          <div className="space-y-2 rounded-lg border border-gray-200 p-4 text-sm">
+          <div className="space-y-2 rounded-lg border border-border p-4 text-sm">
             <h3 className="font-semibold text-foreground">API status</h3>
             {(
               [
@@ -312,7 +312,7 @@ export function AccountSettings() {
           aria-modal="true"
           aria-labelledby="delete-account-title"
         >
-          <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-5 shadow-lg">
+          <div className={cn("w-full max-w-md rounded-lg border border-border bg-card p-5 shadow-lg")}>
             <h3 id="delete-account-title" className="text-lg font-semibold text-destructive">
               Delete account
             </h3>

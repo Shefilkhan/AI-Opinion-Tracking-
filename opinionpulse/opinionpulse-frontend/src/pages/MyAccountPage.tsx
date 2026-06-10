@@ -25,9 +25,17 @@ import { logoutUser } from "@/api/auth"
 import { getUserStats, uploadUserAvatar } from "@/api/users"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { LoadingState } from "@/components/ui/LoadingState"
-import { ParticleBackground } from "@/components/ui/ParticleBackground"
 import { useToast } from "@/components/ui/toast"
 import { formatNumber, formatTimeAgo, resolveMediaUrl } from "@/lib/formatUtils"
+import {
+  btnPrimary,
+  cardTitle,
+  inputSurface,
+  pageTitle,
+  proCard,
+  sectionTitle,
+} from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 export function MyAccountPage() {
   const navigate = useNavigate()
@@ -145,31 +153,29 @@ export function MyAccountPage() {
 
   return (
     <DashboardLayout title="" subtitle="" hidePageHeader>
-      <div className="relative min-h-full bg-gray-50 dark:bg-[#0f0f1a]">
-        <ParticleBackground sentiment="neutral" intensity={0.15} />
-
+      <div className="relative min-h-full bg-background">
         <div className="relative z-10 w-full">
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Account</h1>
-              <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+              <h1 className={pageTitle}>My Account</h1>
+              <p className="mt-0.5 text-sm text-muted-foreground">
                 Manage your profile and account settings
               </p>
             </div>
             <button
               type="button"
               onClick={handleLogout}
-              className="flex items-center gap-2 rounded-xl border border-gray-200 dark:border-[#2d2d44] px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+              className="flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600"
             >
               <LogOut size={15} />
               Log out
             </button>
           </div>
 
-          <div className="mb-6 rounded-2xl border border-gray-200 dark:border-[#2d2d44] bg-white dark:bg-[#1e1e30] p-6 shadow-sm">
+          <div className={cn(proCard, "mb-6 p-6")}>
             <div className="flex items-start gap-5">
               <div className="relative shrink-0">
-                <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 text-2xl font-bold text-white">
+                <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-primary text-2xl font-bold text-primary-foreground">
                   {avatarUrl ? (
                     <img
                       src={avatarUrl}
@@ -187,9 +193,9 @@ export function MyAccountPage() {
                 </div>
                 <label
                   htmlFor="avatar-upload"
-                  className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-purple-600 transition-colors hover:bg-purple-50 dark:hover:bg-purple-500/100"
+                  className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-background bg-primary transition-colors hover:bg-primary/90"
                 >
-                  <Camera size={12} className="text-white" />
+                  <Camera size={12} className="text-primary-foreground" />
                 </label>
                 <input
                   id="avatar-upload"
@@ -203,7 +209,7 @@ export function MyAccountPage() {
 
               <div className="min-w-0 flex-1">
                 <div className="mb-1 flex items-center gap-3">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">{displayName}</h2>
+                  <h2 className={cn(sectionTitle, "text-xl")}>{displayName}</h2>
                   {userProfile?.is_email_verified ? (
                     <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
                       <CheckCircle size={11} />
@@ -216,11 +222,11 @@ export function MyAccountPage() {
                     </span>
                   )}
                 </div>
-                <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">{userProfile?.email}</p>
+                <p className="mb-1 text-sm text-muted-foreground">{userProfile?.email}</p>
                 {userProfile?.username && (
-                  <p className="text-sm text-gray-400 dark:text-gray-500">@{userProfile.username}</p>
+                  <p className="text-sm text-muted-foreground">@{userProfile.username}</p>
                 )}
-                <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
+                <p className="mt-2 text-xs text-muted-foreground">
                   Member since{" "}
                   {userProfile?.created_at
                     ? new Date(userProfile.created_at).toLocaleDateString("en-US", {
@@ -234,7 +240,7 @@ export function MyAccountPage() {
               <button
                 type="button"
                 onClick={() => navigate("/settings#profile")}
-                className="flex shrink-0 items-center gap-2 rounded-xl border border-gray-200 dark:border-[#2d2d44] px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:border-gray-300 dark:hover:border-[#3d3d5c] hover:bg-gray-50 dark:hover:bg-white/5"
+                className="flex shrink-0 items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-accent"
               >
                 <Settings size={14} />
                 Edit Profile
@@ -242,7 +248,7 @@ export function MyAccountPage() {
             </div>
 
             {userProfile?.bio && (
-              <p className="mt-4 border-t border-gray-100 dark:border-[#2d2d44] pt-4 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+              <p className="mt-4 border-t border-border pt-4 text-sm leading-relaxed text-muted-foreground">
                 {userProfile.bio}
               </p>
             )}
@@ -250,8 +256,8 @@ export function MyAccountPage() {
 
           <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
             <StatCard
-              icon={<Search size={18} className="text-purple-600" />}
-              iconBg="bg-purple-100"
+              icon={<Search size={18} className="text-primary" />}
+              iconBg="bg-primary/10"
               value={formatNumber(stats?.total_searches ?? 0)}
               label="Total Searches"
             />
@@ -278,12 +284,12 @@ export function MyAccountPage() {
           </div>
 
           <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div className="rounded-2xl border border-gray-200 dark:border-[#2d2d44] bg-white dark:bg-[#1e1e30] p-6 shadow-sm">
+            <div className={cn(proCard, "p-6")}>
               <div className="mb-4 flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100">
-                  <Lock size={15} className="text-gray-600 dark:text-gray-300" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                  <Lock size={15} className="text-muted-foreground" />
                 </div>
-                <h3 className="font-semibold text-gray-900 dark:text-white">Change Password</h3>
+                <h3 className={cardTitle}>Change Password</h3>
               </div>
 
               <div className="space-y-3">
@@ -323,7 +329,7 @@ export function MyAccountPage() {
                   type="button"
                   onClick={handlePasswordChange}
                   disabled={passwordMutation.isPending}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 py-2.5 text-sm font-medium text-white transition-all hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className={cn("flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-medium transition-all disabled:cursor-not-allowed disabled:opacity-50", btnPrimary)}
                 >
                   {passwordMutation.isPending ? (
                     <>
@@ -337,12 +343,12 @@ export function MyAccountPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-gray-200 dark:border-[#2d2d44] bg-white dark:bg-[#1e1e30] p-6 shadow-sm">
+            <div className={cn(proCard, "p-6")}>
               <div className="mb-4 flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100">
-                  <User size={15} className="text-gray-600 dark:text-gray-300" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                  <User size={15} className="text-muted-foreground" />
                 </div>
-                <h3 className="font-semibold text-gray-900 dark:text-white">Account Details</h3>
+                <h3 className={cardTitle}>Account Details</h3>
               </div>
 
               <div className="space-y-4">
@@ -352,11 +358,11 @@ export function MyAccountPage() {
                   actionLabel="Edit"
                   onAction={() => navigate("/settings#profile")}
                 />
-                <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#2d2d44] py-3">
+                <div className="flex items-center justify-between border-b border-border py-3">
                   <div>
-                    <p className="mb-0.5 text-xs text-gray-500 dark:text-gray-400">Email Address</p>
+                    <p className="mb-0.5 text-xs text-muted-foreground">Email Address</p>
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      <p className="text-sm font-medium text-foreground">
                         {userProfile?.email || "—"}
                       </p>
                       {userProfile?.is_email_verified && (
@@ -377,15 +383,15 @@ export function MyAccountPage() {
                   actionLabel={userProfile?.username ? "Edit" : "Add"}
                   onAction={() => navigate("/settings#profile")}
                 />
-                <div className="border-b border-gray-100 dark:border-[#2d2d44] py-3">
-                  <p className="mb-0.5 text-xs text-gray-500 dark:text-gray-400">Account Role</p>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
+                <div className="border-b border-border py-3">
+                  <p className="mb-0.5 text-xs text-muted-foreground">Account Role</p>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
                     {userProfile?.role === "ADMIN" ? "👑 Admin" : "👤 User"}
                   </span>
                 </div>
                 <div className="py-3">
-                  <p className="mb-0.5 text-xs text-gray-500 dark:text-gray-400">Member Since</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  <p className="mb-0.5 text-xs text-muted-foreground">Member Since</p>
+                  <p className="text-sm font-medium text-foreground">
                     {userProfile?.created_at
                       ? new Date(userProfile.created_at).toLocaleDateString(
                           "en-US",
@@ -403,8 +409,8 @@ export function MyAccountPage() {
             </div>
           </div>
 
-          <div className="mb-6 rounded-2xl border border-gray-200 dark:border-[#2d2d44] bg-white dark:bg-[#1e1e30] p-6 shadow-sm">
-            <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">Quick Actions</h3>
+          <div className={cn(proCard, "mb-6 p-6")}>
+            <h3 className={cn(cardTitle, "mb-4")}>Quick Actions</h3>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               <QuickAction
                 icon={Search}
@@ -429,19 +435,19 @@ export function MyAccountPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-red-200 bg-white dark:bg-[#1e1e30] p-6 shadow-sm">
+          <div className={cn(proCard, "border-red-200 p-6")}>
             <h3 className="mb-1 flex items-center gap-2 font-semibold text-red-600">
               <AlertTriangle size={16} />
               Danger Zone
             </h3>
-            <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mb-4 text-xs text-muted-foreground">
               These actions are permanent and cannot be undone.
             </p>
             <div className="flex flex-wrap gap-3">
               <button
                 type="button"
                 onClick={handleExportData}
-                className="flex items-center gap-2 rounded-xl border border-gray-200 dark:border-[#2d2d44] px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 transition-all hover:bg-gray-50 dark:hover:bg-white/5"
+                className="flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-accent"
               >
                 <Download size={14} />
                 Export My Data
@@ -461,9 +467,9 @@ export function MyAccountPage() {
 
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-[#2d2d44] bg-white dark:bg-[#1e1e30] p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Delete account?</h3>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          <div className={cn(proCard, "w-full max-w-md p-6 shadow-xl")}>
+            <h3 className={cn(sectionTitle, "text-lg")}>Delete account?</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
               Account deletion is not yet available. Contact support if you need
               your data removed.
             </p>
@@ -471,7 +477,7 @@ export function MyAccountPage() {
               <button
                 type="button"
                 onClick={() => setShowDeleteModal(false)}
-                className="rounded-xl border border-gray-200 dark:border-[#2d2d44] px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-white/5"
+                className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
               >
                 Cancel
               </button>
@@ -505,14 +511,14 @@ function StatCard({
   label: string
 }) {
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-[#2d2d44] bg-white dark:bg-[#1e1e30] p-5 text-center shadow-sm">
+    <div className={cn(proCard, "p-5 text-center")}>
       <div
         className={`mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl ${iconBg}`}
       >
         {icon}
       </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{label}</p>
+      <p className="text-2xl font-bold text-foreground">{value}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{label}</p>
     </div>
   )
 }
@@ -530,7 +536,7 @@ function PasswordField({
 }) {
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+      <label className="mb-1 block text-xs font-medium text-muted-foreground">
         {label}
       </label>
       <input
@@ -538,7 +544,7 @@ function PasswordField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-xl border border-gray-200 dark:border-[#2d2d44] bg-gray-50 dark:bg-[#252538] px-3 py-2.5 text-sm text-gray-900 dark:text-white transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-purple-500 focus:bg-white dark:focus:bg-[#2a2a40] focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+        className={cn(inputSurface, "w-full rounded-xl px-3 py-2.5")}
       />
     </div>
   )
@@ -556,15 +562,15 @@ function DetailRow({
   onAction: () => void
 }) {
   return (
-    <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#2d2d44] py-3">
+    <div className="flex items-center justify-between border-b border-border py-3">
       <div>
-        <p className="mb-0.5 text-xs text-gray-500 dark:text-gray-400">{label}</p>
-        <p className="text-sm font-medium text-gray-900 dark:text-white">{value}</p>
+        <p className="mb-0.5 text-xs text-muted-foreground">{label}</p>
+        <p className="text-sm font-medium text-foreground">{value}</p>
       </div>
       <button
         type="button"
         onClick={onAction}
-        className="text-xs font-medium text-purple-600 hover:underline"
+        className="text-xs font-medium text-primary hover:underline"
       >
         {actionLabel}
       </button>
@@ -585,13 +591,13 @@ function QuickAction({
     <button
       type="button"
       onClick={onClick}
-      className="group flex flex-col items-center gap-2 rounded-xl border border-gray-200 dark:border-[#2d2d44] p-4 transition-all hover:border-purple-300 dark:hover:border-purple-500/50 hover:bg-purple-50 dark:hover:bg-purple-500/10"
+      className="group flex flex-col items-center gap-2 rounded-xl border border-border p-4 transition-all hover:border-primary/30 hover:bg-accent"
     >
       <Icon
         size={20}
-        className="text-gray-400 dark:text-gray-500 group-hover:text-purple-600"
+        className="text-muted-foreground group-hover:text-primary"
       />
-      <span className="text-xs font-medium text-gray-600 dark:text-gray-300 group-hover:text-purple-700">
+      <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground">
         {label}
       </span>
     </button>

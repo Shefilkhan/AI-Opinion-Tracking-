@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { inputSurface } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 type OtpInputProps = {
@@ -99,12 +100,13 @@ export function OtpInput({
           disabled={disabled}
           aria-label={`Digit ${index + 1} of 6`}
           className={cn(
-            "h-14 w-12 rounded-xl border-2 bg-gray-50 text-center text-xl font-bold text-gray-900 caret-transparent",
+            inputSurface,
+            "h-14 w-12 text-center text-xl font-medium text-foreground caret-transparent",
             "outline-none transition-all duration-200",
-            "focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-500/20",
-            digit && !hasError && "border-purple-500 bg-purple-50 text-purple-700",
-            hasError && "border-red-400 bg-red-50",
-            !digit && !hasError && "border-gray-200"
+            "focus:border-primary focus:ring-2 focus:ring-primary/20",
+            digit && !hasError && "border-primary bg-accent text-accent-foreground",
+            hasError && "border-destructive bg-destructive/5",
+            !digit && !hasError && "border-border"
           )}
           onChange={(e) => handleChange(index, e.target.value)}
           onKeyDown={(e) => handleKeyDown(index, e)}

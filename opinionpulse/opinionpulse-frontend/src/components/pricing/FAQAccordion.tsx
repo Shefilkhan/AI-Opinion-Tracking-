@@ -7,11 +7,11 @@ export function FAQAccordion() {
   const [openIndex, setOpenIndex] = useState<number | null>(0)
 
   return (
-    <section className="py-20">
-      <h2 className="text-center text-2xl font-bold text-gray-900 md:text-3xl">
+    <section className="py-20 md:py-28">
+      <h2 className="font-serif-display text-center text-2xl font-medium tracking-normal text-foreground md:text-3xl">
         Frequently Asked Questions
       </h2>
-      <div className="mx-auto mt-10 max-w-3xl divide-y divide-gray-200 rounded-2xl border border-gray-200 bg-white px-2 shadow-sm">
+      <div className="mx-auto mt-10 max-w-3xl divide-y divide-border rounded-2xl border border-border bg-card px-2">
         {pricingFaqs.map((item, i) => {
           const isOpen = openIndex === i
           return (
@@ -19,12 +19,12 @@ export function FAQAccordion() {
               <button
                 type="button"
                 onClick={() => setOpenIndex(isOpen ? null : i)}
-                className="flex w-full items-center justify-between gap-4 px-4 py-5 text-left transition-colors hover:bg-gray-50"
+                className="flex w-full items-center justify-between gap-4 px-4 py-5 text-left transition-colors hover:bg-muted/30"
               >
-                <span className="font-medium text-gray-900">{item.q}</span>
+                <span className="font-medium text-foreground">{item.q}</span>
                 <ChevronDown
                   className={cn(
-                    "size-5 shrink-0 text-gray-400 transition-transform duration-200",
+                    "size-5 shrink-0 text-muted-foreground transition-transform duration-200",
                     isOpen && "rotate-180"
                   )}
                 />
@@ -36,7 +36,7 @@ export function FAQAccordion() {
                 )}
               >
                 <div className="overflow-hidden">
-                  <p className="px-4 pb-5 text-sm leading-relaxed text-gray-600">
+                  <p className="px-4 pb-5 text-sm leading-relaxed text-muted-foreground">
                     {item.a}
                   </p>
                 </div>

@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowRight, ArrowUp, RefreshCw, Zap } from "lucide-react"
 import type { AiTrendPrediction } from "@/api/ai"
+import { proCard, sectionTitle } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 type AiTrendPredictionCardProps = {
@@ -76,18 +77,18 @@ export function AiTrendPredictionCard({
 }: AiTrendPredictionCardProps) {
   if (loading) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] p-6">
+      <div className={cn(proCard, "p-6")}>
         <p className="animate-pulse text-sm text-muted-foreground">
           📈 AI is predicting opinion trends…
         </p>
-        <div className="mt-4 h-24 animate-pulse rounded-lg bg-gray-100" />
+        <div className="mt-4 h-24 animate-pulse rounded-lg bg-muted" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] p-6 text-center">
+      <div className={cn(proCard, "p-6 text-center")}>
         <p className="text-sm text-muted-foreground">🤖 {error}</p>
         {onRetry && (
           <button
@@ -110,12 +111,13 @@ export function AiTrendPredictionCard({
   return (
     <div
       className={cn(
-        "rounded-xl border border-gray-200 border-l-4 bg-white p-6",
+        proCard,
+        "border-l-4 p-6",
         meta.border
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <h3 className="text-[15px] font-semibold text-foreground">
+        <h3 className={sectionTitle}>
           📈 AI Trend Prediction
         </h3>
         <span className="text-[10px] font-medium text-muted-foreground">
@@ -144,16 +146,16 @@ export function AiTrendPredictionCard({
         <p className="text-xs font-semibold uppercase text-muted-foreground">
           Why this is happening
         </p>
-        <p className="mt-1 text-sm text-gray-700">{prediction.reasoning}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{prediction.reasoning}</p>
       </div>
 
-      <div className="mt-4 border-t border-gray-100 pt-4">
+      <div className="mt-4 border-t border-border pt-4">
         <p className="text-xs font-semibold text-muted-foreground">Key drivers</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {prediction.key_drivers.map((d) => (
             <span
               key={d}
-              className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs"
+              className="rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs"
             >
               📌 {d}
             </span>
@@ -161,7 +163,7 @@ export function AiTrendPredictionCard({
         </div>
       </div>
 
-      <ul className="mt-4 space-y-1 text-sm text-gray-700">
+      <ul className="mt-4 space-y-1 text-sm text-muted-foreground">
         <li>
           <span className="font-medium">⚠️ Watch for:</span> {prediction.watch_for}
         </li>
@@ -175,7 +177,7 @@ export function AiTrendPredictionCard({
         </li>
       </ul>
 
-      <p className="mt-3 text-xs italic text-gray-500">{prediction.short_forecast}</p>
+      <p className="mt-3 text-xs italic text-muted-foreground">{prediction.short_forecast}</p>
     </div>
   )
 }

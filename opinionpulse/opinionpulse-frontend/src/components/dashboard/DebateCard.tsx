@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom"
 import type { LiveDebateItem } from "@/api/dashboard"
 import { formatSentimentPct, platformBadge } from "@/lib/api/sentiment"
+import { proCard } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 type DebateCardProps = {
@@ -34,7 +35,8 @@ export function DebateCard({ debate }: DebateCardProps) {
   return (
     <article
       className={cn(
-        "rounded-xl border border-gray-200 bg-white p-5 transition-all duration-150 dark:border-[#2d2d44] dark:bg-[#1e1e30]",
+        proCard,
+        "p-5 transition-all duration-150",
         "hover:scale-[1.01] hover:shadow-md"
       )}
     >
@@ -71,7 +73,7 @@ export function DebateCard({ debate }: DebateCardProps) {
       <h3 className="mt-3 text-[15px] font-semibold leading-snug text-foreground">
         {debate.headline}
       </h3>
-      <p className="mt-2 line-clamp-2 text-[13px] text-gray-600">{debate.summary}</p>
+      <p className="mt-2 line-clamp-2 text-[13px] text-muted-foreground">{debate.summary}</p>
 
       <div className="mt-4 flex h-3 overflow-hidden rounded-md">
         {pos > 0 && (
@@ -91,7 +93,7 @@ export function DebateCard({ debate }: DebateCardProps) {
       </div>
 
       <div className="mt-4 flex items-end justify-between gap-2">
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           📊 {debate.total_mentions.toLocaleString()} mentions across{" "}
           {debate.platforms.length} platform
           {debate.platforms.length === 1 ? "" : "s"}

@@ -65,7 +65,7 @@ export function NotificationSettings() {
         />
       </div>
 
-      <div className="space-y-4 border-t border-gray-200 pt-6">
+      <div className="space-y-4 border-t border-border pt-6">
         <h3 className="text-sm font-semibold text-foreground">Push notifications</h3>
         <p className="text-sm text-muted-foreground">
           Browser push is available when you enable notifications for this site.

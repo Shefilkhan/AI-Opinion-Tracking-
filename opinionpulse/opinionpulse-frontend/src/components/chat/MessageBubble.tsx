@@ -22,18 +22,18 @@ type MessageBubbleProps = {
 }
 
 const MARKDOWN_CLASS =
-  "text-sm leading-relaxed text-gray-800 dark:text-gray-200 " +
-  "[&_strong]:font-semibold [&_strong]:text-gray-900 dark:[&_strong]:text-white " +
+  "text-sm leading-relaxed text-foreground " +
+  "[&_strong]:font-medium [&_strong]:text-foreground " +
   "[&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-4 " +
   "[&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-4 " +
   "[&_li]:my-0.5 " +
   "[&_p]:my-1.5 " +
-  "[&_h1]:my-2 [&_h1]:text-lg [&_h1]:font-bold [&_h1]:text-gray-900 dark:[&_h1]:text-white " +
-  "[&_h2]:my-1.5 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-gray-900 dark:[&_h2]:text-white " +
-  "[&_h3]:my-1 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-gray-900 dark:[&_h3]:text-white " +
-  "[&_a]:text-purple-600 dark:[&_a]:text-purple-400 [&_a]:hover:underline " +
-  "[&_blockquote]:border-l-2 [&_blockquote]:border-purple-300 [&_blockquote]:pl-3 [&_blockquote]:text-gray-600 dark:[&_blockquote]:text-gray-400 " +
-  "[&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:text-xs dark:[&_code]:bg-[#252538]"
+  "[&_h1]:my-2 [&_h1]:text-lg [&_h1]:font-medium [&_h1]:text-foreground " +
+  "[&_h2]:my-1.5 [&_h2]:text-base [&_h2]:font-medium [&_h2]:text-foreground " +
+  "[&_h3]:my-1 [&_h3]:text-sm [&_h3]:font-medium [&_h3]:text-foreground " +
+  "[&_a]:text-primary [&_a]:hover:underline " +
+  "[&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_blockquote]:text-muted-foreground " +
+  "[&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:text-xs"
 
 function isDatabaseError(content: string): boolean {
   const lower = content.toLowerCase()
@@ -64,10 +64,10 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
     >
       <div
         className={cn(
-          "mt-1 flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+          "mt-1 flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-medium",
           isUser
-            ? "bg-purple-600 text-white"
-            : "bg-gradient-to-br from-purple-500 to-indigo-600 text-white"
+            ? "bg-primary text-primary-foreground"
+            : "border border-border bg-accent text-accent-foreground"
         )}
       >
         {isUser ? "U" : "⚡"}
@@ -81,17 +81,17 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
       >
         <div
           className={cn(
-            "rounded-2xl px-4 py-3 text-sm leading-relaxed",
+            "rounded-[var(--radius-lg)] px-4 py-3 text-sm leading-relaxed",
             isUser
-              ? "rounded-tr-md bg-purple-600 text-white"
+              ? "rounded-tr-[var(--radius-sm)] bg-primary text-primary-foreground"
               : message.isError
-                ? "rounded-tl-md border border-red-200 bg-red-50 text-red-700"
-                : "rounded-tl-md bg-gray-100 text-gray-800 dark:bg-[#252538] dark:text-gray-200"
+                ? "rounded-tl-[var(--radius-sm)] border border-destructive/20 bg-destructive/5 text-destructive"
+                : "rounded-tl-[var(--radius-sm)] border border-border bg-card text-foreground"
           )}
         >
           {!isUser && message.hasRealData && (
-            <div className="mb-2 flex items-center gap-1 text-xs font-medium text-purple-600">
-              <span className="inline-block size-1.5 rounded-full bg-green-500" />
+            <div className="mb-2 flex items-center gap-1 text-xs font-medium text-primary">
+              <span className="inline-block size-1.5 rounded-full bg-success" />
               Based on live data
             </div>
           )}
@@ -100,10 +100,10 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
             <p>{message.content}</p>
           ) : showDbError ? (
             <div>
-              <p className="mb-1 font-medium text-red-600">
+              <p className="mb-1 font-medium text-destructive">
                 Database connection issue
               </p>
-              <p className="text-xs text-red-500">
+              <p className="text-xs text-destructive/80">
                 The chat history service encountered an error. Your question was
                 received but history could not be saved. Please try again.
               </p>
@@ -120,7 +120,7 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
             <button
               type="button"
               onClick={copyMessage}
-              className="flex items-center gap-1 text-xs text-gray-400 transition-colors hover:text-gray-600"
+              className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
               <Copy size={11} />
               {copied ? "Copied!" : "Copy"}
@@ -135,7 +135,7 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
           />
         )}
 
-        <span className="mt-1 text-[10px] text-gray-400">
+        <span className="mt-1 text-[10px] text-muted-foreground">
           {message.timestamp.toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",

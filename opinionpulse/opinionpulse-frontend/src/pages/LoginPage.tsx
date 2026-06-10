@@ -29,15 +29,11 @@ export function LoginPage() {
       const res = await loginUser({ email: email.trim(), password })
       const mail = encodeURIComponent(res.email)
       if (res.requires_email_verification) {
-        navigate(`/verify-register-otp?email=${mail}`, {
-          state: { devOtpCode: res.dev_otp_code ?? undefined },
-        })
+        navigate(`/verify-register-otp?email=${mail}`)
         return
       }
       if (res.requires_login_otp) {
-        navigate(`/verify-login-otp?email=${mail}`, {
-          state: { devOtpCode: res.dev_otp_code ?? undefined },
-        })
+        navigate(`/verify-login-otp?email=${mail}`)
         return
       }
       navigate("/dashboard")

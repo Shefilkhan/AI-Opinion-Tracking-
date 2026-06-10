@@ -1,16 +1,16 @@
 import { useMemo } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ArrowRight, Check, CheckCircle, Circle, Loader2 } from "lucide-react"
 import { ApiError } from "@/api/client"
 import { signUpUser } from "@/api/auth"
 import { getApiErrorMessage } from "@/lib/apiErrorMessage"
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton"
 import { PasswordInput } from "@/components/auth/PasswordInput"
 import {
   authInputClass,
   authLabelClass,
-  GoogleIcon,
   STRENGTH_HEX,
   STRENGTH_LABELS,
 } from "@/lib/auth/authUi"
@@ -19,10 +19,13 @@ import {
   getPasswordStrength,
 } from "@/lib/auth/passwordStrength"
 import { signUpSchema, type SignUpFormValues } from "@/lib/validations/auth"
+import { btnPrimary } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 export function SignUpForm() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const redirect = searchParams.get("redirect") ?? "/dashboard"
   const {
     register,
     control,
@@ -56,8 +59,7 @@ export function SignUpForm() {
         password: values.password,
       })
       navigate(
-        `/auth/verify-otp?email=${encodeURIComponent(res.email)}&type=signup`,
-        { state: { devOtpCode: res.dev_otp_code ?? undefined } }
+        `/auth/verify-otp?email=${encodeURIComponent(res.email)}&type=signup`
       )
     } catch (err) {
       const message = getApiErrorMessage(err)
@@ -76,15 +78,17 @@ export function SignUpForm() {
       {errors.root && (
         <p
           role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+          className="rounded-[var(--radius-md)] border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive"
         >
           {errors.root.message}
         </p>
       )}
 
       <div className="mb-8">
-        <h2 className="mb-1 text-2xl font-bold text-gray-900">Create your account</h2>
-        <p className="text-sm text-gray-500">
+        <h2 className="font-serif-display mb-1 text-2xl font-medium text-foreground">
+          Create your account
+        </h2>
+        <p className="text-sm text-muted-foreground">
           Start tracking public opinion in minutes. Free 14-day Pro trial included.
         </p>
       </div>
@@ -104,7 +108,7 @@ export function SignUpForm() {
           {...register("full_name")}
         />
         {errors.full_name && (
-          <p className="mt-1 text-sm text-red-600">{errors.full_name.message}</p>
+          <p className="mt-1 text-sm text-destructive">{errors.full_name.message}</p>
         )}
       </div>
 
@@ -125,7 +129,7 @@ export function SignUpForm() {
           {...register("email")}
         />
         {errors.email && (
-          <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+          <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
         )}
       </div>
 
@@ -153,7 +157,7 @@ export function SignUpForm() {
               className="h-1 flex-1 rounded-full transition-all duration-300"
               style={{
                 backgroundColor:
-                  i < strength.score ? strengthColor : "#e5e7eb",
+                  i < strength.score ? strengthColor : "var(--border)",
               }}
             />
           ))}
@@ -169,20 +173,20 @@ export function SignUpForm() {
               key={req.id}
               className={cn(
                 "flex items-center gap-1.5 text-xs",
-                req.met ? "text-green-600" : "text-gray-400"
+                req.met ? "text-success" : "text-muted-foreground"
               )}
             >
               {req.met ? (
-                <CheckCircle size={12} className="shrink-0 text-green-500" />
+                <CheckCircle size={12} className="shrink-0 text-success" />
               ) : (
-                <Circle size={12} className="shrink-0 text-gray-300" />
+                <Circle size={12} className="shrink-0 text-border" />
               )}
               {req.label}
             </div>
           ))}
         </div>
         {errors.password && (
-          <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+          <p className="mt-1 text-sm text-destructive">{errors.password.message}</p>
         )}
       </div>
 
@@ -204,7 +208,7 @@ export function SignUpForm() {
           )}
         />
         {errors.confirmPassword && (
-          <p className="mt-1 text-sm text-red-600">
+          <p className="mt-1 text-sm text-destructive">
             {errors.confirmPassword.message}
           </p>
         )}
@@ -224,22 +228,22 @@ export function SignUpForm() {
               />
               <span
                 className={cn(
-                  "flex size-4 items-center justify-center rounded border-2 border-gray-300 transition-all duration-200",
-                  "peer-checked:border-purple-600 peer-checked:bg-purple-600",
+                  "flex size-4 items-center justify-center rounded border-2 border-border transition-all duration-200",
+                  "peer-checked:border-primary peer-checked:bg-primary",
                   "peer-checked:[&_svg]:opacity-100",
-                  errors.terms && "border-red-400"
+                  errors.terms && "border-destructive"
                 )}
               >
-                <Check size={10} className="text-white opacity-0" />
+                <Check size={10} className="text-primary-foreground opacity-0" />
               </span>
             </span>
-            <span className="text-sm leading-relaxed text-gray-600">
+            <span className="text-sm leading-relaxed text-muted-foreground">
               I agree to the{" "}
-              <Link to="/" className="font-medium text-purple-600 hover:underline">
+              <Link to="/" className="font-medium text-primary hover:underline">
                 Terms of Service
               </Link>{" "}
               and{" "}
-              <Link to="/" className="font-medium text-purple-600 hover:underline">
+              <Link to="/" className="font-medium text-primary hover:underline">
                 Privacy Policy
               </Link>
             </span>
@@ -247,13 +251,17 @@ export function SignUpForm() {
         )}
       />
       {errors.terms && (
-        <p className="text-sm text-red-600">{errors.terms.message}</p>
+        <p className="text-sm text-destructive">{errors.terms.message}</p>
       )}
 
       <button
         type="submit"
         disabled={isSubmitting || !isValid}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:scale-[1.02] hover:from-purple-500 hover:to-indigo-500 hover:shadow-lg hover:shadow-purple-200 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+        className={cn(
+          "flex w-full min-h-11 items-center justify-center gap-2 px-6 py-3 text-sm font-medium",
+          btnPrimary,
+          "disabled:cursor-not-allowed disabled:opacity-50"
+        )}
       >
         {isSubmitting ? (
           <>
@@ -269,22 +277,14 @@ export function SignUpForm() {
       </button>
 
       <div className="flex items-center gap-3 py-1">
-        <div className="h-px flex-1 bg-gray-200" />
-        <span className="text-xs font-medium text-gray-400">or continue with</span>
-        <div className="h-px flex-1 bg-gray-200" />
+        <div className="h-px flex-1 bg-border" />
+        <span className="text-xs font-medium text-muted-foreground">or continue with</span>
+        <div className="h-px flex-1 bg-border" />
       </div>
 
-      <button
-        type="button"
-        disabled
-        title="Google OAuth — coming soon"
-        className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-3 text-sm font-medium text-gray-700 transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm disabled:opacity-60"
-      >
-        <GoogleIcon />
-        Continue with Google
-      </button>
+      <GoogleSignInButton redirect={redirect} />
 
-      <p className="text-center text-xs text-gray-400">
+      <p className="text-center text-xs text-muted-foreground">
         By creating an account you agree to our terms. No credit card required for
         the 14-day Pro trial.
       </p>

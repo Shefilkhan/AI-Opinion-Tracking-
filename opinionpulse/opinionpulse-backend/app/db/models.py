@@ -41,6 +41,9 @@ class User(Base):
         DateTime(timezone=True), nullable=True
     )
     avatar_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    google_id: Mapped[Optional[str]] = mapped_column(
+        String(255), unique=True, nullable=True, index=True
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     failed_login_attempts: Mapped[int] = mapped_column(
         Integer, default=0, nullable=False

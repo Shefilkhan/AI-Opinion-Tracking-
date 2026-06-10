@@ -38,7 +38,7 @@ export function PricingPlansGrid({
       </div>
 
       {showBetaNote && (
-        <p className="mt-8 text-center text-sm text-gray-400">
+        <p className="mt-8 text-center text-sm text-muted-foreground">
           💡 Currently in beta — all features available free during development.
           Pricing activates at launch.
         </p>

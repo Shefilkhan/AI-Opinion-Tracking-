@@ -2,6 +2,8 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Loader2, Sparkles } from "lucide-react"
 import { getAiInsightOfTheDay, getAiStatus, type AiInsightOfTheDay } from "@/api/ai"
+import { proCard, sectionTitle } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 export function AiInsightOfTheDay() {
   const navigate = useNavigate()
@@ -30,12 +32,12 @@ export function AiInsightOfTheDay() {
   }
 
   return (
-    <section className="rounded-xl border border-purple-100 border-l-4 border-l-purple-500 bg-gradient-to-br from-purple-50 to-indigo-50 p-5">
+    <section className={cn(proCard, "border-l-4 border-l-primary p-5")}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-[15px] font-semibold text-foreground">
+        <h2 className={sectionTitle}>
           🤖 AI Insight of the Day
         </h2>
-        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-purple-700">
+        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-primary">
           <Sparkles className="size-3" />
           Powered by Claude
         </span>
@@ -48,13 +50,13 @@ export function AiInsightOfTheDay() {
         </div>
       ) : insight ? (
         <>
-          <p className="mt-2 text-sm font-medium text-purple-900">
+          <p className="mt-2 text-sm font-medium text-foreground">
             Topic: {insight.topic}
           </p>
           <p className="mt-3 text-base font-semibold leading-snug text-foreground">
             &ldquo;{insight.headline}&rdquo;
           </p>
-          <p className="mt-2 text-sm text-gray-700">{insight.overview}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{insight.overview}</p>
           <div className="mt-4 flex justify-end">
             <button
               type="button"

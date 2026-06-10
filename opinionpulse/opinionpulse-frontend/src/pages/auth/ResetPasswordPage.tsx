@@ -117,7 +117,7 @@ export function ResetPasswordPage() {
               <div
                 key={i}
                 className={cn(
-                  "h-1 flex-1 rounded-full bg-gray-200",
+                  "h-1 flex-1 rounded-full bg-muted",
                   i < strength.score && STRENGTH_COLORS[strength.level]
                 )}
               />

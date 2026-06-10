@@ -22,7 +22,7 @@ function SourceDot({
   live: boolean
 }) {
   return (
-    <span className={live ? "text-green-600" : "text-gray-400"}>
+    <span className={live ? "text-green-600" : "text-muted-foreground"}>
       ● {label} {live ? "Live" : "Off"}
     </span>
   )
@@ -30,14 +30,14 @@ function SourceDot({
 
 export function LiveDataIndicator({ isLive, lastUpdated }: LiveDataIndicatorProps) {
   return (
-    <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+    <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
       <span>Data sources:</span>
       <SourceDot label="Reddit" live={isLive.reddit ?? true} />
       <SourceDot label="Dev.to" live={isLive.devto ?? true} />
       <SourceDot label="HN" live={isLive.hackernews ?? true} />
       <SourceDot label="News" live={!!(isLive.newsapi || isLive.guardian || isLive.gnews)} />
       <SourceDot label="YouTube" live={!!isLive.youtube} />
-      <span className="text-gray-300">Updated {timeAgo(lastUpdated)}</span>
+      <span className="text-border">Updated {timeAgo(lastUpdated)}</span>
     </div>
   )
 }

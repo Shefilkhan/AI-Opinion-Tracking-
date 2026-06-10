@@ -1,26 +1,18 @@
 import { useState } from "react"
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { ApiError } from "@/api/client"
 import { resendRegisterOtp, verifyRegisterOtp } from "@/api/auth"
 import { AuthLayout } from "@/components/auth/AuthLayout"
-import { DevOtpBanner } from "@/components/auth/DevOtpBanner"
 import { OtpInput } from "@/components/auth/OtpInput"
 import { Button } from "@/components/ui/button"
 import { btnPrimary, successSurface } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
-type LocationState = {
-  devOtpCode?: string
-}
-
 export function VerifyRegisterOtpPage() {
   const [searchParams] = useSearchParams()
-  const location = useLocation()
   const navigate = useNavigate()
   const email = searchParams.get("email") ?? ""
-  const initialDevOtp = (location.state as LocationState | null)?.devOtpCode
-  const [devOtpCode, setDevOtpCode] = useState<string | undefined>(initialDevOtp)
-  const [otp, setOtp] = useState(initialDevOtp ?? "")
+  const [otp, setOtp] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -56,10 +48,6 @@ export function VerifyRegisterOtpPage() {
     try {
       const res = await resendRegisterOtp(email)
       setSuccess(res.message)
-      if (res.dev_otp_code) {
-        setDevOtpCode(res.dev_otp_code)
-        setOtp(res.dev_otp_code)
-      }
     } catch (err) {
       setError(err instanceof ApiError ? err.detail : "Could not resend OTP.")
     } finally {
@@ -80,9 +68,6 @@ export function VerifyRegisterOtpPage() {
       footerLinkLabel="Sign up"
     >
       <form onSubmit={handleVerify} className="space-y-6">
-        {import.meta.env.DEV && devOtpCode ? (
-          <DevOtpBanner code={devOtpCode} />
-        ) : null}
         <OtpInput value={otp} onChange={setOtp} disabled={loading} />
         {error && (
           <p className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">

@@ -109,6 +109,12 @@ def ensure_users_schema(engine: Engine) -> None:
             )
         if "bio" not in columns:
             conn.execute(text("ALTER TABLE users ADD COLUMN bio TEXT NULL"))
+        if "google_id" not in columns:
+            conn.execute(
+                text(
+                    "ALTER TABLE users ADD COLUMN google_id VARCHAR(255) NULL UNIQUE"
+                )
+            )
 
 
 REQUIRED_CHAT_COLUMNS = {

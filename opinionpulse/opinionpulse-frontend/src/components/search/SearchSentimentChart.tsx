@@ -9,6 +9,8 @@ import {
   YAxis,
 } from "recharts"
 import type { SearchResponse } from "@/lib/api/types"
+import { proCard, cardTitle } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 const FALLBACK_TREND = [
   { time: "12AM", positive: 42, negative: 28, neutral: 30 },
@@ -40,7 +42,7 @@ function ChartTooltip({
 }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-lg border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] px-3 py-2 text-xs shadow-md">
+    <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-md">
       <p className="font-medium text-foreground">{label}</p>
       {payload.map((p) => (
         <p key={p.name} style={{ color: p.color }}>
@@ -62,8 +64,8 @@ export function SearchSentimentChart({ data }: SearchSentimentChartProps) {
   }))
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] p-5">
-      <h3 className="mb-4 text-sm font-semibold text-foreground">
+    <div className={cn(proCard, "p-5")}>
+      <h3 className={cn(cardTitle, "mb-4")}>
         Sentiment Trend — Last 24 Hours
       </h3>
       <div className="h-[220px] w-full">

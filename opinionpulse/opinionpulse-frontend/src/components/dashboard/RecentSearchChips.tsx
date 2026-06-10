@@ -1,5 +1,7 @@
 import { Search, X } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { proCard } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 type RecentSearchChipsProps = {
   items: string[]
@@ -22,7 +24,7 @@ export function RecentSearchChips({ items, onRemove }: RecentSearchChipsProps) {
       {items.map((q) => (
         <span
           key={q}
-          className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white py-1.5 pl-3 pr-1 text-sm dark:border-[#2d2d44] dark:bg-[#1e1e30]"
+          className={cn(proCard, "inline-flex items-center gap-1 rounded-full py-1.5 pl-3 pr-1 text-sm")}
         >
           <button
             type="button"
@@ -35,7 +37,7 @@ export function RecentSearchChips({ items, onRemove }: RecentSearchChipsProps) {
           <button
             type="button"
             onClick={() => onRemove(q)}
-            className="rounded-full p-1 text-muted-foreground hover:bg-gray-100 hover:text-foreground"
+            className="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
             aria-label={`Remove ${q}`}
           >
             <X className="size-3.5" />

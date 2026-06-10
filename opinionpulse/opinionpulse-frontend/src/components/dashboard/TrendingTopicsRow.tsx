@@ -2,6 +2,7 @@ import { useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { ChevronLeft, ChevronRight, TrendingDown, TrendingUp } from "lucide-react"
 import type { TrendingTopic } from "@/api/dashboard"
+import { proCard, sectionTitle } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 type TrendingTopicsRowProps = {
@@ -19,7 +20,7 @@ export function TrendingTopicsRow({ topics }: TrendingTopicsRowProps) {
   return (
     <section>
       <div className="mb-4 flex items-center gap-2">
-        <h2 className="text-lg font-semibold text-foreground">Trending Right Now</h2>
+        <h2 className={sectionTitle}>Trending Right Now</h2>
         <span className="relative flex size-2">
           <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-500 opacity-75" />
           <span className="relative inline-flex size-2 rounded-full bg-red-500" />
@@ -32,7 +33,7 @@ export function TrendingTopicsRow({ topics }: TrendingTopicsRowProps) {
         <button
           type="button"
           onClick={() => scroll("left")}
-          className="absolute -left-2 top-1/2 z-10 hidden size-8 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm dark:border-[#2d2d44] dark:bg-[#1e1e30] md:flex"
+          className="absolute -left-2 top-1/2 z-10 hidden size-8 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card shadow-sm md:flex"
           aria-label="Scroll left"
         >
           <ChevronLeft className="size-4" />
@@ -50,7 +51,10 @@ export function TrendingTopicsRow({ topics }: TrendingTopicsRowProps) {
                   `/search?q=${encodeURIComponent((t.query || t.name).replace(/^#/, ""))}`
                 )
               }
-              className="min-w-[160px] shrink-0 rounded-[20px] border border-gray-100 bg-white px-4 py-3 text-left transition-all duration-150 hover:scale-[1.02] hover:shadow-md dark:border-[#2d2d44] dark:bg-[#1e1e30] dark:hover:shadow-black/30"
+              className={cn(
+                proCard,
+                "min-w-[160px] shrink-0 rounded-[20px] px-4 py-3 text-left transition-all duration-150 hover:scale-[1.02] hover:shadow-md"
+              )}
             >
               <p className="font-semibold text-foreground">{t.name}</p>
               <p className="mt-1 text-xs text-muted-foreground">{t.mentions} mentions</p>
@@ -77,7 +81,7 @@ export function TrendingTopicsRow({ topics }: TrendingTopicsRowProps) {
         <button
           type="button"
           onClick={() => scroll("right")}
-          className="absolute -right-2 top-1/2 z-10 hidden size-8 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm dark:border-[#2d2d44] dark:bg-[#1e1e30] md:flex"
+          className="absolute -right-2 top-1/2 z-10 hidden size-8 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card shadow-sm md:flex"
           aria-label="Scroll right"
         >
           <ChevronRight className="size-4" />

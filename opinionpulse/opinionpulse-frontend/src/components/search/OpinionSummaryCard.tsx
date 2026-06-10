@@ -1,6 +1,6 @@
 import type { SearchResponse } from "@/lib/api/types"
 import { formatSentimentPct, platformDisplayName } from "@/lib/api/sentiment"
-import { proCard } from "@/lib/ui-classes"
+import { proCard, sectionTitle } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 type OpinionSummaryCardProps = {
@@ -18,11 +18,11 @@ export function OpinionSummaryCard({ data, timeLabel }: OpinionSummaryCardProps)
     <div className={cn(proCard, "p-6 sm:p-7")}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+          <h2 className={cn(sectionTitle, "text-xl")}>
             &ldquo;{data.query}&rdquo;
           </h2>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            <span className="font-semibold text-purple-600 dark:text-purple-400">
+          <p className="mt-1 text-sm text-muted-foreground">
+            <span className="font-semibold text-primary">
               {data.total_results.toLocaleString()}
             </span>{" "}
             mentions found · {timeLabel}
@@ -31,10 +31,10 @@ export function OpinionSummaryCard({ data, timeLabel }: OpinionSummaryCardProps)
       </div>
 
       <div className="mt-6">
-        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Overall Sentiment
         </p>
-        <div className="mt-3 flex h-2.5 overflow-hidden rounded-full bg-gray-100 dark:bg-[#252538]">
+        <div className="mt-3 flex h-2.5 overflow-hidden rounded-full bg-muted">
           {pos > 0 && (
             <div
               className="bg-green-500 transition-all"
@@ -83,8 +83,8 @@ export function OpinionSummaryCard({ data, timeLabel }: OpinionSummaryCardProps)
             emoji: "😐",
             value: neu,
             label: "Neutral",
-            bg: "bg-gray-50 dark:bg-[#252538]",
-            text: "text-gray-600 dark:text-gray-300",
+            bg: "bg-muted",
+            text: "text-muted-foreground",
           },
           {
             emoji: "😠",
@@ -107,7 +107,7 @@ export function OpinionSummaryCard({ data, timeLabel }: OpinionSummaryCardProps)
             <p className={cn("mt-2 text-2xl font-bold leading-none sm:text-3xl", item.text)}>
               {formatSentimentPct(item.value)}
             </p>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-muted-foreground">
               {item.label}
             </p>
           </div>
@@ -115,7 +115,7 @@ export function OpinionSummaryCard({ data, timeLabel }: OpinionSummaryCardProps)
       </div>
 
       {(data.peak_discussion || data.most_active_platform) && (
-        <p className="mt-5 border-t border-gray-100 pt-4 text-xs text-gray-500 dark:border-[#2d2d44] dark:text-gray-400">
+        <p className="mt-5 border-t border-border pt-4 text-xs text-muted-foreground">
           {data.peak_discussion && (
             <span>📈 Peak discussion: {data.peak_discussion}</span>
           )}

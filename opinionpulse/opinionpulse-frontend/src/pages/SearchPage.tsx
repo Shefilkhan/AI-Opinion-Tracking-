@@ -1,12 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { Info, Loader2, Search, Sparkles } from "lucide-react"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import {
-  ParticleBackground,
-  type ParticleSentiment,
-} from "@/components/ui/ParticleBackground"
-import { pageShellParticles, proCard, btnPrimary } from "@/lib/ui-classes"
+  pageShell,
+  proCard,
+  btnPrimary,
+  sectionTitle,
+  inputSurface,
+} from "@/lib/ui-classes"
 import { Button } from "@/components/ui/button"
 import { KeywordsSidebar } from "@/components/search/KeywordsSidebar"
 import { AiInsightsSection } from "@/components/search/AiInsightsSection"
@@ -92,24 +94,10 @@ export function SearchPage() {
     runSearch(query)
   }
 
-  const particleSentiment = useMemo((): ParticleSentiment => {
-    const s = data?.sentiment_summary
-    if (!s || !hasSearched) return "neutral"
-    if (s.positive > 50) return "positive"
-    if (s.negative > 40) return "negative"
-    return "neutral"
-  }, [data?.sentiment_summary, hasSearched])
-
-  const particleIntensity = loading ? 0.5 : hasSearched ? 0.35 : 0.2
   const showResults = hasSearched && (loading || data || error)
 
   return (
-    <div className={cn(pageShellParticles, "min-h-screen w-full")}>
-      <ParticleBackground
-        key={particleSentiment}
-        sentiment={particleSentiment}
-        intensity={particleIntensity}
-      />
+    <div className={cn(pageShell, "min-h-screen w-full")}>
       <div className="relative z-10 w-full">
         <DashboardLayout
           title="Search"
@@ -126,13 +114,13 @@ export function SearchPage() {
             >
               {!showResults && (
                 <div className="mb-6 text-center">
-                  <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-600 shadow-lg shadow-purple-500/20">
-                    <Sparkles className="size-6 text-white" />
+                  <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-2xl bg-primary shadow-none">
+                    <Sparkles className="size-6 text-primary-foreground" />
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">
+                  <h2 className={cn(sectionTitle, "text-2xl sm:text-3xl")}>
                     Track Public Opinion
                   </h2>
-                  <p className="mx-auto mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-400">
+                  <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
                     Search any topic, brand, person, or keyword to see what the
                     world thinks across 10+ live sources
                   </p>
@@ -142,7 +130,7 @@ export function SearchPage() {
               <form onSubmit={handleSubmit} className="w-full">
                 <div className="relative flex items-center">
                   <Search
-                    className="absolute left-4 size-5 text-gray-400"
+                    className="absolute left-4 size-5 text-muted-foreground"
                     aria-hidden
                   />
                   <input
@@ -150,7 +138,10 @@ export function SearchPage() {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Search for a topic, brand, or keyword..."
-                    className="h-12 w-full rounded-xl border border-gray-200 bg-gray-50 py-2 pl-12 pr-28 text-sm text-gray-900 shadow-sm transition-all placeholder:text-gray-400 focus:border-purple-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/25 dark:border-[#2d2d44] dark:bg-[#252538] dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-[#2a2a40] sm:h-[52px] sm:pr-32"
+                    className={cn(
+                      inputSurface,
+                      "h-12 w-full rounded-xl bg-muted/40 py-2 pl-12 pr-28 shadow-none sm:h-[52px] sm:pr-32"
+                    )}
                   />
                   <Button
                     type="submit"
@@ -176,7 +167,7 @@ export function SearchPage() {
                         setQuery(s.query)
                         runSearch(s.query)
                       }}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-medium text-gray-600 transition-all hover:border-purple-300 hover:bg-purple-50 hover:text-purple-700 dark:border-[#2d2d44] dark:bg-[#1e1e30] dark:text-gray-300 dark:hover:border-purple-500/50 dark:hover:bg-purple-500/10 dark:hover:text-purple-300"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:border-primary/30 hover:bg-accent hover:text-accent-foreground"
                     >
                       <span aria-hidden>{s.emoji}</span>
                       {s.label}
@@ -204,14 +195,14 @@ export function SearchPage() {
                   "border-red-200 bg-red-50 p-8 text-center dark:border-red-500/30 dark:bg-red-500/10"
                 )}
               >
-                <h3 className="font-semibold text-gray-900 dark:text-white">
+                <h3 className="font-semibold text-foreground">
                   Couldn&apos;t load results
                 </h3>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                <p className="mt-2 text-sm text-muted-foreground">
                   There was a problem connecting to the data source. Please try
                   again.
                 </p>
-                <Button className="mt-4" onClick={() => runSearch(query)}>
+                <Button className={cn("mt-4", btnPrimary)} onClick={() => runSearch(query)}>
                   Retry
                 </Button>
               </div>
@@ -219,8 +210,8 @@ export function SearchPage() {
 
             {loading && (
               <div className="flex items-center justify-center gap-3 py-16">
-                <Loader2 className="size-6 animate-spin text-purple-600" />
-                <span className="text-sm text-gray-500 dark:text-gray-400">
+                <Loader2 className="size-6 animate-spin text-primary" />
+                <span className="text-sm text-muted-foreground">
                   Searching live sources for &ldquo;{query}&rdquo;…
                 </span>
               </div>
@@ -250,18 +241,18 @@ export function SearchPage() {
             )}
 
             {!loading && !error && !data && !hasSearched && (
-              <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+              <p className="py-8 text-center text-sm text-muted-foreground">
                 Enter a topic above to see opinion data.
               </p>
             )}
 
             {!loading && !error && data && data.results.length === 0 && (
               <div className={cn(proCard, "p-12 text-center")}>
-                <Search className="mx-auto size-12 text-gray-300 dark:text-gray-600" />
-                <h3 className="mt-4 font-semibold text-gray-900 dark:text-white">
+                <Search className="mx-auto size-12 text-muted-foreground/40" />
+                <h3 className="mt-4 font-semibold text-foreground">
                   No results found
                 </h3>
-                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-2 text-sm text-muted-foreground">
                   Try a different keyword or adjust your filters
                 </p>
                 <Button

@@ -47,10 +47,10 @@ export function PrivacySettings() {
           <label
             key={opt.id}
             className={cn(
-              "flex cursor-pointer gap-3 rounded-lg border p-4 transition-colors duration-150 hover:bg-gray-50",
+              "flex cursor-pointer gap-3 rounded-lg border p-4 transition-colors duration-150 hover:bg-accent/50",
               draft.profileVisibility === opt.id
                 ? "border-primary bg-primary/5"
-                : "border-gray-200"
+                : "border-border"
             )}
           >
             <input
@@ -89,7 +89,7 @@ export function PrivacySettings() {
         onCheckedChange={(v) => setDraft((p) => ({ ...p, allowUsageAnalytics: v }))}
       />
 
-      <div className="border-t border-gray-200 pt-4">
+      <div className="border-t border-border pt-4">
         <Button
           type="button"
           variant="outline"

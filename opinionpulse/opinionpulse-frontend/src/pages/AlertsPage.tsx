@@ -3,7 +3,8 @@ import { Bell, Plus } from "lucide-react"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Button } from "@/components/ui/button"
 import { Toggle } from "@/components/ui/toggle"
-import { btnPrimary } from "@/lib/ui-classes"
+import { btnPrimary, proCard, cardTitle, inputSurface } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
 
 type AlertRule = {
   id: string
@@ -63,8 +64,8 @@ export function AlertsPage() {
       subtitle="Get notified when sentiment spikes on keywords you care about"
     >
       <div className="mx-auto max-w-2xl space-y-8">
-        <div className="rounded-xl border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] p-6">
-          <h2 className="text-sm font-semibold text-foreground">New alert</h2>
+        <div className={cn(proCard, "p-6")}>
+          <h2 className={cardTitle}>New alert</h2>
           <p className="mt-1 text-xs text-muted-foreground">
             Backend delivery is coming soon — rules are saved locally for now.
           </p>
@@ -74,7 +75,7 @@ export function AlertsPage() {
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="Keyword e.g. Bitcoin"
-              className="h-11 w-full rounded-lg border border-gray-200 px-3 text-sm"
+              className={cn(inputSurface, "h-11 w-full")}
             />
             <div className="flex flex-wrap gap-3">
               <label className="text-xs text-muted-foreground">
@@ -85,7 +86,7 @@ export function AlertsPage() {
                   max={100}
                   value={threshold}
                   onChange={(e) => setThreshold(e.target.value)}
-                  className="mt-1 block h-10 w-24 rounded-lg border border-gray-200 px-2 text-sm"
+                  className={cn(inputSurface, "mt-1 block h-10 w-24")}
                 />
               </label>
               <label className="text-xs text-muted-foreground">
@@ -93,7 +94,7 @@ export function AlertsPage() {
                 <select
                   value={frequency}
                   onChange={(e) => setFrequency(e.target.value)}
-                  className="mt-1 block h-10 rounded-lg border border-gray-200 px-2 text-sm"
+                  className={cn(inputSurface, "mt-1 block h-10")}
                 >
                   <option value="instant">Instant</option>
                   <option value="daily">Daily</option>
@@ -108,9 +109,9 @@ export function AlertsPage() {
         </div>
 
         {alerts.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] p-12 text-center">
+          <div className={cn(proCard, "border-dashed p-12 text-center")}>
             <Bell className="mx-auto size-10 text-muted-foreground/50" />
-            <p className="mt-4 font-medium">Set up your first alert</p>
+            <p className={cn(cardTitle, "mt-4")}>Set up your first alert</p>
             <p className="mt-2 text-sm text-muted-foreground">
               Monitor keywords when negative sentiment crosses your threshold.
             </p>
@@ -120,7 +121,7 @@ export function AlertsPage() {
             {alerts.map((a) => (
               <li
                 key={a.id}
-                className="flex items-center justify-between rounded-xl border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] px-5 py-4"
+                className={cn(proCard, "flex items-center justify-between px-5 py-4")}
               >
                 <div>
                   <p className="font-medium text-foreground">{a.keyword}</p>

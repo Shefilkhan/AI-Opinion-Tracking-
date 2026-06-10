@@ -5,12 +5,12 @@ import { cn } from "@/lib/utils"
 
 function CellValue({ value }: { value: ComparisonCell }) {
   if (value === true) {
-    return <Check className="mx-auto size-5 text-green-600" aria-label="Included" />
+    return <Check className="mx-auto size-5 text-success" aria-label="Included" />
   }
   if (value === false) {
-    return <X className="mx-auto size-5 text-gray-300" aria-label="Not included" />
+    return <X className="mx-auto size-5 text-muted-foreground/40" aria-label="Not included" />
   }
-  return <span className="text-sm text-gray-700">{value}</span>
+  return <span className="text-sm text-foreground">{value}</span>
 }
 
 export function ComparisonTable() {
@@ -19,13 +19,13 @@ export function ComparisonTable() {
   return (
     <div className="mt-20">
       <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-        <h2 className="text-2xl font-bold text-gray-900 md:text-3xl">
+        <h2 className="font-serif-display text-2xl font-medium tracking-normal text-foreground md:text-3xl">
           Compare All Features
         </h2>
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="flex items-center gap-1 text-sm font-medium text-purple-600 hover:text-purple-700"
+          className="flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80"
         >
           {open ? "Hide full comparison" : "Show full comparison"}
           <ChevronDown
@@ -41,20 +41,20 @@ export function ComparisonTable() {
         )}
       >
         <div className="overflow-hidden">
-          <div className="overflow-x-auto rounded-2xl border border-gray-200 shadow-sm">
+          <div className="overflow-x-auto rounded-2xl border border-border">
             <table className="w-full min-w-[640px] border-collapse text-left">
               <thead>
-                <tr className="bg-gray-50">
-                  <th className="sticky left-0 z-10 min-w-[200px] bg-gray-50 px-4 py-4 text-sm font-semibold text-gray-900">
+                <tr className="bg-[var(--bg-secondary)]">
+                  <th className="sticky left-0 z-10 min-w-[200px] bg-[var(--bg-secondary)] px-4 py-4 text-sm font-semibold text-foreground">
                     Feature
                   </th>
-                  <th className="px-4 py-4 text-center text-sm font-semibold text-gray-900">
+                  <th className="px-4 py-4 text-center text-sm font-semibold text-foreground">
                     Starter
                   </th>
-                  <th className="px-4 py-4 text-center text-sm font-semibold text-purple-700">
+                  <th className="px-4 py-4 text-center text-sm font-semibold text-primary">
                     Pro
                   </th>
-                  <th className="px-4 py-4 text-center text-sm font-semibold text-gray-900">
+                  <th className="px-4 py-4 text-center text-sm font-semibold text-foreground">
                     Enterprise
                   </th>
                 </tr>
@@ -63,10 +63,10 @@ export function ComparisonTable() {
                 {comparisonRows.map((row, i) => {
                   if (row.category) {
                     return (
-                      <tr key={row.category} className="bg-purple-50/50">
+                      <tr key={row.category} className="bg-primary/5">
                         <td
                           colSpan={4}
-                          className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-purple-700"
+                          className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-primary"
                         >
                           {row.category}
                         </td>
@@ -76,9 +76,9 @@ export function ComparisonTable() {
                   return (
                     <tr
                       key={row.feature}
-                      className={cn(i % 2 === 0 ? "bg-white" : "bg-gray-50/50")}
+                      className={cn(i % 2 === 0 ? "bg-card" : "bg-[var(--bg-secondary)]/50")}
                     >
-                      <td className="sticky left-0 z-10 bg-inherit px-4 py-3 text-sm font-medium text-gray-800">
+                      <td className="sticky left-0 z-10 bg-inherit px-4 py-3 text-sm font-medium text-foreground">
                         {row.feature}
                       </td>
                       <td className="px-4 py-3 text-center">

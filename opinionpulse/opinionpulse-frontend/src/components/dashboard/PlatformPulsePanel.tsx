@@ -1,4 +1,7 @@
 import type { PlatformPulse } from "@/api/dashboard"
+import { proCard, sectionTitle } from "@/lib/ui-classes"
+
+import { cn } from "@/lib/utils"
 
 const platformColors: Record<string, string> = {
   reddit: "bg-orange-600",
@@ -14,8 +17,8 @@ type PlatformPulsePanelProps = {
 
 export function PlatformPulsePanel({ items }: PlatformPulsePanelProps) {
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-[#2d2d44] dark:bg-[#1e1e30]">
-      <h2 className="mb-4 text-lg font-semibold text-foreground">Social Media Pulse</h2>
+    <section className={cn(proCard, "p-5")}>
+      <h2 className={cn(sectionTitle, "mb-4")}>Social Media Pulse</h2>
       <ul className="space-y-5">
         {items.map((p) => (
           <li key={p.platform}>
@@ -33,7 +36,7 @@ export function PlatformPulsePanel({ items }: PlatformPulsePanelProps) {
                       className={
                         p.live
                           ? "ml-2 text-[10px] font-normal text-green-600"
-                          : "ml-2 text-[10px] font-normal text-gray-400"
+                          : "ml-2 text-[10px] font-normal text-muted-foreground"
                       }
                     >
                       {p.live ? "● Live" : "● Demo"}
@@ -45,7 +48,7 @@ export function PlatformPulsePanel({ items }: PlatformPulsePanelProps) {
             </div>
             <div className="mt-2 flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Sentiment:</span>
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-100">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
                 <div
                   className="h-full rounded-full bg-green-500"
                   style={{ width: `${p.positive_pct}%` }}

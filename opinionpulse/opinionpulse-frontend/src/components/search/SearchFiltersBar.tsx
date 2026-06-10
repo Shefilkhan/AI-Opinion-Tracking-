@@ -29,8 +29,8 @@ function FilterGroup({
           className={cn(
             "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors duration-150",
             value === o.id
-              ? "border-transparent bg-purple-600 text-white dark:bg-purple-700"
-              : "border-gray-200 bg-white text-gray-600 hover:border-purple-300 dark:border-[#2d2d44] dark:bg-[#1e1e30] dark:text-gray-300 dark:hover:border-purple-500"
+              ? "border-transparent bg-primary text-primary-foreground"
+              : "border-border bg-card text-muted-foreground hover:border-primary/30 hover:bg-accent"
           )}
         >
           {o.label}
