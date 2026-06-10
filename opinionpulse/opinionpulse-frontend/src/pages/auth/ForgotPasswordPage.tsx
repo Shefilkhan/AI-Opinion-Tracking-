@@ -34,8 +34,7 @@ export function ForgotPasswordPage() {
       const res = await forgotPassword(values.email)
       showToast("If an account exists, a code was sent", "success")
       navigate(
-        `/auth/verify-otp?email=${encodeURIComponent(values.email)}&type=password_reset`,
-        { state: { devOtpCode: res.dev_otp_code ?? undefined } }
+        `/auth/verify-otp?email=${encodeURIComponent(values.email)}&type=password_reset`
       )
     } catch (err) {
       const message =

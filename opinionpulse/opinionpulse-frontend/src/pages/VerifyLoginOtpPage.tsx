@@ -1,26 +1,18 @@
 import { useState } from "react"
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { ApiError } from "@/api/client"
 import { resendLoginOtp, verifyLoginOtp } from "@/api/auth"
 import { AuthLayout } from "@/components/auth/AuthLayout"
-import { DevOtpBanner } from "@/components/auth/DevOtpBanner"
 import { OtpInput } from "@/components/auth/OtpInput"
 import { Button } from "@/components/ui/button"
 import { btnPrimary, successSurface } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
-type LocationState = {
-  devOtpCode?: string
-}
-
 export function VerifyLoginOtpPage() {
   const [searchParams] = useSearchParams()
-  const location = useLocation()
   const navigate = useNavigate()
   const email = searchParams.get("email") ?? ""
-  const initialDevOtp = (location.state as LocationState | null)?.devOtpCode
-  const [devOtpCode, setDevOtpCode] = useState<string | undefined>(initialDevOtp)
-  const [otp, setOtp] = useState(initialDevOtp ?? "")
+  const [otp, setOtp] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [resent, setResent] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -56,10 +48,6 @@ export function VerifyLoginOtpPage() {
     try {
       const res = await resendLoginOtp(email)
       setResent(res.message)
-      if (res.dev_otp_code) {
-        setDevOtpCode(res.dev_otp_code)
-        setOtp(res.dev_otp_code)
-      }
     } catch (err) {
       setError(err instanceof ApiError ? err.detail : "Could not resend OTP.")
     } finally {
@@ -80,9 +68,6 @@ export function VerifyLoginOtpPage() {
       footerLinkLabel="Login"
     >
       <form onSubmit={handleVerify} className="space-y-6">
-        {import.meta.env.DEV && devOtpCode ? (
-          <DevOtpBanner code={devOtpCode} />
-        ) : null}
         <OtpInput value={otp} onChange={setOtp} disabled={loading} />
         {resent && !error && <p className={successSurface}>{resent}</p>}
         {error && (

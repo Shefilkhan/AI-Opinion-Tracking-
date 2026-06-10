@@ -37,8 +37,7 @@ export function SignInForm() {
       const res = await signInUser(values)
       const type = res.requires_email_verification ? "signup" : "login"
       navigate(
-        `/auth/verify-otp?email=${encodeURIComponent(res.email)}&type=${type}&redirect=${encodeURIComponent(redirect)}`,
-        { state: { devOtpCode: res.dev_otp_code ?? undefined } }
+        `/auth/verify-otp?email=${encodeURIComponent(res.email)}&type=${type}&redirect=${encodeURIComponent(redirect)}`
       )
     } catch (err) {
       setError("root", { message: getApiErrorMessage(err) })

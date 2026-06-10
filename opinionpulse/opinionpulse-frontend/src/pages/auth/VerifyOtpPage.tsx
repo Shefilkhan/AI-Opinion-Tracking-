@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Clock, Loader2 } from "lucide-react"
 import { ApiError } from "@/api/client"
 import {
@@ -10,7 +10,6 @@ import {
   type OtpType,
 } from "@/api/auth"
 import { AuthSplitLayout } from "@/components/auth/AuthSplitLayout"
-import { DevOtpBanner } from "@/components/auth/DevOtpBanner"
 import { OtpInput } from "@/components/auth/OtpInput"
 import { useToast } from "@/components/ui/toast"
 import { useAuth } from "@/contexts/AuthContext"
@@ -29,20 +28,16 @@ function parseOtpType(raw: string | null): OtpType {
 export function VerifyOtpPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const location = useLocation()
   const { showToast } = useToast()
   const { setUser, refreshUser } = useAuth()
 
   const email = searchParams.get("email") ?? ""
   const type = parseOtpType(searchParams.get("type"))
   const redirect = searchParams.get("redirect") ?? "/dashboard"
-  const devOtpFromState = (location.state as { devOtpCode?: string } | null)?.devOtpCode
-
   const [code, setCode] = useState("")
   const [secondsLeft, setSecondsLeft] = useState(OTP_SECONDS)
   const [resendCooldown, setResendCooldown] = useState(OTP_SECONDS)
   const [resendCount, setResendCount] = useState(0)
-  const [devOtp, setDevOtp] = useState<string | undefined>(devOtpFromState)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const submitLockRef = useRef(false)
@@ -80,7 +75,6 @@ export function VerifyOtpPage() {
       setResendCount((c) => c + 1)
       setSecondsLeft(OTP_SECONDS)
       setResendCooldown(OTP_SECONDS)
-      if (res.dev_otp_code) setDevOtp(res.dev_otp_code)
       showToast("A new code has been sent", "success")
     } catch (err) {
       setError(
@@ -176,8 +170,6 @@ export function VerifyOtpPage() {
               : `We sent a 6-digit code to ${maskEmail(email)}`}
           </p>
         </div>
-
-        {import.meta.env.DEV && devOtp ? <DevOtpBanner code={devOtp} /> : null}
 
         <OtpInput
           value={code}

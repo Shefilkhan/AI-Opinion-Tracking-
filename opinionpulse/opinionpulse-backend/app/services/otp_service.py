@@ -12,7 +12,6 @@ from app.db.models import EmailOTP, User
 from app.services.email_service import EmailSendError, deliver_otp_email
 
 logger = logging.getLogger(__name__)
-settings = get_settings()
 
 ALLOWED_PURPOSES = (
     "register_verification",
@@ -57,6 +56,7 @@ def create_email_otp_record(db: Session, user: User, purpose: str) -> str:
     if purpose not in ALLOWED_PURPOSES:
         raise ValueError(f"Invalid OTP purpose: {purpose}")
 
+    settings = get_settings()
     invalidate_existing_otps(db, user.id, purpose)
     plain_otp = generate_otp_code()
     expires_at = datetime.now(timezone.utc) + timedelta(
@@ -84,6 +84,7 @@ def create_email_otp(
     background_tasks: Optional[BackgroundTasks] = None,
 ) -> str:
     del background_tasks  # OTP email is sent synchronously so failures reach the client
+    settings = get_settings()
     window = settings.otp_resend_window_minutes
     max_sent = settings.otp_resend_max_per_window
     sent = count_recent_otps(db, user.email, purpose, window)
@@ -104,7 +105,7 @@ def create_email_otp(
 
 
 def dev_otp_payload(plain_otp: str) -> Optional[str]:
-    if settings.expose_dev_otp_in_api:
+    if get_settings().expose_dev_otp_in_api:
         return plain_otp
     return None
 
@@ -118,6 +119,7 @@ def validate_email_otp(
     consume: bool = False,
 ) -> User:
     """Check OTP validity; optionally mark it used (consume=True)."""
+    settings = get_settings()
     email_lower = email.lower().strip()
     user = db.query(User).filter(User.email == email_lower).first()
     if user is None:

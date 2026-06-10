@@ -58,8 +58,7 @@ export function SignUpForm() {
         password: values.password,
       })
       navigate(
-        `/auth/verify-otp?email=${encodeURIComponent(res.email)}&type=signup`,
-        { state: { devOtpCode: res.dev_otp_code ?? undefined } }
+        `/auth/verify-otp?email=${encodeURIComponent(res.email)}&type=signup`
       )
     } catch (err) {
       const message = getApiErrorMessage(err)

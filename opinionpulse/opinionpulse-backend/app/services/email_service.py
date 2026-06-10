@@ -6,7 +6,6 @@ from email.mime.text import MIMEText
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
-settings = get_settings()
 
 
 class EmailSendError(Exception):
@@ -29,6 +28,7 @@ def _format_otp_display(otp_code: str) -> str:
 
 
 def _build_otp_email(otp_code: str, purpose: str) -> tuple[str, str, str]:
+    settings = get_settings()
     spaced = _format_otp_display(otp_code)
     app = settings.app_name
     subject = f"Your verification code — {app}"
@@ -62,6 +62,7 @@ def send_email(to_email: str, subject: str, html_body: str, plain_body: str) -> 
     Returns True on success, False if SMTP is not configured.
     Raises EmailSendError if configured but delivery fails.
     """
+    settings = get_settings()
     if not settings.email_configured:
         logger.info(
             "[OpinionPulse] SMTP not configured — email not sent to %s. Subject: %s",
@@ -103,6 +104,7 @@ def deliver_otp_email(to_email: str, otp_code: str, purpose: str) -> None:
     Send OTP email when SMTP is configured; otherwise log for local dev only.
     Raises EmailSendError when configured but send fails.
     """
+    settings = get_settings()
     subject, html_body, plain_body = _build_otp_email(otp_code, purpose)
 
     if not settings.email_configured:
@@ -121,6 +123,6 @@ def send_otp_email(to_email: str, otp_code: str, purpose: str) -> bool:
     """Legacy helper; prefer deliver_otp_email for auth flows."""
     try:
         deliver_otp_email(to_email, otp_code, purpose)
-        return settings.email_configured
+        return get_settings().email_configured
     except EmailSendError:
         return False
