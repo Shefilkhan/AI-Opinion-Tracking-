@@ -56,7 +56,7 @@ export function ResultsFeed({ results }: ResultsFeedProps) {
   }
 
   return (
-    <ul className={cn(proCard, "divide-y divide-gray-100 dark:divide-[#2d2d44]")}>
+    <ul className={cn(proCard, "divide-y divide-border")}>
       {results.map((r) => {
         const plat = platformBadge(r.platform, r.source_label)
         const views = r.engagement.views ?? 0
@@ -133,7 +133,7 @@ export function ResultsFeed({ results }: ResultsFeedProps) {
                     {r.title}
                   </p>
                 )}
-                <p className="mt-1 line-clamp-3 text-sm text-gray-700">{r.content}</p>
+                <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">{r.content}</p>
                 <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
                   {r.platform === "youtube" && views > 0 && (
                     <span className="inline-flex items-center gap-1">
@@ -152,8 +152,8 @@ export function ResultsFeed({ results }: ResultsFeedProps) {
                     {r.engagement.comments.toLocaleString()}
                   </span>
                 </div>
-                <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-2.5">
-                  <span className="flex max-w-[60%] items-center gap-1.5 truncate text-xs text-gray-400">
+                <div className="mt-3 flex items-center justify-between border-t border-border pt-2.5">
+                  <span className="flex max-w-[60%] items-center gap-1.5 truncate text-xs text-muted-foreground">
                     <ExternalLink size={11} />
                     {sourceLabel}
                   </span>
@@ -161,7 +161,7 @@ export function ResultsFeed({ results }: ResultsFeedProps) {
                     href={r.source_url || r.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex shrink-0 items-center gap-1 text-xs font-medium text-purple-600 transition-colors hover:text-purple-800 hover:underline"
+                    className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary transition-colors hover:underline"
                   >
                     Visit source <ExternalLink size={10} />
                   </a>

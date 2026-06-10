@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 
 export function ChatbotPreview() {
   return (
-    <section id="demo" className="py-16 md:py-24">
+    <section id="demo" className="bg-background py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-4 md:px-6">
         <SectionHeader
           badge="AI Opinion Assistant"
@@ -15,7 +15,7 @@ export function ChatbotPreview() {
           description="Get instant summaries of what people are saying — powered by your tracked data and NLP insights."
         />
         <Card className={cn("mx-auto max-w-2xl", cardSurface)}>
-          <CardHeader className="flex flex-row items-center gap-3 border-b border-gray-200">
+          <CardHeader className="flex flex-row items-center gap-3 border-b border-border">
             <div className="flex size-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <Bot className="size-5" />
             </div>
@@ -37,7 +37,7 @@ export function ChatbotPreview() {
               <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                 <Bot className="size-4" />
               </div>
-              <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-gray-200 bg-background/80 px-4 py-3 text-sm leading-relaxed text-foreground/80">
+              <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-border bg-muted/30 px-4 py-3 text-sm leading-relaxed text-foreground">
                 {chatbotMock.assistantMessage}
               </div>
             </div>

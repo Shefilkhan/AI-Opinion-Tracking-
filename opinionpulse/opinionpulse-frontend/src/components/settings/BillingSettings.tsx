@@ -48,7 +48,7 @@ export function BillingSettings() {
         saving={saving}
         saveLabel="Save billing info"
       >
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-gray-200 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border p-4">
           <div>
             <p className="text-sm text-muted-foreground">Current plan</p>
             <div className="mt-1 flex items-center gap-2">
@@ -74,7 +74,7 @@ export function BillingSettings() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-gray-200 p-4">
+        <div className="rounded-lg border border-border p-4">
           <h3 className="text-sm font-semibold text-foreground">Payment method</h3>
           <p className="mt-2 text-sm text-muted-foreground">
             {draft.cardBrand} ending in {draft.cardLast4}
@@ -91,9 +91,9 @@ export function BillingSettings() {
 
         <div>
           <h3 className="mb-3 text-sm font-semibold text-foreground">Billing history</h3>
-          <div className="overflow-x-auto rounded-lg border border-gray-200">
+          <div className="overflow-x-auto rounded-lg border border-border">
             <table className="w-full min-w-[400px] text-left text-sm">
-              <thead className="border-b border-gray-200 bg-muted/50">
+              <thead className="border-b border-border bg-muted/50">
                 <tr>
                   <th className="px-4 py-3 font-medium text-muted-foreground">Date</th>
                   <th className="px-4 py-3 font-medium text-muted-foreground">Amount</th>
@@ -103,7 +103,7 @@ export function BillingSettings() {
               </thead>
               <tbody>
                 {INVOICES.map((row) => (
-                  <tr key={row.id} className="border-b border-gray-200 last:border-0">
+                  <tr key={row.id} className="border-b border-border last:border-0">
                     <td className="px-4 py-3 text-foreground">{row.date}</td>
                     <td className="px-4 py-3 text-foreground">{row.amount}</td>
                     <td className="px-4 py-3">

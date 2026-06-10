@@ -1,5 +1,6 @@
 import { Check, Lightbulb, RefreshCw, Sparkles, X } from "lucide-react"
 import type { AiOpinionSummary } from "@/api/ai"
+import { proCard, sectionTitle } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 type AiOpinionSummaryCardProps = {
@@ -20,7 +21,7 @@ function verdictBadge(verdict: string) {
   if (v.includes("divided")) {
     return { label: "DEEPLY DIVIDED", className: "bg-orange-100 text-orange-800" }
   }
-  return { label: "MOSTLY NEUTRAL", className: "bg-gray-100 text-gray-700" }
+  return { label: "MOSTLY NEUTRAL", className: "bg-muted text-muted-foreground" }
 }
 
 export function AiOpinionSummaryCard({
@@ -31,14 +32,14 @@ export function AiOpinionSummaryCard({
 }: AiOpinionSummaryCardProps) {
   if (loading) {
     return (
-      <div className="rounded-xl border border-purple-100 bg-gradient-to-br from-purple-50 to-indigo-50 p-6">
-        <p className="animate-pulse text-sm font-medium text-purple-700">
+      <div className={cn(proCard, "border-l-4 border-l-primary p-6")}>
+        <p className="animate-pulse text-sm font-medium text-primary">
           🤖 AI is analyzing public opinion…
         </p>
         <div className="mt-4 space-y-2">
-          <div className="h-5 w-3/4 animate-pulse rounded bg-purple-100" />
-          <div className="h-4 w-full animate-pulse rounded bg-purple-100/80" />
-          <div className="h-4 w-5/6 animate-pulse rounded bg-purple-100/80" />
+          <div className="h-5 w-3/4 animate-pulse rounded bg-muted" />
+          <div className="h-4 w-full animate-pulse rounded bg-muted/80" />
+          <div className="h-4 w-5/6 animate-pulse rounded bg-muted/80" />
         </div>
       </div>
     )
@@ -46,7 +47,7 @@ export function AiOpinionSummaryCard({
 
   if (error) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30] p-6 text-center">
+      <div className={cn(proCard, "p-6 text-center")}>
         <p className="text-sm text-muted-foreground">🤖 {error}</p>
         {onRetry && (
           <button
@@ -66,12 +67,12 @@ export function AiOpinionSummaryCard({
   const badge = verdictBadge(summary.verdict)
 
   return (
-    <div className="rounded-xl border border-purple-100 border-l-4 border-l-purple-500 bg-gradient-to-br from-purple-50 to-indigo-50 p-6">
+    <div className={cn(proCard, "border-l-4 border-l-primary p-6")}>
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <h3 className="text-[15px] font-semibold text-foreground">
+        <h3 className={sectionTitle}>
           🤖 AI Opinion Analysis
         </h3>
-        <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-medium text-purple-800">
+        <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[10px] font-medium text-accent-foreground">
           <Sparkles className="size-3" />
           Powered by Claude
         </span>
@@ -90,7 +91,7 @@ export function AiOpinionSummaryCard({
         {badge.label}
       </span>
 
-      <p className="mt-3 text-sm leading-relaxed text-gray-700">{summary.overview}</p>
+      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{summary.overview}</p>
 
       <ul className="mt-4 space-y-2 text-sm">
         <li className="flex gap-2 text-green-800">
@@ -113,7 +114,7 @@ export function AiOpinionSummaryCard({
         </li>
       </ul>
 
-      <p className="mt-4 border-t border-purple-100 pt-4 text-sm italic text-gray-500">
+      <p className="mt-4 border-t border-border pt-4 text-sm italic text-muted-foreground">
         &ldquo;{summary.one_liner}&rdquo;
       </p>
     </div>

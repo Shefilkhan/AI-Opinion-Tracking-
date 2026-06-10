@@ -5,7 +5,7 @@ import { cardInteractive } from "@/lib/ui-classes"
 
 export function ProblemSection() {
   return (
-    <section className="py-16 md:py-24">
+    <section className="bg-background py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-4 md:px-6">
         <SectionHeader
           badge="The Problem"

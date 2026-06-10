@@ -1,11 +1,7 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Search, ThumbsDown, ThumbsUp, TrendingUp } from "lucide-react"
 import { useDashboard } from "@/hooks/useDashboard"
-import {
-  ParticleBackground,
-  type ParticleSentiment,
-} from "@/components/ui/ParticleBackground"
-import { pageShellParticles } from "@/lib/ui-classes"
+import { pageShell, sectionTitle } from "@/lib/ui-classes"
 import { AiInsightOfTheDay } from "@/components/dashboard/AiInsightOfTheDay"
 import { DebateList } from "@/components/dashboard/DebateList"
 import { LiveDataIndicator } from "@/components/dashboard/LiveDataIndicator"
@@ -21,34 +17,16 @@ import {
   removeRecentSearch,
 } from "@/lib/recentSearchStorage"
 import { getSelectedPlan, planDisplayName } from "@/lib/planStorage"
+import { cn } from "@/lib/utils"
 
 export function DashboardPage() {
   const [recent, setRecent] = useState(getRecentSearches)
   const selectedPlan = getSelectedPlan()
-  const [overallSentiment, setOverallSentiment] =
-    useState<ParticleSentiment>("neutral")
 
   const { data, isLoading, isFetching, refetch } = useDashboard()
 
-  useEffect(() => {
-    if (!data) {
-      setOverallSentiment("neutral")
-      return
-    }
-    const positive = data.stats.positive_sentiment.progress ?? 50
-    const negative = data.stats.negative_sentiment.progress ?? 30
-    if (positive > 60) setOverallSentiment("positive")
-    else if (negative > 60) setOverallSentiment("negative")
-    else setOverallSentiment("neutral")
-  }, [data])
-
   return (
-    <div className={pageShellParticles}>
-      <ParticleBackground
-        key={overallSentiment}
-        sentiment={overallSentiment}
-        intensity={0.35}
-      />
+    <div className={pageShell}>
       <div className="relative z-10">
         <DashboardLayout
           title="Dashboard"
@@ -60,11 +38,11 @@ export function DashboardPage() {
             {[0, 1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-28 animate-pulse rounded-xl bg-gray-100 dark:bg-[#252538]"
+                className="h-28 animate-pulse rounded-xl bg-muted"
               />
             ))}
           </div>
-          <div className="h-36 animate-pulse rounded-xl bg-gray-100 dark:bg-[#252538]" />
+          <div className="h-36 animate-pulse rounded-xl bg-muted" />
           <LiveDebates isLoading />
           <MostDiscussed isLoading />
         </div>
@@ -146,7 +124,7 @@ export function DashboardPage() {
           </div>
 
           <section>
-            <h2 className="mb-3 text-lg font-semibold text-foreground">
+            <h2 className={cn(sectionTitle, "mb-3")}>
               Your Recent Searches
             </h2>
             <RecentSearchChips

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 import { Activity } from "lucide-react"
-import { cardSurface, pageShell } from "@/lib/ui-classes"
+import { cardSurface, pageShell, pageTitle } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 type AuthLayoutProps = {
@@ -29,16 +29,16 @@ export function AuthLayout({
     >
       <Link
         to="/"
-        className="mb-8 flex items-center gap-2 text-sm font-semibold text-foreground transition-opacity hover:opacity-80"
+        className="mb-8 flex items-center gap-2 text-sm font-medium text-foreground transition-opacity hover:opacity-80"
       >
-        <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+        <span className="flex size-8 items-center justify-center rounded-[var(--radius-md)] bg-primary text-primary-foreground">
           <Activity className="size-4" />
         </span>
         OpinionPulse
       </Link>
 
       <div className={cn("w-full max-w-[420px] p-8", cardSurface)}>
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">{title}</h1>
+        <h1 className={pageTitle}>{title}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
         <div className="mt-6">{children}</div>
         <p className="mt-6 text-center text-sm text-muted-foreground">

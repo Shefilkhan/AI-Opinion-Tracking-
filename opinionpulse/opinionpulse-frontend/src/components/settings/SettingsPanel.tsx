@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { btnPrimary } from "@/lib/ui-classes"
+import { btnPrimary, proCard, sectionTitle } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 type SettingsPanelProps = {
@@ -24,16 +24,16 @@ export function SettingsPanel({
   showSave = true,
 }: SettingsPanelProps) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-5 dark:border-[#2d2d44] dark:bg-[#1e1e30]">
-      <div className="mb-6 border-b border-gray-200 pb-4 dark:border-[#2d2d44]">
-        <h2 className="text-lg font-semibold tracking-tight text-foreground">{title}</h2>
+    <div className={cn(proCard, "p-5")}>
+      <div className="mb-6 border-b border-border pb-4">
+        <h2 className={sectionTitle}>{title}</h2>
         {description && (
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         )}
       </div>
       <div className="space-y-6">{children}</div>
       {showSave && onSave && (
-        <div className="mt-8 flex justify-end border-t border-gray-200 pt-6 dark:border-[#2d2d44]">
+        <div className="mt-8 flex justify-end border-t border-border pt-6">
           <Button
             type="button"
             onClick={onSave}

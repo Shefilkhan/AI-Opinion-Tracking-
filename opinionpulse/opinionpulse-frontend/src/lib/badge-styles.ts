@@ -14,7 +14,7 @@ export const SOURCE_STYLES: Record<string, string> = {
 export const SENTIMENT_STYLES: Record<string, string> = {
   positive: "border border-success/20 bg-success/5 text-success",
   negative: "border border-destructive/20 bg-destructive/5 text-destructive",
-  neutral: "border border-gray-200 bg-muted text-muted-foreground",
+  neutral: "border border-border bg-muted text-muted-foreground",
 }
 
 export const sentimentTextClass = {

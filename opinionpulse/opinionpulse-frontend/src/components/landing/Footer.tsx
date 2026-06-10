@@ -4,12 +4,12 @@ import { footerLinks } from "@/data/landingData"
 
 export function Footer() {
   return (
-    <footer className="bg-[#0f0f1a] py-12 text-gray-400">
+    <footer className="border-t border-border bg-[var(--bg-secondary)] py-16 text-muted-foreground">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div className="sm:col-span-2 lg:col-span-1">
-            <Link to="/" className="flex items-center gap-2 text-sm font-semibold text-white">
-              <span className="flex size-8 items-center justify-center rounded-lg bg-purple-600 text-white">
+            <Link to="/" className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <Activity className="size-4" />
               </span>
               OpinionPulse
@@ -22,11 +22,11 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-white">Product</h3>
+            <h3 className="text-sm font-semibold text-foreground">Product</h3>
             <ul className="mt-4 space-y-2">
               {footerLinks.product.map((link) => (
                 <li key={link.label}>
-                  <a href={link.href} className="text-sm transition-colors hover:text-white">
+                  <a href={link.href} className="text-sm transition-colors hover:text-foreground">
                     {link.label}
                   </a>
                 </li>
@@ -35,11 +35,11 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-white">Data Sources</h3>
+            <h3 className="text-sm font-semibold text-foreground">Data Sources</h3>
             <ul className="mt-4 space-y-2">
               {footerLinks.sources.map((link) => (
                 <li key={link.label}>
-                  <a href={link.href} className="text-sm transition-colors hover:text-white">
+                  <a href={link.href} className="text-sm transition-colors hover:text-foreground">
                     {link.label}
                   </a>
                 </li>
@@ -48,7 +48,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-white">Connect</h3>
+            <h3 className="text-sm font-semibold text-foreground">Connect</h3>
             <ul className="mt-4 space-y-2">
               {footerLinks.connect.map((link) => (
                 <li key={link.label}>
@@ -56,7 +56,7 @@ export function Footer() {
                     href={link.href}
                     target={link.href.startsWith("http") ? "_blank" : undefined}
                     rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
-                    className="text-sm transition-colors hover:text-white"
+                    className="text-sm transition-colors hover:text-foreground"
                   >
                     {link.label}
                   </a>
@@ -66,9 +66,9 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 text-center text-sm sm:flex-row sm:text-left">
+        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 text-center text-sm sm:flex-row sm:text-left">
           <p>© {new Date().getFullYear()} OpinionPulse. Built for academic research.</p>
-          <p className="text-purple-300">Powered by Claude AI · Anthropic</p>
+          <p className="text-primary">Powered by Claude AI · Anthropic</p>
         </div>
       </div>
     </footer>

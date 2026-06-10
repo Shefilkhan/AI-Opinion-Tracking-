@@ -1,30 +1,28 @@
 import { cn } from "@/lib/utils"
+import { inputSurface } from "@/lib/ui-classes"
 
-export const authLabelClass = "mb-1.5 block text-sm font-medium text-gray-700"
+export const authLabelClass = "mb-1.5 block text-sm font-medium text-foreground"
 
 export function authInputClass(options?: {
   error?: boolean
   success?: boolean
 }): string {
   return cn(
-    "w-full rounded-xl border bg-gray-50 px-4 py-3 text-sm text-gray-900",
-    "placeholder:text-gray-400 transition-all duration-200",
-    "focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500",
-    "min-h-[44px]",
+    inputSurface,
+    "w-full rounded-[var(--radius-md)] px-4 py-3 min-h-[44px]",
     options?.error &&
-      "border-red-400 bg-red-50 focus:border-red-400 focus:ring-red-400/20",
+      "border-destructive bg-destructive/5 focus:border-destructive focus:ring-destructive/20",
     options?.success &&
       !options?.error &&
-      "border-green-400 focus:border-green-400 focus:ring-green-400/20",
-    !options?.error && !options?.success && "border-gray-200"
+      "border-success focus:border-success focus:ring-success/20"
   )
 }
 
 export const STRENGTH_HEX: Record<string, string> = {
-  weak: "#ef4444",
-  fair: "#f97316",
-  good: "#eab308",
-  strong: "#22c55e",
+  weak: "#dc2626",
+  fair: "#c96442",
+  good: "#ca8a04",
+  strong: "#16a34a",
 }
 
 export const STRENGTH_LABELS: Record<string, string> = {

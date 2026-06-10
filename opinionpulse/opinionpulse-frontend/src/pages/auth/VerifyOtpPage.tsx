@@ -14,6 +14,7 @@ import { OtpInput } from "@/components/auth/OtpInput"
 import { useToast } from "@/components/ui/toast"
 import { useAuth } from "@/contexts/AuthContext"
 import { maskEmail } from "@/lib/auth/maskEmail"
+import { btnPrimary } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 const OTP_SECONDS = 120
@@ -71,7 +72,7 @@ export function VerifyOtpPage() {
     if (resendCooldown > 0 || resendCount >= MAX_RESENDS) return
     setError(null)
     try {
-      const res = await resendOtp(email, type)
+      await resendOtp(email, type)
       setResendCount((c) => c + 1)
       setSecondsLeft(OTP_SECONDS)
       setResendCooldown(OTP_SECONDS)
@@ -161,10 +162,10 @@ export function VerifyOtpPage() {
     <AuthSplitLayout variant="otp">
       <form onSubmit={handleVerify} className="space-y-5">
         <div className="mb-6">
-          <h2 className="mb-1 text-2xl font-bold text-gray-900">
+          <h2 className="font-serif-display mb-1 text-2xl font-medium text-foreground">
             {isPasswordReset ? "Verify reset code" : "Enter verification code"}
           </h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             {isPasswordReset
               ? `Code sent to ${maskEmail(email)} to reset your password.`
               : `We sent a 6-digit code to ${maskEmail(email)}`}
@@ -188,28 +189,28 @@ export function VerifyOtpPage() {
           <Clock
             size={14}
             className={cn(
-              expired || timerUrgent ? "text-red-400" : "text-gray-400"
+              expired || timerUrgent ? "text-destructive" : "text-muted-foreground"
             )}
           />
           <span
             className={cn(
               "font-mono text-sm font-medium",
-              expired || timerUrgent ? "text-red-500" : "text-gray-500"
+              expired || timerUrgent ? "text-destructive" : "text-muted-foreground"
             )}
           >
             {expired ? "Code expired" : formatTime(secondsLeft)}
           </span>
         </div>
 
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center text-sm text-muted-foreground">
           {resendCooldown > 0 ? (
             <>Resend code in {formatTime(resendCooldown)}</>
           ) : resendCount >= MAX_RESENDS ? (
-            <span className="text-red-600">Resend limit reached for this session.</span>
+            <span className="text-destructive">Resend limit reached for this session.</span>
           ) : (
             <button
               type="button"
-              className="font-medium text-purple-600 hover:underline"
+              className="font-medium text-primary hover:underline"
               onClick={handleResend}
             >
               Didn&apos;t receive the code? Resend
@@ -220,7 +221,7 @@ export function VerifyOtpPage() {
         {error && (
           <p
             role="alert"
-            className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+            className="rounded-[var(--radius-md)] border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive"
           >
             {error}
           </p>
@@ -229,7 +230,11 @@ export function VerifyOtpPage() {
         <button
           type="submit"
           disabled={loading || code.length !== 6 || expired}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:scale-[1.02] hover:from-purple-500 hover:to-indigo-500 hover:shadow-lg hover:shadow-purple-200 disabled:cursor-not-allowed disabled:opacity-50"
+          className={cn(
+            "flex w-full min-h-11 items-center justify-center gap-2 px-6 py-3 text-sm font-medium",
+            btnPrimary,
+            "disabled:cursor-not-allowed disabled:opacity-50"
+          )}
         >
           {loading ? (
             <>
@@ -243,9 +248,9 @@ export function VerifyOtpPage() {
           )}
         </button>
 
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center text-sm text-muted-foreground">
           Wrong account?{" "}
-          <Link to={footerLink} className="font-medium text-purple-600 hover:underline">
+          <Link to={footerLink} className="font-medium text-primary hover:underline">
             {footerLabel}
           </Link>
         </p>

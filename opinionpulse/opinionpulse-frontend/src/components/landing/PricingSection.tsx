@@ -7,17 +7,17 @@ export function PricingSection() {
   return (
     <section
       id="pricing"
-      className="scroll-mt-24 border-t border-gray-100 bg-gradient-to-b from-purple-50/80 via-white to-white py-24"
+      className="scroll-mt-24 border-t border-border bg-[var(--bg-secondary)] py-24 md:py-32"
     >
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <ScrollReveal className="mx-auto max-w-2xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-widest text-purple-600">
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary">
             Pricing
           </p>
-          <h2 className="mt-3 text-3xl font-bold text-gray-900 md:text-4xl">
+          <h2 className="font-serif-display mt-3 text-3xl font-medium tracking-normal text-foreground md:text-4xl">
             Simple, transparent pricing
           </h2>
-          <p className="mt-4 text-lg text-gray-600">
+          <p className="mt-4 text-lg text-muted-foreground">
             Starter, Pro, and Enterprise — built for researchers and teams.
           </p>
         </ScrollReveal>
@@ -29,7 +29,7 @@ export function PricingSection() {
         <div className="mt-10 text-center">
           <Link
             to="/pricing"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-purple-600 hover:text-purple-700"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80"
           >
             View full comparison &amp; FAQ
             <ArrowRight className="size-4" />

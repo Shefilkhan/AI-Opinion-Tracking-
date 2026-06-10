@@ -3,6 +3,7 @@ import { useAppearance } from "@/contexts/AppearanceContext"
 import { SettingsPanel } from "@/components/settings/SettingsPanel"
 import { ACCENT_PRESETS } from "@/lib/userSettingsStore"
 import type { FontSize, ThemeMode } from "@/lib/userSettingsStore"
+import { cardTitle, proCard } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 const THEMES: ThemeMode[] = ["light", "dark", "system"]
@@ -23,7 +24,7 @@ export function AppearanceSettings() {
       showSave={false}
     >
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+        <h3 className={cn(cardTitle, "mb-3")}>
           Theme
         </h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -35,20 +36,20 @@ export function AppearanceSettings() {
               className={cn(
                 "relative flex flex-col items-center gap-3 rounded-xl border-2 p-4 transition-all",
                 appearance.theme === theme
-                  ? "border-purple-500 bg-purple-50 dark:bg-purple-500/10"
-                  : "border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#1e1e30]"
+                  ? "border-primary bg-accent"
+                  : cn(proCard, "border-2")
               )}
               aria-pressed={appearance.theme === theme}
             >
               {appearance.theme === theme && (
-                <div className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-purple-600">
-                  <Check size={11} className="text-white" />
+                <div className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-primary">
+                  <Check size={11} className="text-primary-foreground" />
                 </div>
               )}
 
               <div
                 className={cn(
-                  "h-16 w-full overflow-hidden rounded-lg border border-gray-200 dark:border-[#2d2d44]",
+                  "h-16 w-full overflow-hidden rounded-lg border border-border",
                   theme === "dark"
                     ? "bg-gray-900"
                     : theme === "light"
@@ -60,7 +61,7 @@ export function AppearanceSettings() {
                   <div
                     className={cn(
                       "h-full w-8",
-                      theme === "dark" ? "bg-gray-800" : "bg-gray-100"
+                      theme === "dark" ? "bg-gray-800" : "bg-muted"
                     )}
                   />
                   <div className="flex-1 space-y-1 p-1.5">
@@ -69,7 +70,7 @@ export function AppearanceSettings() {
                         key={i}
                         className={cn(
                           "h-1.5 rounded-full",
-                          theme === "dark" ? "bg-gray-700" : "bg-gray-200",
+                          theme === "dark" ? "bg-gray-700" : "bg-muted",
                           i === 0 ? "w-3/4" : i === 1 ? "w-1/2" : "w-2/3"
                         )}
                       />
@@ -83,17 +84,17 @@ export function AppearanceSettings() {
                   <Sun size={14} className="text-amber-500" aria-hidden />
                 )}
                 {theme === "dark" && (
-                  <Moon size={14} className="text-purple-400" aria-hidden />
+                  <Moon size={14} className="text-muted-foreground" aria-hidden />
                 )}
                 {theme === "system" && (
-                  <Monitor size={14} className="text-gray-400" aria-hidden />
+                  <Monitor size={14} className="text-muted-foreground" aria-hidden />
                 )}
                 <span
                   className={cn(
                     "text-sm font-medium capitalize",
                     appearance.theme === theme
-                      ? "text-purple-700 dark:text-purple-300"
-                      : "text-gray-600 dark:text-gray-400"
+                      ? "text-accent-foreground"
+                      : "text-muted-foreground"
                   )}
                 >
                   {theme}
@@ -105,7 +106,7 @@ export function AppearanceSettings() {
       </div>
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+        <h3 className={cn(cardTitle, "mb-3")}>
           Accent color
         </h3>
         <div className="flex flex-wrap gap-3">
@@ -116,9 +117,9 @@ export function AppearanceSettings() {
               title={preset.label}
               onClick={() => updateAppearance({ accentColor: preset.value })}
               className={cn(
-                "size-10 rounded-full border-2 transition-transform duration-150 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/30 focus-visible:ring-offset-2 dark:ring-offset-[#1e1e30]",
+                "size-10 rounded-full border-2 transition-transform duration-150 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 appearance.accentColor === preset.value
-                  ? "scale-105 border-gray-900 dark:border-white"
+                  ? "scale-105 border-foreground"
                   : "border-transparent"
               )}
               style={{ backgroundColor: preset.value }}
@@ -130,10 +131,10 @@ export function AppearanceSettings() {
       </div>
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+        <h3 className={cn(cardTitle, "mb-3")}>
           Font size
         </h3>
-        <div className="inline-flex rounded-lg border border-gray-200 p-1 dark:border-[#2d2d44]">
+        <div className="inline-flex rounded-lg border border-border p-1">
           {FONT_SIZES.map(({ id, label }) => (
             <button
               key={id}
@@ -141,10 +142,10 @@ export function AppearanceSettings() {
               onClick={() => updateAppearance({ fontSize: id })}
               className={cn(
                 "min-h-10 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-150",
-                "hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-purple-500/30 dark:hover:bg-white/5",
+                "hover:bg-accent focus-visible:ring-2 focus-visible:ring-primary/20",
                 appearance.fontSize === id
                   ? "bg-primary text-primary-foreground"
-                  : "text-gray-600 dark:text-gray-400"
+                  : "text-muted-foreground"
               )}
               aria-pressed={appearance.fontSize === id}
             >

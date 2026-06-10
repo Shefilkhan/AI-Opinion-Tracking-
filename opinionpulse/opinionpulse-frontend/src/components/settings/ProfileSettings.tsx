@@ -19,10 +19,10 @@ import {
   validateBio,
   validateUsername,
 } from "@/lib/settingsValidation"
+import { inputSurface } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
-const inputClass =
-  "h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition-all duration-200 placeholder:text-gray-400 hover:bg-white focus:border-purple-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/30 dark:border-[#2d2d44] dark:bg-[#252538] dark:text-white dark:placeholder:text-gray-500 dark:hover:bg-[#2a2a40] dark:focus:bg-[#2a2a40]"
+const inputClass = cn(inputSurface, "h-11 w-full rounded-xl px-3 py-2")
 
 export function ProfileSettings() {
   const { showToast } = useToast()
@@ -146,11 +146,11 @@ export function ProfileSettings() {
     >
       <FormField label="Profile photo" htmlFor="avatar-upload">
         <div className="flex items-center gap-4">
-          <div className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-br from-purple-500 to-indigo-600">
+          <div className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-primary">
             {avatarSrc ? (
               <img src={avatarSrc} alt="" className="size-full object-cover" />
             ) : (
-              <span className="text-lg font-bold text-white">
+              <span className="text-lg font-bold text-primary-foreground">
                 {draft.fullName.charAt(0).toUpperCase() || "?"}
               </span>
             )}
@@ -163,8 +163,8 @@ export function ProfileSettings() {
           <label
             htmlFor="avatar-upload"
             className={cn(
-              "inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium transition-colors duration-200",
-              "hover:border-purple-300 hover:bg-purple-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/30",
+              "inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium transition-colors duration-200",
+              "hover:border-primary/30 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20",
               uploadingAvatar && "pointer-events-none opacity-60"
             )}
           >
@@ -207,7 +207,7 @@ export function ProfileSettings() {
         }
       >
         <div className="relative">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
             @
           </span>
           <Input
@@ -222,7 +222,7 @@ export function ProfileSettings() {
           />
         </div>
         {usernameStatus === "checking" && (
-          <p className="mt-1 text-xs text-gray-400">Checking availability…</p>
+          <p className="mt-1 text-xs text-muted-foreground">Checking availability…</p>
         )}
       </FormField>
 
@@ -233,7 +233,7 @@ export function ProfileSettings() {
             type="email"
             value={draft.email}
             readOnly
-            className={cn(inputClass, "flex-1 bg-gray-100")}
+            className={cn(inputClass, "flex-1 bg-muted/40")}
             aria-describedby="email-status"
           />
           <Badge
@@ -260,7 +260,7 @@ export function ProfileSettings() {
           className={inputClass}
           aria-invalid={!!errors.bio}
         />
-        <p className="mt-1 text-right text-xs text-gray-400">{draft.bio.length}/160</p>
+        <p className="mt-1 text-right text-xs text-muted-foreground">{draft.bio.length}/160</p>
       </FormField>
     </SettingsPanel>
   )

@@ -21,7 +21,7 @@ export function AiInsightsSection({ data, timeRange }: AiInsightsSectionProps) {
 
   if (aiEnabled === false) {
     return (
-      <p className="rounded-lg border border-purple-100 bg-purple-50/50 px-3 py-2 text-xs text-purple-900">
+      <p className="rounded-lg border border-border bg-accent/50 px-3 py-2 text-xs text-foreground">
         💡 Add <code className="text-[11px]">ANTHROPIC_API_KEY</code> to{" "}
         <code className="text-[11px]">opinionpulse-backend/.env.local</code> to
         enable AI features

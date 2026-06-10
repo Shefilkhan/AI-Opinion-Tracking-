@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react"
+import { proCard } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 type MetricCardProps = {
@@ -21,7 +22,7 @@ export function MetricCard({
   progressColor = "green",
 }: MetricCardProps) {
   return (
-    <div className="relative rounded-xl border border-gray-200 bg-white px-6 py-5 dark:border-[#2d2d44] dark:bg-[#1e1e30]">
+    <div className={cn(proCard, "relative px-6 py-5")}>
       <div className="absolute right-5 top-5 flex size-9 items-center justify-center rounded-full bg-primary/10">
         <Icon className="size-[18px] text-primary" aria-hidden />
       </div>
@@ -38,7 +39,7 @@ export function MetricCard({
         </p>
       ) : null}
       {progress != null ? (
-        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-[#252538]">
+        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
           <div
             className={cn(
               "h-full rounded-full transition-all",

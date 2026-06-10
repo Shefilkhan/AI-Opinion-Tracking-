@@ -4,13 +4,13 @@ import { cn } from "@/lib/utils"
 
 export function TechStackSection() {
   return (
-    <section id="tech-stack" className="bg-white py-16">
+    <section id="tech-stack" className="border-y border-border bg-[var(--bg-secondary)] py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <ScrollReveal className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-widest text-gray-500">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Built With
           </p>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-muted-foreground">
             Modern, reliable, open-source technology
           </p>
         </ScrollReveal>
@@ -21,15 +21,15 @@ export function TechStackSection() {
               <div className="flex flex-col items-center gap-2">
                 <div
                   className={cn(
-                    "flex size-14 items-center justify-center rounded-full text-sm font-bold transition-all duration-200 hover:scale-110",
+                    "flex size-14 items-center justify-center rounded-full text-sm font-bold transition-colors duration-200",
                     item.highlighted
-                      ? "bg-purple-600 text-white shadow-lg shadow-purple-500/30 md:size-16 md:text-base"
-                      : "bg-gray-100 text-gray-600 hover:bg-purple-100 hover:text-purple-700"
+                      ? "bg-primary text-primary-foreground md:size-16 md:text-base"
+                      : "border border-border bg-card text-muted-foreground hover:border-primary/30 hover:text-primary"
                   )}
                 >
                   {item.abbr}
                 </div>
-                <span className="text-xs text-gray-500">{item.name}</span>
+                <span className="text-xs text-muted-foreground">{item.name}</span>
               </div>
             </ScrollReveal>
           ))}

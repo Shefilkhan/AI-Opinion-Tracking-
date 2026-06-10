@@ -53,7 +53,7 @@ export const features: {
     description:
       "Reddit, YouTube, Guardian, NewsAPI, Hacker News, Dev.to and more — searched simultaneously in seconds.",
     icon: Search,
-    iconBg: "bg-purple-100 text-purple-600",
+    iconBg: "bg-primary/10 text-primary",
   },
   {
     emoji: "🤖",

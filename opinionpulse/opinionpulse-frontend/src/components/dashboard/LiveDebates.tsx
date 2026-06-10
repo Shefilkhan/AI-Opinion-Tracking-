@@ -1,6 +1,7 @@
 import { Loader2, RefreshCw } from "lucide-react"
 import type { LiveDebateItem } from "@/api/dashboard"
 import { DebateCard } from "@/components/dashboard/DebateCard"
+import { proCard, sectionTitle } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 type LiveDebatesProps = {
@@ -27,7 +28,7 @@ function LiveDebatesSkeleton() {
       {[0, 1, 2].map((i) => (
         <div
           key={i}
-          className="h-32 animate-pulse rounded-xl bg-gray-100"
+          className="h-32 animate-pulse rounded-xl bg-muted"
         />
       ))}
     </div>
@@ -44,7 +45,7 @@ export function LiveDebates({
   return (
     <section>
       <div className="mb-1 flex flex-wrap items-center gap-2">
-        <h2 className="text-lg font-semibold text-foreground">
+        <h2 className={sectionTitle}>
           🔥 Ongoing Debates Right Now
         </h2>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-red-700">
@@ -62,7 +63,7 @@ export function LiveDebates({
             type="button"
             onClick={onRefresh}
             disabled={isRefreshing}
-            className="ml-auto rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
+            className="ml-auto rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             aria-label="Refresh debates"
           >
             <RefreshCw className={cn("size-4", isRefreshing && "animate-spin")} />
@@ -76,7 +77,7 @@ export function LiveDebates({
       {isLoading ? (
         <LiveDebatesSkeleton />
       ) : debates.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-200 py-12 text-center dark:border-[#2d2d44]">
+        <div className={cn(proCard, "border-dashed py-12 text-center")}>
           <p className="text-2xl" aria-hidden>
             💬
           </p>

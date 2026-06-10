@@ -15,7 +15,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext"
 import { Skeleton } from "@/components/ui/Skeleton"
 import { cn } from "@/lib/utils"
-import { pageContent, pageShell, sidebarSurface } from "@/lib/ui-classes"
+import { pageContent, pageShell, pageTitle, pageSubtitle, sidebarSurface, navItemActive, navItemInactive } from "@/lib/ui-classes"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -65,16 +65,14 @@ function NavLinkItem({
       to={item.href}
       onClick={onNavigate}
       className={cn(
-        "flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors duration-150",
-        isActive
-          ? "bg-purple-50 font-medium text-purple-700 dark:bg-purple-500/10 dark:text-purple-300"
-          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
+        "flex min-h-10 items-center gap-3 rounded-[var(--radius-md)] pr-3 text-sm font-medium transition-colors duration-150",
+        isActive ? navItemActive : navItemInactive
       )}
     >
       <Icon className="size-4 shrink-0" aria-hidden />
       <span className="truncate">{item.label}</span>
       {item.badge && (
-        <span className="ml-auto rounded-full bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-500/20 dark:text-purple-300">
+        <span className="ml-auto rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium text-accent-foreground">
           {item.badge}
         </span>
       )}
@@ -145,10 +143,10 @@ export function DashboardLayout({
     <>
       <Link
         to="/dashboard"
-        className="flex min-h-14 items-center gap-2.5 border-b border-gray-200 px-4 py-3 transition-opacity hover:opacity-80 dark:border-[#2d2d44] sm:px-5"
+        className="flex min-h-14 items-center gap-2.5 border-b border-border px-4 py-3 transition-opacity hover:opacity-80 sm:px-5"
         onClick={() => setMobileOpen(false)}
       >
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-purple-600 to-indigo-600 text-white">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-primary text-primary-foreground">
           <Activity className="size-4" aria-hidden />
         </span>
         <span className="truncate text-sm font-bold tracking-tight text-foreground">
@@ -169,10 +167,10 @@ export function DashboardLayout({
           onNavigate={() => setMobileOpen(false)}
         />
       </nav>
-      <div className="border-t border-gray-200 p-3 dark:border-white/10 sm:p-4">
+      <div className="border-t border-border p-3 sm:p-4">
         {user ? (
-          <div className="flex min-h-11 items-center gap-3 rounded-xl border border-gray-200 bg-card px-3 py-2.5 shadow-sm dark:border-[#2d2d44]">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-purple-100 text-xs font-semibold text-purple-700 dark:bg-purple-500/20 dark:text-purple-300">
+          <div className="flex min-h-11 items-center gap-3 rounded-[var(--radius-md)] border border-border bg-card px-3 py-2.5">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-accent text-xs font-medium text-accent-foreground">
               {initials || "?"}
             </span>
             <div className="min-w-0 flex-1">
@@ -182,7 +180,7 @@ export function DashboardLayout({
           </div>
         ) : (
           <div
-            className="flex min-h-11 items-center gap-3 rounded-xl border border-gray-200 bg-card px-3 py-2.5 dark:border-[#2d2d44]"
+            className="flex min-h-11 items-center gap-3 rounded-[var(--radius-md)] border border-border bg-card px-3 py-2.5"
             aria-hidden
           >
             <Skeleton className="size-8 shrink-0 rounded-lg" />
@@ -211,21 +209,20 @@ export function DashboardLayout({
         {!hidePageHeader && (
           <header
             className={cn(
-              "sticky top-0 z-40 flex min-h-[60px] shrink-0 items-center justify-between gap-4 border-b px-5 py-3 backdrop-blur-sm sm:px-6 lg:px-8 xl:px-10",
-              sidebarSurface
+              "sticky top-0 z-40 flex min-h-[60px] shrink-0 items-center justify-between gap-4 border-b border-border bg-background px-5 py-3 sm:px-6 lg:px-8 xl:px-10",
             )}
           >
             <div className="flex min-w-0 flex-1 items-center gap-3">
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger
-                  className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-foreground transition-colors hover:bg-muted dark:border-[#2d2d44] dark:hover:bg-white/5 md:hidden"
+                  className="inline-flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-border text-foreground transition-colors hover:bg-muted md:hidden"
                   aria-label="Open navigation menu"
                 >
                   <Menu className="size-5" aria-hidden />
                 </SheetTrigger>
                 <SheetContent
                   side="left"
-                  className="w-[min(100vw-1rem,18rem)] border-gray-200 bg-card p-0 dark:border-[#2d2d44] sm:w-72"
+                  className="w-[min(100vw-1rem,18rem)] border-border bg-card p-0 sm:w-72"
                 >
                   <SheetHeader className="sr-only">
                     <SheetTitle>Navigation</SheetTitle>
@@ -234,18 +231,16 @@ export function DashboardLayout({
                 </SheetContent>
               </Sheet>
               <div className="min-w-0 flex-1">
-                <h1 className="truncate text-xl font-bold tracking-tight text-foreground lg:text-2xl">
-                  {title}
-                </h1>
+                <h1 className={cn(pageTitle, "truncate")}>{title}</h1>
                 {subtitle && (
-                  <p className="truncate text-sm text-muted-foreground">{subtitle}</p>
+                  <p className={cn(pageSubtitle, "truncate")}>{subtitle}</p>
                 )}
               </div>
             </div>
             <Button
               variant="outline"
               onClick={handleLogout}
-              className="h-9 shrink-0 gap-2 rounded-lg border-gray-200 px-3 text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 dark:border-[#2d2d44] dark:text-gray-300 dark:hover:border-red-500/30 dark:hover:bg-red-500/10 dark:hover:text-red-400 sm:px-4"
+              className="h-9 shrink-0 gap-2 rounded-[var(--radius-md)] border-border px-3 text-sm text-muted-foreground hover:bg-destructive/5 hover:text-destructive sm:px-4"
             >
               <LogOut className="size-4" aria-hidden />
               <span className="hidden sm:inline">Logout</span>
@@ -255,20 +250,19 @@ export function DashboardLayout({
         {hidePageHeader && (
           <div
             className={cn(
-              "sticky top-0 z-40 flex min-h-14 shrink-0 items-center border-b px-5 py-2 backdrop-blur-sm md:hidden lg:px-8",
-              sidebarSurface
+              "sticky top-0 z-40 flex min-h-14 shrink-0 items-center border-b border-border bg-background px-5 py-2 md:hidden lg:px-8",
             )}
           >
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger
-                className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-foreground transition-colors hover:bg-muted dark:border-[#2d2d44] dark:hover:bg-white/5"
+                className="inline-flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-border text-foreground transition-colors hover:bg-muted"
                 aria-label="Open navigation menu"
               >
                 <Menu className="size-5" aria-hidden />
               </SheetTrigger>
               <SheetContent
                 side="left"
-                className="w-[min(100vw-1rem,18rem)] border-gray-200 bg-card p-0 sm:w-72"
+                className="w-[min(100vw-1rem,18rem)] border-border bg-card p-0 sm:w-72"
               >
                 <SheetHeader className="sr-only">
                   <SheetTitle>Navigation</SheetTitle>

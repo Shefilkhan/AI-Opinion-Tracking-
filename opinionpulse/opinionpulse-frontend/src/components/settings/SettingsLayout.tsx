@@ -13,7 +13,7 @@ import { PrivacySettings } from "@/components/settings/PrivacySettings"
 import { BillingSettings } from "@/components/settings/BillingSettings"
 import type { SettingsSectionId } from "@/components/settings/settingsNav"
 import { Button } from "@/components/ui/button"
-import { btnPrimary } from "@/lib/ui-classes"
+import { btnPrimary, pageTitle } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
 
@@ -95,7 +95,7 @@ function SettingsLayoutInner() {
     <div className="settings-page w-full">
       <div className="settings-header mb-6 flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          <h1 className={pageTitle}>
             Settings
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -106,7 +106,7 @@ function SettingsLayoutInner() {
           type="button"
           variant="outline"
           onClick={handleLogout}
-          className="h-10 shrink-0 gap-2 border-gray-200 px-4 text-gray-600 hover:bg-red-50 hover:text-red-600 dark:border-[#2d2d44] dark:text-gray-300 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+          className="h-10 shrink-0 gap-2 border-border px-4 text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400"
         >
           <LogOut className="size-4" aria-hidden />
           Logout

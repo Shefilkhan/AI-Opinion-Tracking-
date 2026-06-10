@@ -72,12 +72,12 @@ export type UserSettings = {
 const STORAGE_KEY = "opinionpulse_user_settings"
 
 export const ACCENT_PRESETS = [
-  { id: "blue", label: "Blue", value: "#0070f3" },
-  { id: "violet", label: "Violet", value: "#7c3aed" },
+  { id: "clay", label: "Clay", value: "#c96442" },
+  { id: "terracotta", label: "Terracotta", value: "#b45309" },
   { id: "emerald", label: "Emerald", value: "#059669" },
-  { id: "orange", label: "Orange", value: "#ea580c" },
-  { id: "rose", label: "Rose", value: "#e11d48" },
-  { id: "slate", label: "Slate", value: "#475569" },
+  { id: "slate", label: "Slate", value: "#57534e" },
+  { id: "rose", label: "Rose", value: "#be123c" },
+  { id: "ocean", label: "Ocean", value: "#0369a1" },
 ] as const
 
 const defaults: UserSettings = {

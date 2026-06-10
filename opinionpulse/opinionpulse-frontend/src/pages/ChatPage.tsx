@@ -16,7 +16,14 @@ import {
 } from "@/api/chat"
 import { ChatWindow } from "@/components/chat/ChatWindow"
 import type { ChatMessageItem } from "@/components/chat/MessageBubble"
-import { ParticleBackground } from "@/components/ui/ParticleBackground"
+import {
+  btnPrimary,
+  inputSurface,
+  navItemActive,
+  navItemInactive,
+  pageShell,
+  proCard,
+} from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 function formatTimeAgo(iso: string) {
@@ -106,22 +113,25 @@ export function ChatPage() {
   )
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-gray-50 dark:bg-[#0f0f1a]">
-      <div className="flex w-64 shrink-0 flex-col border-r border-gray-200 bg-white dark:border-[#2d2d44] dark:bg-[#13131f] lg:w-72 xl:w-80">
-        <div className="border-b border-gray-100 p-4 dark:border-[#2d2d44]">
+    <div className={cn("flex h-screen w-full overflow-hidden", pageShell)}>
+      <div className="flex w-64 shrink-0 flex-col border-r border-border bg-card lg:w-72 xl:w-80">
+        <div className="border-b border-border p-4">
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-purple-600 to-indigo-600">
-                <Sparkles size={14} className="text-white" />
+              <div className="flex size-7 items-center justify-center rounded-[var(--radius-md)] bg-primary text-primary-foreground">
+                <Sparkles size={14} />
               </div>
-              <span className="text-sm font-semibold text-gray-900 dark:text-white">
+              <span className="font-serif-display text-sm font-medium text-foreground">
                 Pulse AI
               </span>
             </div>
             <button
               type="button"
               onClick={startNewChat}
-              className="flex items-center gap-1.5 rounded-lg bg-purple-600 px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-purple-500"
+              className={cn(
+                "flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium",
+                btnPrimary
+              )}
             >
               <Plus size={12} />
               New Chat
@@ -132,18 +142,18 @@ export function ChatPage() {
             placeholder="Search conversations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none dark:border-[#2d2d44] dark:bg-[#252538] dark:text-white dark:placeholder:text-gray-500"
+            className={cn(inputSurface, "w-full px-3 py-2")}
           />
         </div>
 
         <div className="flex-1 overflow-y-auto py-2">
           {loadingList ? (
-            <p className="px-4 py-6 text-center text-sm text-gray-400">Loading...</p>
+            <p className="px-4 py-6 text-center text-sm text-muted-foreground">Loading...</p>
           ) : filtered.length === 0 ? (
             <div className="px-4 py-8 text-center">
-              <MessageCircle size={32} className="mx-auto mb-2 text-gray-300" />
-              <p className="text-sm text-gray-400">No conversations yet</p>
-              <p className="mt-1 text-xs text-gray-300">
+              <MessageCircle size={32} className="mx-auto mb-2 text-muted-foreground/50" />
+              <p className="text-sm text-muted-foreground">No conversations yet</p>
+              <p className="mt-1 text-xs text-muted-foreground/70">
                 Start by asking Pulse AI anything
               </p>
             </div>
@@ -158,21 +168,21 @@ export function ChatPage() {
                   if (e.key === "Enter") void loadConversation(conv.conversation_id)
                 }}
                 className={cn(
-                  "group mx-2 flex cursor-pointer items-start gap-2 rounded-xl px-3 py-3 transition-colors",
+                  "group mx-2 flex cursor-pointer items-start gap-2 rounded-[var(--radius-lg)] px-3 py-3 transition-colors",
                   activeConvId === conv.conversation_id
-                    ? "border border-purple-200 bg-purple-50 dark:border-purple-500/30 dark:bg-purple-500/10"
-                    : "hover:bg-gray-50 dark:hover:bg-white/5"
+                    ? navItemActive
+                    : navItemInactive
                 )}
               >
                 <MessageCircle
                   size={14}
-                  className="mt-0.5 shrink-0 text-gray-400"
+                  className="mt-0.5 shrink-0 text-muted-foreground"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <p className="truncate text-sm font-medium text-foreground">
                     {conv.first_message || "New conversation"}
                   </p>
-                  <p className="mt-0.5 text-xs text-gray-400">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     {conv.message_count} messages ·{" "}
                     {formatTimeAgo(conv.started_at)}
                   </p>
@@ -183,7 +193,7 @@ export function ChatPage() {
                     e.stopPropagation()
                     void handleDelete(conv.conversation_id)
                   }}
-                  className="rounded p-1 text-gray-400 opacity-0 transition-all group-hover:opacity-100 hover:text-red-500"
+                  className="rounded p-1 text-muted-foreground opacity-0 transition-all group-hover:opacity-100 hover:text-destructive"
                 >
                   <Trash2 size={12} />
                 </button>
@@ -192,10 +202,10 @@ export function ChatPage() {
           )}
         </div>
 
-        <div className="border-t border-gray-100 p-4 dark:border-[#2d2d44]">
+        <div className="border-t border-border p-4">
           <Link
             to="/dashboard"
-            className="flex items-center gap-2 text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft size={14} />
             Back to Dashboard
@@ -203,10 +213,15 @@ export function ChatPage() {
         </div>
       </div>
 
-      <div className="relative flex min-w-0 flex-1 flex-col">
-        <ParticleBackground sentiment="neutral" intensity={0.2} />
-        <div className="relative z-10 flex h-full w-full flex-1 flex-col p-4 sm:p-5 lg:p-6 xl:p-8">
-          <div className="mx-auto flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md dark:border-[#2d2d44] dark:bg-[#1e1e30] dark:shadow-black/40 xl:max-w-none">
+      <div className="flex min-w-0 flex-1 flex-col bg-background">
+        <div className="flex h-full w-full flex-1 flex-col p-4 sm:p-5 lg:p-6 xl:p-8">
+          <div
+            className={cn(
+              "mx-auto flex h-full w-full max-w-5xl flex-col overflow-hidden",
+              proCard,
+              "xl:max-w-none"
+            )}
+          >
             <ChatWindow
               mode="full"
               conversationId={activeConvId}

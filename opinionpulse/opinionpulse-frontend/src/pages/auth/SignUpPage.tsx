@@ -4,6 +4,8 @@ import { AuthSplitLayout } from "@/components/auth/AuthSplitLayout"
 import { SignUpForm } from "@/components/auth/SignUpForm"
 import type { PlanId } from "@/data/pricingData"
 import { saveSelectedPlan, planDisplayName, getSelectedPlan } from "@/lib/planStorage"
+import { cn } from "@/lib/utils"
+import { proCard } from "@/lib/ui-classes"
 
 export function SignUpPage() {
   const [searchParams] = useSearchParams()
@@ -30,8 +32,13 @@ export function SignUpPage() {
       }}
     >
       {selected && (
-        <p className="mb-4 rounded-xl border border-purple-200 bg-purple-50 px-3 py-2 text-center text-sm text-purple-900">
-          Plan selected: <strong>{planDisplayName(selected)}</strong>
+        <p
+          className={cn(
+            proCard,
+            "mb-4 px-3 py-2 text-center text-sm text-accent-foreground bg-accent"
+          )}
+        >
+          Plan selected: <strong className="font-medium text-foreground">{planDisplayName(selected)}</strong>
         </p>
       )}
       <SignUpForm />

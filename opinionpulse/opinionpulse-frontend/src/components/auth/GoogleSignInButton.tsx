@@ -14,7 +14,7 @@ export function GoogleSignInButton({ redirect = "/dashboard" }: GoogleSignInButt
     <button
       type="button"
       onClick={handleClick}
-      className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-3 text-sm font-medium text-gray-700 transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm"
+      className="flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-card px-6 py-3 text-sm font-medium text-foreground transition-colors duration-200 hover:bg-accent hover:text-accent-foreground"
     >
       <GoogleIcon />
       Continue with Google

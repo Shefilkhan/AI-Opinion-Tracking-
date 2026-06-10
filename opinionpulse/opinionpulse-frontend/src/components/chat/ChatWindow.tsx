@@ -18,6 +18,9 @@ import {
 import { ApiError } from "@/api/client"
 import { MessageBubble, type ChatMessageItem } from "@/components/chat/MessageBubble"
 import { TypingIndicator } from "@/components/chat/TypingIndicator"
+import { btnPrimary, inputSurface } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
+
 const STARTER_SUGGESTIONS = [
   "What do people think about Artificial Intelligence?",
   "Show me Bitcoin sentiment right now",
@@ -172,16 +175,15 @@ export function ChatWindow({
   }
 
   return (
-    <div className="flex h-full flex-col bg-white">
-      <div className="flex items-center justify-between border-b border-gray-100 bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3">
+    <div className="flex h-full flex-col bg-background">
+      <div className="flex items-center justify-between border-b border-border bg-card px-4 py-3">
         <div className="flex items-center gap-2.5">
-          <div className="relative flex size-8 items-center justify-center rounded-full bg-white/20">
-            <Sparkles size={16} className="text-white" />
-            <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border border-white bg-green-400" />
+          <div className="flex size-8 items-center justify-center rounded-full border border-border bg-accent">
+            <Sparkles size={16} className="text-accent-foreground" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-white">Pulse AI</p>
-            <p className="text-xs text-purple-200">Powered by Groq + Live Data</p>
+            <p className="text-sm font-medium text-foreground">Pulse AI</p>
+            <p className="text-xs text-muted-foreground">Powered by Groq + Live Data</p>
           </div>
         </div>
 
@@ -190,7 +192,7 @@ export function ChatWindow({
             type="button"
             onClick={clearChat}
             title="New conversation"
-            className="rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+            className="rounded-[var(--radius-md)] p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <RefreshCw size={14} />
           </button>
@@ -198,7 +200,7 @@ export function ChatWindow({
             type="button"
             onClick={exportChat}
             title="Export chat"
-            className="rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+            className="rounded-[var(--radius-md)] p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <ExternalLink size={14} />
           </button>
@@ -207,7 +209,7 @@ export function ChatWindow({
               type="button"
               onClick={onExpand}
               title="Open full page"
-              className="rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+              className="rounded-[var(--radius-md)] p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <Maximize2 size={14} />
             </button>
@@ -216,7 +218,7 @@ export function ChatWindow({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+              className="rounded-[var(--radius-md)] p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <X size={14} />
             </button>
@@ -225,10 +227,10 @@ export function ChatWindow({
       </div>
 
       {dataPanel && (
-        <div className="flex items-center justify-between border-b border-purple-100 bg-purple-50 px-4 py-2 dark:border-purple-500/20 dark:bg-purple-500/10">
+        <div className="flex items-center justify-between border-b border-border bg-accent px-4 py-2">
           <div className="flex items-center gap-2">
-            <BarChart2 size={13} className="text-purple-500" />
-            <span className="text-xs text-purple-700 dark:text-purple-300">
+            <BarChart2 size={13} className="text-primary" />
+            <span className="text-xs text-accent-foreground">
               Analyzed {dataPanel.results_count} real posts from{" "}
               {dataPanel.platforms?.join(", ") || "live sources"}
             </span>
@@ -236,87 +238,100 @@ export function ChatWindow({
           <button
             type="button"
             onClick={() => setDataPanel(null)}
-            className="text-purple-400 hover:text-purple-600"
+            className="text-muted-foreground hover:text-foreground"
           >
             <X size={12} />
           </button>
         </div>
       )}
 
-      <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
-        {messages.map((message) => (
-          <MessageBubble
-            key={message.id}
-            message={message}
-            onSuggestionClick={(s) => void sendMessage(s)}
-          />
-        ))}
-        {isLoading && <TypingIndicator />}
-        <div ref={messagesEndRef} />
+      <div className="flex-1 overflow-y-auto px-4 py-6">
+        <div className="mx-auto w-full max-w-3xl space-y-6">
+          {messages.map((message) => (
+            <MessageBubble
+              key={message.id}
+              message={message}
+              onSuggestionClick={(s) => void sendMessage(s)}
+            />
+          ))}
+          {isLoading && <TypingIndicator />}
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {messages.length <= 1 && !isLoading && (
         <div className="px-4 pb-3">
-          <p className="mb-2 text-xs font-medium text-gray-400">Try asking:</p>
-          <div className="flex flex-wrap gap-1.5">
-            {STARTER_SUGGESTIONS.slice(0, 4).map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => void sendMessage(s)}
-                className="rounded-full border border-purple-200 bg-purple-50 px-2.5 py-1.5 text-xs text-purple-700 transition-colors hover:bg-purple-100 dark:border-purple-500/30 dark:bg-purple-500/10 dark:text-purple-300 dark:hover:bg-purple-500/20"
-              >
-                {s.length > 35 ? `${s.slice(0, 35)}...` : s}
-              </button>
-            ))}
+          <div className="mx-auto w-full max-w-3xl">
+            <p className="mb-2 text-xs font-medium text-muted-foreground">Try asking:</p>
+            <div className="flex flex-wrap gap-1.5">
+              {STARTER_SUGGESTIONS.slice(0, 4).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => void sendMessage(s)}
+                  className="rounded-full border border-border bg-card px-2.5 py-1.5 text-xs text-foreground transition-colors hover:border-primary/30 hover:bg-accent hover:text-accent-foreground"
+                >
+                  {s.length > 35 ? `${s.slice(0, 35)}...` : s}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
 
-      <div className="border-t border-gray-100 px-4 py-3 dark:border-[#2d2d44]">
-        <div className="flex items-end gap-2">
-          <div className="relative flex-1">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask about any topic... (Enter to send)"
-              rows={1}
-              maxLength={500}
-              className="max-h-32 min-h-12 w-full resize-none overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 pr-12 text-sm text-gray-900 transition-all placeholder:text-gray-400 focus:border-purple-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/30 dark:border-[#2d2d44] dark:bg-[#252538] dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-[#2a2a40]"
-            />
-            {input.length > 400 && (
-              <span className="absolute bottom-2 right-2 text-xs text-gray-400">
-                {500 - input.length}
-              </span>
-            )}
+      <div className="border-t border-border px-4 py-4">
+        <div className="mx-auto w-full max-w-3xl">
+          <div className="flex items-end gap-2">
+            <div className="relative flex-1">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask about any topic... (Enter to send)"
+                rows={1}
+                maxLength={500}
+                className={cn(
+                  inputSurface,
+                  "max-h-32 min-h-12 w-full resize-none overflow-y-auto px-4 py-3 pr-12"
+                )}
+              />
+              {input.length > 400 && (
+                <span className="absolute bottom-2 right-2 text-xs text-muted-foreground">
+                  {500 - input.length}
+                </span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => void sendMessage()}
+              disabled={!input.trim() || isLoading}
+              className={cn(
+                "flex size-11 shrink-0 items-center justify-center",
+                btnPrimary,
+                "disabled:cursor-not-allowed disabled:opacity-40"
+              )}
+            >
+              {isLoading ? (
+                <Loader2 size={16} className="animate-spin text-primary-foreground" />
+              ) : (
+                <Send size={16} className="text-primary-foreground" />
+              )}
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => void sendMessage()}
-            disabled={!input.trim() || isLoading}
-            className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-purple-600 shadow-md shadow-purple-200 transition-all hover:scale-105 hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {isLoading ? (
-              <Loader2 size={16} className="animate-spin text-white" />
-            ) : (
-              <Send size={16} className="text-white" />
-            )}
-          </button>
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            Pulse AI reads live data · Not financial advice
+          </p>
+          {mode === "full" && (
+            <button
+              type="button"
+              onClick={() => navigate("/search")}
+              className="mt-2 w-full text-center text-xs text-primary hover:underline"
+            >
+              Open full search results →
+            </button>
+          )}
         </div>
-        <p className="mt-1.5 text-center text-xs text-gray-400">
-          Pulse AI reads live data · Not financial advice
-        </p>
-        {mode === "full" && (
-          <button
-            type="button"
-            onClick={() => navigate("/search")}
-            className="mt-2 w-full text-center text-xs text-purple-600 hover:underline"
-          >
-            Open full search results →
-          </button>
-        )}
       </div>
     </div>
   )

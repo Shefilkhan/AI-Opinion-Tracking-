@@ -2,6 +2,7 @@ import { ExternalLink } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import type { DebateItem } from "@/api/dashboard"
 import { platformBadge } from "@/lib/api/sentiment"
+import { sectionTitle } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 type DebateListProps = {
@@ -13,10 +14,10 @@ export function DebateList({ debates }: DebateListProps) {
 
   return (
     <section>
-      <h2 className="mb-4 text-lg font-semibold text-foreground">
+      <h2 className={cn(sectionTitle, "mb-4")}>
         Latest Opinion Debates
       </h2>
-      <ul className="divide-y divide-gray-200">
+      <ul className="divide-y divide-border">
         {debates.map((d) => {
           const plat = platformBadge(d.platform)
           return (
@@ -49,10 +50,10 @@ export function DebateList({ debates }: DebateListProps) {
                   >
                     {plat.label}
                   </span>
-                  <p className="mt-2 line-clamp-2 text-[13px] text-gray-600">
+                  <p className="mt-2 line-clamp-2 text-[13px] text-muted-foreground">
                     {d.summary}
                   </p>
-                  <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-gray-100">
+                  <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-muted">
                     <div
                       className="bg-green-500"
                       style={{ width: `${d.positive_pct}%` }}
@@ -66,8 +67,8 @@ export function DebateList({ debates }: DebateListProps) {
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">{d.time_ago}</p>
                   {d.source_url && (
-                    <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-2.5">
-                      <span className="flex max-w-[60%] items-center gap-1.5 truncate text-xs text-gray-400">
+                    <div className="mt-3 flex items-center justify-between border-t border-border pt-2.5">
+                      <span className="flex max-w-[60%] items-center gap-1.5 truncate text-xs text-muted-foreground">
                         <ExternalLink size={11} />
                         {d.source_label || "Source"}
                       </span>
@@ -76,7 +77,7 @@ export function DebateList({ debates }: DebateListProps) {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="flex shrink-0 items-center gap-1 text-xs font-medium text-purple-600 transition-colors hover:text-purple-800 hover:underline"
+                        className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary transition-colors hover:underline"
                       >
                         Visit source <ExternalLink size={10} />
                       </a>

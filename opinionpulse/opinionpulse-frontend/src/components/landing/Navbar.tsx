@@ -28,19 +28,16 @@ export function Navbar() {
       className={cn(
         "fixed top-0 z-50 w-full transition-all duration-300 ease-out",
         scrolled
-          ? "border-b border-black/[0.08] bg-white/[0.85] shadow-[0_1px_20px_rgba(0,0,0,0.05)] backdrop-blur-[12px]"
+          ? "border-b border-border bg-background"
           : "border-b border-transparent bg-transparent"
       )}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-8">
         <Link
           to="/"
-          className={cn(
-            "flex items-center gap-2 text-sm font-semibold transition-colors",
-            scrolled ? "text-gray-900" : "text-white"
-          )}
+          className="flex items-center gap-2 text-sm font-semibold text-foreground transition-colors"
         >
-          <span className="flex size-9 items-center justify-center rounded-lg bg-purple-600 text-white shadow-lg shadow-purple-500/30">
+          <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Activity className="size-4" />
           </span>
           OpinionPulse
@@ -48,12 +45,8 @@ export function Navbar() {
 
         <nav className="hidden items-center gap-8 lg:flex">
           {navLinks.map((link) => {
-            const className = cn(
-              "text-sm font-medium transition-colors duration-200",
-              scrolled
-                ? "text-gray-600 hover:text-gray-900"
-                : "text-gray-300 hover:text-white"
-            )
+            const className =
+              "text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground"
             return link.href.startsWith("/") ? (
               <Link key={link.href} to={link.href} className={className}>
                 {link.label}
@@ -71,19 +64,14 @@ export function Navbar() {
             render={<Link to="/auth/signin" />}
             variant="ghost"
             size="sm"
-            className={cn(
-              "border-0 shadow-none",
-              scrolled
-                ? "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                : "text-white/90 hover:bg-white/10 hover:text-white"
-            )}
+            className="border-0 text-muted-foreground shadow-none hover:bg-muted/60 hover:text-foreground"
           >
             Login
           </Button>
           <Button
             render={<Link to="/auth/signup" />}
             size="sm"
-            className="gap-1.5 rounded-xl bg-purple-600 px-5 text-white shadow-lg shadow-purple-500/25 hover:bg-purple-500"
+            className="gap-1.5 rounded-xl bg-primary px-5 text-primary-foreground hover:bg-primary/90"
           >
             Get Started
             <ArrowRight className="size-4" />
@@ -92,20 +80,15 @@ export function Navbar() {
 
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger
-            className={cn(
-              "inline-flex size-10 items-center justify-center rounded-lg border transition-colors lg:hidden",
-              scrolled
-                ? "border-gray-200 text-gray-900 hover:bg-gray-100"
-                : "border-white/20 text-white hover:bg-white/10"
-            )}
+            className="inline-flex size-10 items-center justify-center rounded-lg border border-border text-foreground transition-colors hover:bg-muted/60 lg:hidden"
             aria-label="Open menu"
           >
             <Menu className="size-5" />
           </SheetTrigger>
-          <SheetContent side="right" className="w-full max-w-sm border-gray-200 bg-white p-0 sm:max-w-md">
-            <SheetHeader className="border-b border-gray-100 px-6 py-4">
+          <SheetContent side="right" className="w-full max-w-sm border-border bg-background p-0 sm:max-w-md">
+            <SheetHeader className="border-b border-border px-6 py-4">
               <SheetTitle className="flex items-center gap-2 text-left">
-                <span className="flex size-8 items-center justify-center rounded-lg bg-purple-600 text-white">
+                <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Activity className="size-4" />
                 </span>
                 OpinionPulse
@@ -118,7 +101,7 @@ export function Navbar() {
                     key={link.href}
                     to={link.href}
                     onClick={() => setOpen(false)}
-                    className="rounded-lg px-4 py-3 text-base font-medium text-gray-700 transition-colors hover:bg-purple-50 hover:text-purple-700"
+                    className="rounded-lg px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-muted/60"
                   >
                     {link.label}
                   </Link>
@@ -127,23 +110,23 @@ export function Navbar() {
                     key={link.href}
                     href={link.href}
                     onClick={() => setOpen(false)}
-                    className="rounded-lg px-4 py-3 text-base font-medium text-gray-700 transition-colors hover:bg-purple-50 hover:text-purple-700"
+                    className="rounded-lg px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-muted/60"
                   >
                     {link.label}
                   </a>
                 )
               )}
-              <div className="mt-6 flex flex-col gap-3 border-t border-gray-100 pt-6">
+              <div className="mt-6 flex flex-col gap-3 border-t border-border pt-6">
                 <Button
                   render={<Link to="/auth/signin" onClick={() => setOpen(false)} />}
                   variant="ghost"
-                  className="h-11 justify-center text-gray-700"
+                  className="h-11 justify-center text-foreground"
                 >
                   Login
                 </Button>
                 <Button
                   render={<Link to="/auth/signup" onClick={() => setOpen(false)} />}
-                  className="h-11 justify-center gap-2 rounded-xl bg-purple-600 hover:bg-purple-500"
+                  className="h-11 justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90"
                 >
                   Get Started
                   <ArrowRight className="size-4" />
