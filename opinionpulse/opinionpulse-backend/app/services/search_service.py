@@ -29,7 +29,7 @@ from app.services.platforms import (
 )
 from app.services.platforms.platform_common import deduplicate_results, normalize_result
 from app.services.search_constants import SENTIMENT_TREND_24H
-from app.services.sentiment_analysis import calculate_sentiment_summary
+from app.services.sentiment_analysis import calculate_sentiment_summary, calculate_sentiment_forecast
 
 logger = logging.getLogger(__name__)
 
@@ -235,6 +235,7 @@ async def run_search(
         combined.sort(key=lambda r: r.get("posted_at", ""), reverse=True)
 
     summary = calculate_sentiment_summary(combined)
+    forecast = calculate_sentiment_forecast(combined)
     keywords = extract_keywords_from_results(combined)
     related = [f"#{w.title()}" for w in query.split()[:4] if len(w) > 2]
     related.extend([f"#{k['word'].title()}" for k in keywords[:3]])
@@ -300,6 +301,7 @@ async def run_search(
         "trending_keywords": keywords,
         "related_topics": related[:8],
         "sentiment_trend": SENTIMENT_TREND_24H,
+        "sentiment_forecast": forecast,
         "last_updated": datetime.now(timezone.utc).isoformat(),
         "wiki_summary": wiki_summary,
         "errors": errors if errors else None,

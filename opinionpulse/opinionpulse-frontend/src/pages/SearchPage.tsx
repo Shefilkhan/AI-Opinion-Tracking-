@@ -23,6 +23,8 @@ import { SearchSentimentChart } from "@/components/search/SearchSentimentChart"
 import { PlatformSentimentChart } from "@/components/search/PlatformSentimentChart"
 import { PlatformShareChart } from "@/components/search/PlatformShareChart"
 import { WordCloudChart } from "@/components/search/WordCloudChart"
+import { SentimentForecastChart } from "@/components/search/SentimentForecastChart"
+import { AiCrisisResponseModal } from "@/components/search/AiCrisisResponseModal"
 import { searchOpinions } from "@/lib/api/search"
 import type { SearchFilters, SearchResponse } from "@/lib/api/types"
 import { addRecentSearch } from "@/lib/recentSearchStorage"
@@ -49,6 +51,7 @@ const TIME_LABELS: Record<string, string> = {
 }
 
 export function SearchPage() {
+  const [crisisModalOpen, setCrisisModalOpen] = useState(false)
   const [searchParams, setSearchParams] = useSearchParams()
   const initialQ = searchParams.get("q") ?? ""
   const [query, setQuery] = useState(initialQ)
@@ -272,6 +275,28 @@ export function SearchPage() {
               <div className="grid w-full grid-cols-1 gap-6 xl:grid-cols-12 xl:gap-8">
                 <div className="flex flex-col gap-6 xl:col-span-8 xl:gap-8">
                   <SourcesStatusBar data={data} />
+                  
+                  {data.sentiment_summary && data.sentiment_summary.negative > 30 && (
+                    <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-5 flex items-center justify-between shadow-sm">
+                      <div>
+                        <h4 className="font-semibold text-red-500 flex items-center gap-2">
+                          <AlertTriangle className="size-4" /> High Negative Sentiment Detected
+                        </h4>
+                        <p className="text-sm text-red-400 mt-1">
+                          {data.sentiment_summary.negative}% of recent mentions are negative.
+                        </p>
+                      </div>
+                      <Button 
+                        variant="destructive" 
+                        className="gap-2 shadow-sm"
+                        onClick={() => setCrisisModalOpen(true)}
+                      >
+                        <Bot className="size-4" />
+                        Generate PR Strategy
+                      </Button>
+                    </div>
+                  )}
+
                   {data.wiki_summary && (
                     <WikipediaSummaryCard wiki={data.wiki_summary} />
                   )}
@@ -281,11 +306,12 @@ export function SearchPage() {
                   />
                   <AiInsightsSection data={data} timeRange={filters.timeRange} />
                   <SearchSentimentChart data={data} />
-                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 xl:gap-8">
-                    <PlatformSentimentChart data={data} />
+                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                     <PlatformShareChart data={data} />
-                    <WordCloudChart data={data} />
+                    <PlatformSentimentChart data={data} />
                   </div>
+                  <SentimentForecastChart data={data} />
+                  <WordCloudChart data={data} />
                   <ResultsFeed results={data.results} />
                 </div>
                 <div className="xl:col-span-4">
@@ -321,6 +347,15 @@ export function SearchPage() {
               />
             )}
           </div>
+          
+          {data && (
+            <AiCrisisResponseModal
+              topic={query}
+              results={data.results}
+              isOpen={crisisModalOpen}
+              onClose={() => setCrisisModalOpen(false)}
+            />
+          )}
         </DashboardLayout>
       </div>
     </div>

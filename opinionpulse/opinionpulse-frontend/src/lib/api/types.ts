@@ -33,18 +33,27 @@ export type WikiSummary = {
   thumbnail?: string | null
 }
 
+export type SentimentForecastPoint = {
+  date: string
+  predicted_score: number
+  sentiment: "positive" | "negative" | "neutral"
+  estimated_volume: number
+}
+
 export type SearchResponse = {
   query: string
   total_results: number
-  sentiment_summary: { positive: number; negative: number; neutral: number }
+  sentiment_summary: {
+    positive: number
+    negative: number
+    neutral: number
+  }
   platforms_searched: string[]
-  platforms_live?: Record<string, boolean>
-  apis_configured?: Record<string, boolean>
-  wiki_summary?: WikiSummary | null
-  errors?: string[] | null
+  platforms_live: Record<string, boolean>
+  apis_configured: Record<string, boolean>
   demo_mode: boolean
-  peak_discussion?: string | null
-  most_active_platform?: string | null
+  peak_discussion: string | null
+  most_active_platform: string | null
   results: SearchResultItem[]
   trending_keywords: { word: string; count: number }[]
   related_topics: string[]
@@ -55,5 +64,12 @@ export type SearchResponse = {
     neutral: number
     volume?: number
   }[]
-  last_updated?: string | null
+  sentiment_forecast: SentimentForecastPoint[]
+  last_updated: string
+  wiki_summary: {
+    title: string
+    extract: string
+    url: string
+  } | null
+  errors: string[] | null
 }

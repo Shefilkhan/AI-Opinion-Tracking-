@@ -43,3 +43,11 @@ class AiPredictResponse(BaseModel):
 class AiInsightOfTheDayResponse(BaseModel):
     enabled: bool
     insight: Optional[dict[str, Any]] = None
+
+class AiCrisisResponseRequest(BaseModel):
+    topic: str = ""
+    results: list[dict[str, Any]] = Field(default_factory=list)
+
+class AiCrisisResponseResponse(BaseModel):
+    response: dict[str, Any]
+    ai_enabled: bool = True

@@ -32,29 +32,29 @@
   --shadow-subtle: var(--shadow-subtle);
 }
 
-/* ── Light mode — warm Claude-inspired neutrals + clay accent ── */
+/* ── Light mode — OVERRIDDEN TO CYBER-SECURITY DARK ── */
 :root {
-  --radius: 10px;
+  --radius: 12px;
 
-  --bg-primary: #fdfcfb;
-  --bg-secondary: #f6f5f3;
-  --bg-tertiary: #efece8;
-  --bg-card: rgba(255, 255, 255, 0.75); /* Glassmorphism background */
-  --bg-sidebar: #f6f5f3;
+  --bg-primary: #05080f;
+  --bg-secondary: #0a0e17;
+  --bg-tertiary: #111827;
+  --bg-card: rgba(10, 14, 23, 0.7); /* Deep glassmorphism */
+  --bg-sidebar: #05080f;
 
-  --text-primary: #1c1917;
-  --text-secondary: #78716c;
-  --text-tertiary: #a8a29e;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
 
-  --border-color: #e8e6e1;
-  --border-subtle: #f0eeea;
+  --border-color: rgba(6, 182, 212, 0.15); /* Electric cyan hint */
+  --border-subtle: rgba(255, 255, 255, 0.05);
 
-  --accent-primary: #c96442;
-  --accent-light: #f4ece6;
-  --accent-text: #9a4b2f;
+  --accent-primary: #06b6d4; /* Neon Cyan */
+  --accent-light: rgba(6, 182, 212, 0.1);
+  --accent-text: #22d3ee;
 
-  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.02);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 0 10px rgba(6, 182, 212, 0.05);
+  --shadow-md: 0 0 20px rgba(6, 182, 212, 0.1);
 
   --background: var(--bg-primary);
   --foreground: var(--text-primary);
@@ -62,43 +62,43 @@
   --card-foreground: var(--text-primary);
   --popover: var(--bg-card);
   --popover-foreground: var(--text-primary);
-  --primary: #c96442;
-  --primary-foreground: #ffffff;
+  --primary: #06b6d4;
+  --primary-foreground: #000000;
   --secondary: var(--bg-tertiary);
   --secondary-foreground: var(--text-primary);
   --muted: var(--bg-tertiary);
   --muted-foreground: var(--text-secondary);
   --accent: var(--accent-light);
   --accent-foreground: var(--accent-text);
-  --destructive: #dc2626;
-  --success: #16a34a;
+  --destructive: #ef4444;
+  --success: #10b981;
   --border: var(--border-color);
   --input: var(--border-color);
   --ring: var(--accent-primary);
   --shadow-subtle: var(--shadow-sm);
 }
 
-/* ── Dark mode — warm dark surfaces ── */
+/* ── Dark mode — Mirror Light ── */
 .dark {
-  --bg-primary: #12100e;
-  --bg-secondary: #1a1714;
-  --bg-tertiary: #221e1a;
-  --bg-card: rgba(30, 26, 22, 0.6); /* Glassmorphism background */
-  --bg-sidebar: #1a1714;
+  --bg-primary: #05080f;
+  --bg-secondary: #0a0e17;
+  --bg-tertiary: #111827;
+  --bg-card: rgba(10, 14, 23, 0.7);
+  --bg-sidebar: #05080f;
 
-  --text-primary: #f5f4f0;
-  --text-secondary: #a8a29e;
-  --text-tertiary: #78716c;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
 
-  --border-color: #3a3530;
-  --border-subtle: #2a2722;
+  --border-color: rgba(6, 182, 212, 0.2);
+  --border-subtle: rgba(255, 255, 255, 0.08);
 
-  --accent-primary: #d97757;
-  --accent-light: #3d2e26;
-  --accent-text: #e8a88a;
+  --accent-primary: #06b6d4;
+  --accent-light: rgba(6, 182, 212, 0.15);
+  --accent-text: #22d3ee;
 
-  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 0 15px rgba(6, 182, 212, 0.1);
+  --shadow-md: 0 0 25px rgba(6, 182, 212, 0.2);
 
   --background: var(--bg-primary);
   --foreground: var(--text-primary);
@@ -106,8 +106,8 @@
   --card-foreground: var(--text-primary);
   --popover: var(--bg-card);
   --popover-foreground: var(--text-primary);
-  --primary: #d97757;
-  --primary-foreground: #1a1814;
+  --primary: #06b6d4;
+  --primary-foreground: #000000;
   --secondary: var(--bg-tertiary);
   --secondary-foreground: var(--text-primary);
   --muted: var(--bg-tertiary);

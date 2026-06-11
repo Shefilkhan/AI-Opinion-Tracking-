@@ -373,3 +373,61 @@ async def generate_insight_of_the_day() -> dict[str, Any] | None:
         "one_liner": summary.get("one_liner", ""),
         "verdict": summary.get("verdict", "deeply_divided"),
     }
+
+
+async def generate_crisis_response(
+    topic: str,
+    results: list[dict[str, Any]],
+) -> dict[str, Any]:
+    cache_key = _cache_key("ai_crisis", topic)
+    cached = get_cached(cache_key)
+    if cached:
+        return cached
+
+    if not ai_available():
+        return _fallback_crisis_response(topic)
+
+    negative_results = [r for r in results if r.get("sentiment") == "negative"][:10]
+    con_context = "\n".join(
+        f"- {r.get('title', '')}: {(r.get('content') or '')[:150]}"
+        for r in negative_results
+    )
+
+    prompt = f"""You are an elite Public Relations and Crisis Management expert.
+
+Your client is facing negative public sentiment regarding "{topic}".
+Here are the recent negative posts and complaints from social media:
+
+{con_context if con_context else "No specific negative posts found."}
+
+Generate a comprehensive crisis response strategy in this EXACT JSON format:
+{{
+    "severity_assessment": "low OR medium OR high OR critical",
+    "core_issue": "One sentence summarizing the root cause of the outrage",
+    "pr_statement": "A professionally written 3-paragraph PR statement addressing the concerns directly, taking accountability if necessary, and offering a path forward",
+    "suggested_tweet": "A short, empathetic 280-character tweet linking to the statement",
+    "dos": ["Do 1", "Do 2", "Do 3"],
+    "donts": ["Don't 1", "Don't 2"]
+}}
+
+Return ONLY the JSON object. Be empathetic, professional, and strategic."""
+
+    try:
+        response = await _claude_json(prompt)
+        set_cached(cache_key, response, AI_CACHE_TTL)
+        return response
+    except Exception as exc:
+        logger.error("AI Crisis Response failed: %s", exc)
+        return _fallback_crisis_response(topic)
+
+
+def _fallback_crisis_response(topic: str) -> dict[str, Any]:
+    return {
+        "severity_assessment": "medium",
+        "core_issue": f"Users are expressing dissatisfaction regarding {topic}.",
+        "pr_statement": f"We hear you. We understand there are concerns about {topic}, and we take this feedback seriously. Our team is actively investigating the issues raised by our community.\n\nWe are committed to transparency and will provide updates as we learn more. Thank you for holding us accountable.\n\nPlease reach out to our support team if you have further questions.",
+        "suggested_tweet": f"We hear the community's concerns regarding {topic}. We're actively looking into it and are committed to making things right. Read our full statement here: [Link]",
+        "dos": ["Acknowledge the issue", "Be transparent", "Provide a timeline"],
+        "donts": ["Get defensive", "Ignore the problem", "Delete comments"]
+    }
+

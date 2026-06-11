@@ -132,5 +132,25 @@ export async function getAiInsightOfTheDay(): Promise<{
   enabled: boolean
   insight: AiInsightOfTheDay | null
 }> {
-  return apiRequest("/api/ai/insight-of-the-day", { auth: true })
+  return apiRequest<{
+    enabled: boolean
+    insight: AiInsightOfTheDay | null
+  }>("/api/ai/insight-of-the-day", { auth: true })
+}
+
+export type AiCrisisResponse = {
+  severity_assessment: string
+  core_issue: string
+  pr_statement: string
+  suggested_tweet: string
+  dos: string[]
+  donts: string[]
+}
+
+export async function generateCrisisResponse(data: { topic: string; results: any[] }): Promise<{ response: AiCrisisResponse; ai_enabled: boolean }> {
+  return apiRequest<{ response: AiCrisisResponse; ai_enabled: boolean }>("/api/ai/crisis-response", {
+    method: "POST",
+    body: data,
+    auth: true,
+  })
 }

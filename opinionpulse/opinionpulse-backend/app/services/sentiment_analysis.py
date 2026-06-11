@@ -120,3 +120,69 @@ def apply_sentiment_to_results(results: list[dict]) -> list[dict]:
         item["sentiment_score"] = analysis["score"]
         out.append(item)
     return out
+
+
+def calculate_sentiment_forecast(results: list[dict]) -> list[dict]:
+    # A simple forecasting algorithm based on the velocity of recent sentiment
+    from datetime import datetime, timedelta, timezone
+    from dateutil.parser import parse
+    
+    if not results:
+        return []
+    
+    # Sort results by time
+    valid_results = []
+    for r in results:
+        if r.get("posted_at"):
+            try:
+                dt = parse(r["posted_at"])
+                valid_results.append((dt, r.get("sentiment_score", 0.0)))
+            except Exception:
+                pass
+
+    if len(valid_results) < 5:
+        # Not enough data, return flat forecast
+        base_score = 0.5
+        base_vol = 10
+        velocity = 0.0
+    else:
+        valid_results.sort(key=lambda x: x[0])
+        recent_half = valid_results[len(valid_results)//2:]
+        older_half = valid_results[:len(valid_results)//2]
+        
+        recent_avg = sum(x[1] for x in recent_half) / len(recent_half)
+        older_avg = sum(x[1] for x in older_half) / len(older_half)
+        
+        # Velocity is the difference between recent and older avg
+        velocity = recent_avg - older_avg
+        base_score = recent_avg
+        base_vol = len(valid_results) // 7
+
+    forecast = []
+    now = datetime.now(timezone.utc)
+    current_score = base_score
+    
+    for day in range(1, 8):
+        future_date = now + timedelta(days=day)
+        # Apply velocity, dampening it slightly over time to simulate mean reversion
+        current_score += velocity * (0.8 ** day)
+        
+        # Clamp score between -1 and 1
+        current_score = max(-1.0, min(1.0, current_score))
+        
+        # Determine label based on threshold
+        if current_score > 0.15:
+            sentiment_label = "positive"
+        elif current_score < -0.15:
+            sentiment_label = "negative"
+        else:
+            sentiment_label = "neutral"
+            
+        forecast.append({
+            "date": future_date.strftime("%b %d"),
+            "predicted_score": round(current_score, 2),
+            "sentiment": sentiment_label,
+            "estimated_volume": max(1, int(base_vol * (1.0 + current_score * 0.2)))
+        })
+        
+    return forecast

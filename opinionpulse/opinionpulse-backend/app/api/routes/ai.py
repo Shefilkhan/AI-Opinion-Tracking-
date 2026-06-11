@@ -11,6 +11,8 @@ from app.schemas.ai import (
     AiStatusResponse,
     AiSummarizeRequest,
     AiSummarizeResponse,
+    AiCrisisResponseRequest,
+    AiCrisisResponseResponse,
 )
 from app.services.ai_service import (
     ai_available,
@@ -18,6 +20,7 @@ from app.services.ai_service import (
     generate_insight_of_the_day,
     generate_opinion_summary,
     predict_opinion_trend,
+    generate_crisis_response,
 )
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
@@ -99,3 +102,17 @@ async def insight_of_the_day(
 
     insight = await generate_insight_of_the_day()
     return AiInsightOfTheDayResponse(enabled=True, insight=insight)
+
+@router.post("/crisis-response", response_model=AiCrisisResponseResponse)
+async def ai_crisis_response(
+    body: AiCrisisResponseRequest,
+    current_user: User = Depends(get_current_user),
+):
+    if not ai_available():
+        pass # allow fallback for demo
+
+    if not body.topic.strip() or len(body.results) == 0:
+        raise HTTPException(status_code=400, detail="Topic and results required")
+
+    response = await generate_crisis_response(body.topic.strip(), body.results)
+    return AiCrisisResponseResponse(response=response, ai_enabled=ai_available())
