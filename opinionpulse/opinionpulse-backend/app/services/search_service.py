@@ -6,9 +6,11 @@ from datetime import datetime, timezone
 from typing import Any, Callable
 
 from sqlalchemy.orm import Session
+from dateutil.parser import parse
 
 from app.core.config import get_settings
-from app.db.models import SearchHistory
+from app.db.database import SessionLocal
+from app.db.models import SearchHistory, Mention
 from app.services.keywords_utils import extract_keywords_from_results
 from app.services.platforms import (
     get_wikipedia_summary,
@@ -174,6 +176,36 @@ async def run_search(
             if results:
                 platforms_searched.append(name)
 
+    # Fetch historical data from DB to supplement live data
+    try:
+        from datetime import timedelta
+        with SessionLocal() as db:
+            delta = timedelta(days=1)
+            if time_range == "7d": delta = timedelta(days=7)
+            if time_range == "30d": delta = timedelta(days=30)
+            cutoff = datetime.now(timezone.utc) - delta
+            
+            historical = db.query(Mention).filter(
+                Mention.search_query == query,
+                Mention.posted_at >= cutoff
+            ).all()
+            
+            for h in historical:
+                # Basic mapping from Mention model to result dictionary
+                combined.append({
+                    "id": h.id,
+                    "platform": h.platform,
+                    "author": h.author,
+                    "content": h.content,
+                    "source_url": h.source_url,
+                    "sentiment": h.sentiment,
+                    "sentiment_score": h.sentiment_score,
+                    "posted_at": h.posted_at.isoformat() if h.posted_at else None,
+                    "engagement": {"likes": 0, "shares": 0, "views": 0, "comments": 0}
+                })
+    except Exception as e:
+        logger.error("Failed to retrieve historical data: %s", e)
+
     wiki_summary = await asyncio.to_thread(get_wikipedia_summary, query)
 
     if not combined:
@@ -206,6 +238,42 @@ async def run_search(
     keywords = extract_keywords_from_results(combined)
     related = [f"#{w.title()}" for w in query.split()[:4] if len(w) > 2]
     related.extend([f"#{k['word'].title()}" for k in keywords[:3]])
+
+    # Archive to Database
+    try:
+        with SessionLocal() as db:
+            # Avoid duplicate URLs per query
+            existing_urls = {
+                u[0] for u in db.query(Mention.source_url)
+                .filter(Mention.search_query == query, Mention.source_url.isnot(None))
+                .all()
+            }
+            new_mentions = []
+            for item in combined:
+                url = item.get("source_url")
+                if url and url not in existing_urls:
+                    dt = None
+                    try:
+                        if item.get("posted_at"):
+                            dt = parse(item.get("posted_at"))
+                    except Exception:
+                        pass
+                    new_mentions.append(Mention(
+                        search_query=query,
+                        platform=item.get("platform", "unknown")[:50],
+                        author=(item.get("author") or "Unknown")[:255],
+                        content=item.get("content", ""),
+                        source_url=url[:512],
+                        sentiment=item.get("sentiment"),
+                        sentiment_score=item.get("sentiment_score"),
+                        posted_at=dt
+                    ))
+                    existing_urls.add(url)
+            if new_mentions:
+                db.add_all(new_mentions)
+                db.commit()
+    except Exception as e:
+        logger.error("Failed to archive historical data: %s", e)
 
     return {
         "query": query,

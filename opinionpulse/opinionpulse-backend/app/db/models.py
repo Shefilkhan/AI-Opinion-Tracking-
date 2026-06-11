@@ -11,6 +11,7 @@ from sqlalchemy import (
     JSON,
     String,
     Text,
+    Float,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -181,3 +182,21 @@ class PulseChatMessage(Base):
     )
 
     user: Mapped["User"] = relationship(back_populates="pulse_chat_messages")
+
+class Mention(Base):
+    __tablename__ = "mentions"
+    __table_args__ = (
+        Index("idx_search_query_fetched", "search_query", "fetched_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    search_query: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    platform: Mapped[str] = mapped_column(String(50), nullable=False)
+    author: Mapped[str] = mapped_column(String(255), nullable=True)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    source_url: Mapped[str] = mapped_column(String(512), nullable=True)
+    sentiment: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    sentiment_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    posted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
