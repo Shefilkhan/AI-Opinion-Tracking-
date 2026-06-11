@@ -3,10 +3,20 @@ import { useQuery } from "@tanstack/react-query"
 import { Download } from "lucide-react"
 import { fetchSearchHistory } from "@/lib/api/search"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeaderCell,
+  DataTableRow,
+} from "@/components/layout/DataTable"
+import { EmptyState } from "@/components/layout/EmptyState"
+import { PageSection } from "@/components/layout/PageSection"
+import { SegmentedControl } from "@/components/layout/SegmentedControl"
 import { Button } from "@/components/ui/button"
 import { LoadingState } from "@/components/ui/LoadingState"
-import { proCard } from "@/lib/ui-classes"
-import { cn } from "@/lib/utils"
+import { btnPrimary } from "@/lib/ui-classes"
 
 function exportCsv(
   rows: {
@@ -34,6 +44,12 @@ function exportCsv(
   URL.revokeObjectURL(url)
 }
 
+const RANGE_OPTIONS = [
+  { value: "7" as const, label: "Last 7 days" },
+  { value: "30" as const, label: "Last 30 days" },
+  { value: "all" as const, label: "All time" },
+]
+
 export function ReportsPage() {
   const [range, setRange] = useState<"7" | "30" | "all">("30")
   const { data, isLoading } = useQuery({
@@ -50,79 +66,108 @@ export function ReportsPage() {
   }, [data, range])
 
   return (
-    <DashboardLayout title="Reports" subtitle="Your search history and exports">
+    <DashboardLayout
+      title="Reports"
+      subtitle="Your search history and exports"
+      headerAction={
+        items.length > 0 ? (
+          <Button
+            type="button"
+            className={btnPrimary}
+            onClick={() => exportCsv(items)}
+          >
+            <Download className="size-4" />
+            Export all
+          </Button>
+        ) : undefined
+      }
+    >
       {isLoading ? (
         <LoadingState label="Loading reports…" />
       ) : (
-        <div className="space-y-6">
-          <div className="flex flex-wrap gap-2">
-            {(["7", "30", "all"] as const).map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setRange(r)}
-                className={
-                  range === r
-                    ? cn("rounded-lg border border-primary bg-primary px-4 py-2 text-sm font-medium text-primary-foreground")
-                    : cn(proCard, "px-4 py-2 text-sm text-muted-foreground hover:bg-accent")
-                }
-              >
-                {r === "all" ? "All time" : `Last ${r} days`}
-              </button>
-            ))}
+        <PageSection>
+          <div className="mb-5">
+            <SegmentedControl
+              options={RANGE_OPTIONS}
+              value={range}
+              onChange={setRange}
+              aria-label="Date range"
+            />
           </div>
 
           {items.length === 0 ? (
-            <div className={cn(proCard, "p-12 text-center")}>
-              <p className="font-medium text-foreground">No searches yet</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Run a search to see reports here.
-              </p>
-            </div>
+            <EmptyState
+              title="No searches yet"
+              description="Run a search to see reports here."
+            />
           ) : (
-            <div className={cn(proCard, "overflow-hidden")}>
-              <table className="w-full text-left text-sm">
-                <thead className="border-b border-border bg-muted/40">
-                  <tr>
-                    <th className="px-4 py-3 font-medium">Query</th>
-                    <th className="px-4 py-3 font-medium">Date</th>
-                    <th className="px-4 py-3 font-medium">Results</th>
-                    <th className="px-4 py-3 font-medium">Sentiment</th>
-                    <th className="px-4 py-3 font-medium" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {items.map((row) => (
-                    <tr key={row.id}>
-                      <td className="px-4 py-3 font-medium">{row.query}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {new Date(row.searched_at).toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3">{row.results_count.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {row.sentiment_positive != null
-                          ? `${row.sentiment_positive}% pos`
-                          : "—"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="gap-1"
-                          onClick={() => exportCsv([row])}
-                        >
-                          <Download className="size-3.5" />
-                          Export
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable>
+              <DataTableHead>
+                <DataTableRow>
+                  <DataTableHeaderCell>Query</DataTableHeaderCell>
+                  <DataTableHeaderCell>Date</DataTableHeaderCell>
+                  <DataTableHeaderCell>Results</DataTableHeaderCell>
+                  <DataTableHeaderCell>Positive</DataTableHeaderCell>
+                  <DataTableHeaderCell>Negative</DataTableHeaderCell>
+                  <DataTableHeaderCell>Neutral</DataTableHeaderCell>
+                  <DataTableHeaderCell className="w-28">
+                    <span className="sr-only">Actions</span>
+                  </DataTableHeaderCell>
+                </DataTableRow>
+              </DataTableHead>
+              <DataTableBody>
+                {items.map((row) => (
+                  <DataTableRow key={row.id}>
+                    <DataTableCell className="font-medium">{row.query}</DataTableCell>
+                    <DataTableCell className="text-muted-foreground">
+                      {new Date(row.searched_at).toLocaleString()}
+                    </DataTableCell>
+                    <DataTableCell>{row.results_count.toLocaleString()}</DataTableCell>
+                    <DataTableCell>
+                      {row.sentiment_positive != null ? (
+                        <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                          {row.sentiment_positive}%
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </DataTableCell>
+                    <DataTableCell>
+                      {row.sentiment_negative != null ? (
+                        <span className="inline-flex items-center rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-600 dark:text-red-400">
+                          {row.sentiment_negative}%
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </DataTableCell>
+                    <DataTableCell>
+                      {row.sentiment_neutral != null ? (
+                        <span className="inline-flex items-center rounded-full bg-gray-500/10 px-2 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                          {row.sentiment_neutral}%
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </DataTableCell>
+                    <DataTableCell>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="gap-1"
+                        onClick={() => exportCsv([row])}
+                      >
+                        <Download className="size-3.5" />
+                        Export
+                      </Button>
+                    </DataTableCell>
+                  </DataTableRow>
+                ))}
+              </DataTableBody>
+            </DataTable>
           )}
-        </div>
+        </PageSection>
       )}
     </DashboardLayout>
   )

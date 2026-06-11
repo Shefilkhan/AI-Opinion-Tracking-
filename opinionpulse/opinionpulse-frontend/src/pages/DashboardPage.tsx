@@ -1,23 +1,24 @@
 import { useState } from "react"
 import { Search, ThumbsDown, ThumbsUp, TrendingUp } from "lucide-react"
 import { useDashboard } from "@/hooks/useDashboard"
-import { pageShell, sectionTitle } from "@/lib/ui-classes"
+import { pageShell } from "@/lib/ui-classes"
 import { AiInsightOfTheDay } from "@/components/dashboard/AiInsightOfTheDay"
 import { DebateList } from "@/components/dashboard/DebateList"
 import { LiveDataIndicator } from "@/components/dashboard/LiveDataIndicator"
 import { LiveDebates } from "@/components/dashboard/LiveDebates"
-import { MetricCard } from "@/components/dashboard/MetricCard"
 import { MostDiscussed } from "@/components/dashboard/MostDiscussed"
 import { PlatformPulsePanel } from "@/components/dashboard/PlatformPulsePanel"
 import { RecentSearchChips } from "@/components/dashboard/RecentSearchChips"
 import { TrendingTopicsRow } from "@/components/dashboard/TrendingTopicsRow"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { InlineNotice } from "@/components/layout/InlineNotice"
+import { PageSection } from "@/components/layout/PageSection"
+import { StatCard } from "@/components/layout/StatCard"
 import {
   getRecentSearches,
   removeRecentSearch,
 } from "@/lib/recentSearchStorage"
 import { getSelectedPlan, planDisplayName } from "@/lib/planStorage"
-import { cn } from "@/lib/utils"
 
 export function DashboardPage() {
   const [recent, setRecent] = useState(getRecentSearches)
@@ -53,43 +54,43 @@ export function DashboardPage() {
             lastUpdated={data.last_updated}
           />
           {selectedPlan && (
-            <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-              🚧 Payment processing coming soon. You have full{" "}
+            <InlineNotice variant="warning" title="Beta access">
+              Payment processing coming soon. You have full{" "}
               <strong>{planDisplayName(selectedPlan)}</strong> access during our
               beta.
-            </p>
+            </InlineNotice>
           )}
           {data.demo_mode && (
-            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            <InlineNotice variant="warning">
               Some feeds are empty — add API keys in backend{" "}
               <code className="text-[11px]">.env.local</code> for full live coverage.
-            </p>
+            </InlineNotice>
           )}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricCard
+            <StatCard
               value={data.stats.searches_today.value}
-              subtitle={data.stats.searches_today.subtitle}
+              label={data.stats.searches_today.subtitle}
               trend={data.stats.searches_today.trend}
               trendPositive={data.stats.searches_today.trend_positive}
               icon={Search}
             />
-            <MetricCard
+            <StatCard
               value={data.stats.topics_trending.value}
-              subtitle={data.stats.topics_trending.subtitle}
+              label={data.stats.topics_trending.subtitle}
               trend={data.stats.topics_trending.trend}
               trendPositive={data.stats.topics_trending.trend_positive}
               icon={TrendingUp}
             />
-            <MetricCard
+            <StatCard
               value={data.stats.positive_sentiment.value}
-              subtitle={data.stats.positive_sentiment.subtitle}
+              label={data.stats.positive_sentiment.subtitle}
               icon={ThumbsUp}
               progress={data.stats.positive_sentiment.progress}
               progressColor="green"
             />
-            <MetricCard
+            <StatCard
               value={data.stats.negative_sentiment.value}
-              subtitle={data.stats.negative_sentiment.subtitle}
+              label={data.stats.negative_sentiment.subtitle}
               icon={ThumbsDown}
               progress={data.stats.negative_sentiment.progress}
               progressColor="red"
@@ -123,15 +124,12 @@ export function DashboardPage() {
             </div>
           </div>
 
-          <section>
-            <h2 className={cn(sectionTitle, "mb-3")}>
-              Your Recent Searches
-            </h2>
+          <PageSection title="Your Recent Searches">
             <RecentSearchChips
               items={recent}
               onRemove={(q) => setRecent(removeRecentSearch(q))}
             />
-          </section>
+          </PageSection>
         </div>
       ) : null}
         </DashboardLayout>

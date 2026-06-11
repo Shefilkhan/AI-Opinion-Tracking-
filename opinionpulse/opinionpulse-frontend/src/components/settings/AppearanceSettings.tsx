@@ -1,9 +1,10 @@
 import { Check, Monitor, Moon, Sun } from "lucide-react"
+import { PageSection } from "@/components/layout/PageSection"
 import { useAppearance } from "@/contexts/AppearanceContext"
 import { SettingsPanel } from "@/components/settings/SettingsPanel"
 import { ACCENT_PRESETS } from "@/lib/userSettingsStore"
 import type { FontSize, ThemeMode } from "@/lib/userSettingsStore"
-import { cardTitle, proCard } from "@/lib/ui-classes"
+import { proCard } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 const THEMES: ThemeMode[] = ["light", "dark", "system"]
@@ -23,10 +24,7 @@ export function AppearanceSettings() {
       description="Customize how OpinionPulse looks. Changes apply immediately."
       showSave={false}
     >
-      <div>
-        <h3 className={cn(cardTitle, "mb-3")}>
-          Theme
-        </h3>
+      <PageSection title="Theme" className="mb-0">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {THEMES.map((theme) => (
             <button
@@ -34,10 +32,10 @@ export function AppearanceSettings() {
               type="button"
               onClick={() => updateAppearance({ theme })}
               className={cn(
-                "relative flex flex-col items-center gap-3 rounded-xl border-2 p-4 transition-all",
+                "relative flex flex-col items-center gap-3 rounded-[var(--radius-lg)] border p-4 transition-colors duration-150",
                 appearance.theme === theme
-                  ? "border-primary bg-accent"
-                  : cn(proCard, "border-2")
+                  ? "border-primary bg-accent/50"
+                  : cn(proCard, "bg-muted/20 hover:border-muted-foreground/30")
               )}
               aria-pressed={appearance.theme === theme}
             >
@@ -49,7 +47,7 @@ export function AppearanceSettings() {
 
               <div
                 className={cn(
-                  "h-16 w-full overflow-hidden rounded-lg border border-border",
+                  "h-16 w-full overflow-hidden rounded-[var(--radius-md)] border border-border",
                   theme === "dark"
                     ? "bg-gray-900"
                     : theme === "light"
@@ -81,7 +79,7 @@ export function AppearanceSettings() {
 
               <div className="flex items-center gap-1.5">
                 {theme === "light" && (
-                  <Sun size={14} className="text-amber-500" aria-hidden />
+                  <Sun size={14} className="text-primary" aria-hidden />
                 )}
                 {theme === "dark" && (
                   <Moon size={14} className="text-muted-foreground" aria-hidden />
@@ -93,7 +91,7 @@ export function AppearanceSettings() {
                   className={cn(
                     "text-sm font-medium capitalize",
                     appearance.theme === theme
-                      ? "text-accent-foreground"
+                      ? "text-foreground"
                       : "text-muted-foreground"
                   )}
                 >
@@ -103,12 +101,9 @@ export function AppearanceSettings() {
             </button>
           ))}
         </div>
-      </div>
+      </PageSection>
 
-      <div>
-        <h3 className={cn(cardTitle, "mb-3")}>
-          Accent color
-        </h3>
+      <PageSection title="Accent color" className="mb-0">
         <div className="flex flex-wrap gap-3">
           {ACCENT_PRESETS.map((preset) => (
             <button
@@ -128,20 +123,17 @@ export function AppearanceSettings() {
             />
           ))}
         </div>
-      </div>
+      </PageSection>
 
-      <div>
-        <h3 className={cn(cardTitle, "mb-3")}>
-          Font size
-        </h3>
-        <div className="inline-flex rounded-lg border border-border p-1">
+      <PageSection title="Font size" className="mb-0">
+        <div className="inline-flex rounded-[var(--radius-lg)] border border-border bg-muted/20 p-1">
           {FONT_SIZES.map(({ id, label }) => (
             <button
               key={id}
               type="button"
               onClick={() => updateAppearance({ fontSize: id })}
               className={cn(
-                "min-h-10 rounded-md px-4 py-2 text-sm font-medium transition-colors duration-150",
+                "min-h-10 rounded-[var(--radius-md)] px-4 py-2 text-sm font-medium transition-colors duration-150",
                 "hover:bg-accent focus-visible:ring-2 focus-visible:ring-primary/20",
                 appearance.fontSize === id
                   ? "bg-primary text-primary-foreground"
@@ -153,7 +145,7 @@ export function AppearanceSettings() {
             </button>
           ))}
         </div>
-      </div>
+      </PageSection>
     </SettingsPanel>
   )
 }

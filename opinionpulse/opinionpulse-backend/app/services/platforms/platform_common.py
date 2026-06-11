@@ -152,19 +152,15 @@ def deduplicate_results(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def log_platform_success(platform: str, query: str, count: int) -> None:
-    msg = f"✅ {platform}: {count} results for '{query}'"
-    logger.info(msg)
-    print(msg)
+    logger.info("%s: %d results for '%s'", platform, count, query)
 
 
 def log_platform_error(platform: str, query: str, err: Exception) -> None:
     if isinstance(err, requests.Timeout):
-        msg = f"❌ {platform}: timeout for '{query}'"
+        logger.error("%s: timeout for '%s'", platform, query)
     elif isinstance(err, requests.HTTPError):
         status = err.response.status_code if err.response is not None else "?"
-        msg = f"❌ {platform}: HTTP {status} for '{query}'"
+        logger.error("%s: HTTP %s for '%s'", platform, status, query)
     else:
-        msg = f"❌ {platform}: unexpected error for '{query}': {err}"
-    logger.error(msg)
-    print(msg)
+        logger.error("%s: unexpected error for '%s': %s", platform, query, err)
 

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { AppearanceProvider } from "@/contexts/AppearanceContext"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { ToastProvider } from "@/components/ui/toast"
+import { ErrorBoundary } from "@/components/ErrorBoundary"
 import {
   initAppearanceListeners,
   initThemeOnStartup,
@@ -29,12 +30,14 @@ function AppProviders({ children }: { children: React.ReactNode }) {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AppProviders>
-          <App />
-        </AppProviders>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <AppProviders>
+            <App />
+          </AppProviders>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ErrorBoundary>
   </StrictMode>
 )

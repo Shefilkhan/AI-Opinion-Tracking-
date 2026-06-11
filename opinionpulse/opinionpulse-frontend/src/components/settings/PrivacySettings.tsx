@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react"
+import { PageSection } from "@/components/layout/PageSection"
 import { Button } from "@/components/ui/button"
 import { SettingsPanel } from "@/components/settings/SettingsPanel"
 import { Toggle } from "@/components/ui/toggle"
@@ -10,6 +11,7 @@ import {
   type PrivacySettings as PrivacySettingsData,
   type ProfileVisibility,
 } from "@/lib/userSettingsStore"
+import { proCard } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 const VISIBILITY: { id: ProfileVisibility; label: string; desc: string }[] = [
@@ -41,64 +43,76 @@ export function PrivacySettings() {
       onSave={handleSave}
       saving={saving}
     >
-      <fieldset className="space-y-3">
-        <legend className="text-sm font-semibold text-foreground">Profile visibility</legend>
-        {VISIBILITY.map((opt) => (
-          <label
-            key={opt.id}
-            className={cn(
-              "flex cursor-pointer gap-3 rounded-lg border p-4 transition-colors duration-150 hover:bg-accent/50",
-              draft.profileVisibility === opt.id
-                ? "border-primary bg-primary/5"
-                : "border-border"
-            )}
-          >
-            <input
-              type="radio"
-              name="visibility"
-              value={opt.id}
-              checked={draft.profileVisibility === opt.id}
-              onChange={() => setDraft((p) => ({ ...p, profileVisibility: opt.id }))}
-              className="mt-1"
+      <PageSection title="Profile visibility" className="mb-0">
+        <fieldset className="space-y-2">
+          <legend className="sr-only">Profile visibility</legend>
+          {VISIBILITY.map((opt) => (
+            <label
+              key={opt.id}
+              className={cn(
+                "flex cursor-pointer gap-3 rounded-[var(--radius-lg)] border p-4 transition-colors duration-150",
+                draft.profileVisibility === opt.id
+                  ? "border-primary bg-primary/5"
+                  : cn(proCard, "bg-muted/20 hover:border-muted-foreground/30")
+              )}
+            >
+              <input
+                type="radio"
+                name="visibility"
+                value={opt.id}
+                checked={draft.profileVisibility === opt.id}
+                onChange={() => setDraft((p) => ({ ...p, profileVisibility: opt.id }))}
+                className="mt-1"
+              />
+              <span>
+                <span className="block text-sm font-medium text-foreground">{opt.label}</span>
+                <span className="block text-sm text-muted-foreground">{opt.desc}</span>
+              </span>
+            </label>
+          ))}
+        </fieldset>
+      </PageSection>
+
+      <PageSection title="Data & sharing" className="mb-0">
+        <div className={cn(proCard, "divide-y divide-border bg-muted/20")}>
+          <div className="p-4 sm:p-5">
+            <Toggle
+              id="show-email"
+              label="Show email on profile"
+              checked={draft.showEmailOnProfile}
+              onCheckedChange={(v) => setDraft((p) => ({ ...p, showEmailOnProfile: v }))}
             />
-            <span>
-              <span className="block text-sm font-medium text-foreground">{opt.label}</span>
-              <span className="block text-sm text-muted-foreground">{opt.desc}</span>
-            </span>
-          </label>
-        ))}
-      </fieldset>
+          </div>
+          <div className="p-4 sm:p-5">
+            <Toggle
+              id="search-index"
+              label="Allow search engines to index profile"
+              checked={draft.allowSearchIndexing}
+              onCheckedChange={(v) => setDraft((p) => ({ ...p, allowSearchIndexing: v }))}
+            />
+          </div>
+          <div className="p-4 sm:p-5">
+            <Toggle
+              id="usage-analytics"
+              label="Allow usage data collection"
+              description="Help us improve OpinionPulse with anonymous usage stats."
+              checked={draft.allowUsageAnalytics}
+              onCheckedChange={(v) => setDraft((p) => ({ ...p, allowUsageAnalytics: v }))}
+            />
+          </div>
+        </div>
+      </PageSection>
 
-      <Toggle
-        id="show-email"
-        label="Show email on profile"
-        checked={draft.showEmailOnProfile}
-        onCheckedChange={(v) => setDraft((p) => ({ ...p, showEmailOnProfile: v }))}
-      />
-      <Toggle
-        id="search-index"
-        label="Allow search engines to index profile"
-        checked={draft.allowSearchIndexing}
-        onCheckedChange={(v) => setDraft((p) => ({ ...p, allowSearchIndexing: v }))}
-      />
-      <Toggle
-        id="usage-analytics"
-        label="Allow usage data collection"
-        description="Help us improve OpinionPulse with anonymous usage stats."
-        checked={draft.allowUsageAnalytics}
-        onCheckedChange={(v) => setDraft((p) => ({ ...p, allowUsageAnalytics: v }))}
-      />
-
-      <div className="border-t border-border pt-4">
+      <PageSection title="Your data" className="mb-0">
         <Button
           type="button"
           variant="outline"
-          className="min-h-11 px-4 py-2"
+          className="min-h-10 px-4"
           onClick={() => showToast("Your data export will be emailed (demo).")}
         >
           Download my data
         </Button>
-      </div>
+      </PageSection>
     </SettingsPanel>
   )
 }

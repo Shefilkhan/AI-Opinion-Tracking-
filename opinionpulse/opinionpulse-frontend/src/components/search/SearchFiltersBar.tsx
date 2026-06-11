@@ -1,4 +1,6 @@
+import type { ReactNode } from "react"
 import type { SearchFilters } from "@/lib/api/types"
+import { SegmentedControl } from "@/components/layout/SegmentedControl"
 import { proCard } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
@@ -7,35 +9,19 @@ type SearchFiltersBarProps = {
   onChange: (next: SearchFilters) => void
 }
 
-function FilterGroup({
+function FilterRow({
   label,
-  options,
-  value,
-  onSelect,
+  children,
 }: {
   label: string
-  options: { id: string; label: string }[]
-  value: string
-  onSelect: (id: string) => void
+  children: ReactNode
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="text-xs font-medium text-muted-foreground">{label}</span>
-      {options.map((o) => (
-        <button
-          key={o.id}
-          type="button"
-          onClick={() => onSelect(o.id)}
-          className={cn(
-            "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors duration-150",
-            value === o.id
-              ? "border-transparent bg-primary text-primary-foreground"
-              : "border-border bg-card text-muted-foreground hover:border-primary/30 hover:bg-accent"
-          )}
-        >
-          {o.label}
-        </button>
-      ))}
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+      <span className="shrink-0 text-xs font-medium text-muted-foreground sm:w-24">
+        {label}
+      </span>
+      {children}
     </div>
   )
 }
@@ -43,49 +29,57 @@ function FilterGroup({
 export function SearchFiltersBar({ filters, onChange }: SearchFiltersBarProps) {
   return (
     <div className={cn(proCard, "flex flex-col gap-4 p-4 sm:p-5")}>
-      <FilterGroup
-        label="Platform"
-        value={filters.platform}
-        onSelect={(platform) => onChange({ ...filters, platform })}
-        options={[
-          { id: "all", label: "All" },
-          { id: "reddit", label: "Reddit" },
-          { id: "youtube", label: "YouTube" },
-          { id: "news", label: "News" },
-          { id: "tech", label: "Tech" },
-        ]}
-      />
-      <FilterGroup
-        label="Time Range"
-        value={filters.timeRange}
-        onSelect={(timeRange) => onChange({ ...filters, timeRange })}
-        options={[
-          { id: "24h", label: "Last 24h" },
-          { id: "7d", label: "Last 7 days" },
-          { id: "30d", label: "Last 30 days" },
-        ]}
-      />
-      <FilterGroup
-        label="Sentiment"
-        value={filters.sentiment}
-        onSelect={(sentiment) => onChange({ ...filters, sentiment })}
-        options={[
-          { id: "all", label: "All" },
-          { id: "positive", label: "Positive" },
-          { id: "negative", label: "Negative" },
-          { id: "neutral", label: "Neutral" },
-        ]}
-      />
-      <FilterGroup
-        label="Sort by"
-        value={filters.sortBy}
-        onSelect={(sortBy) => onChange({ ...filters, sortBy })}
-        options={[
-          { id: "recent", label: "Most Recent" },
-          { id: "mentioned", label: "Most Mentioned" },
-          { id: "viral", label: "Most Viral" },
-        ]}
-      />
+      <FilterRow label="Platform">
+        <SegmentedControl
+          aria-label="Filter by platform"
+          value={filters.platform}
+          onChange={(platform) => onChange({ ...filters, platform })}
+          options={[
+            { value: "all", label: "All" },
+            { value: "reddit", label: "Reddit" },
+            { value: "youtube", label: "YouTube" },
+            { value: "news", label: "News" },
+            { value: "tech", label: "Tech" },
+          ]}
+        />
+      </FilterRow>
+      <FilterRow label="Time Range">
+        <SegmentedControl
+          aria-label="Filter by time range"
+          value={filters.timeRange}
+          onChange={(timeRange) => onChange({ ...filters, timeRange })}
+          options={[
+            { value: "24h", label: "Last 24h" },
+            { value: "7d", label: "Last 7 days" },
+            { value: "30d", label: "Last 30 days" },
+          ]}
+        />
+      </FilterRow>
+      <FilterRow label="Sentiment">
+        <SegmentedControl
+          aria-label="Filter by sentiment"
+          value={filters.sentiment}
+          onChange={(sentiment) => onChange({ ...filters, sentiment })}
+          options={[
+            { value: "all", label: "All" },
+            { value: "positive", label: "Positive" },
+            { value: "negative", label: "Negative" },
+            { value: "neutral", label: "Neutral" },
+          ]}
+        />
+      </FilterRow>
+      <FilterRow label="Sort by">
+        <SegmentedControl
+          aria-label="Sort results"
+          value={filters.sortBy}
+          onChange={(sortBy) => onChange({ ...filters, sortBy })}
+          options={[
+            { value: "recent", label: "Most Recent" },
+            { value: "mentioned", label: "Most Mentioned" },
+            { value: "viral", label: "Most Viral" },
+          ]}
+        />
+      </FilterRow>
     </div>
   )
 }

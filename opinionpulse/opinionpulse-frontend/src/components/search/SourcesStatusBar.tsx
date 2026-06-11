@@ -1,4 +1,5 @@
 import type { SearchResponse } from "@/lib/api/types"
+import { StatusPill } from "@/components/layout/StatusPill"
 import { proCard } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
@@ -29,7 +30,7 @@ export function SourcesStatusBar({ data }: SourcesStatusBarProps) {
 
   return (
     <div className={cn(proCard, "flex flex-wrap items-center gap-2 px-4 py-3")}>
-      <span className="mr-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <span className="mr-1 text-xs font-medium text-muted-foreground">
         Sources
       </span>
       {entries.map((key) => {
@@ -38,19 +39,14 @@ export function SourcesStatusBar({ data }: SourcesStatusBarProps) {
         const label = SOURCE_LABELS[key]
 
         return (
-          <span
+          <StatusPill
             key={key}
-            className={cn(
-              "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium",
-              gotResults
-                ? "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400"
-                : !hasKey
-                  ? "bg-muted text-muted-foreground"
-                  : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
-            )}
-          >
-            {gotResults ? "✓" : !hasKey ? "✗" : "○"} {label}
-          </span>
+            label={label}
+            variant={
+              gotResults ? "live" : !hasKey ? "off" : "neutral"
+            }
+            live={gotResults}
+          />
         )
       })}
     </div>

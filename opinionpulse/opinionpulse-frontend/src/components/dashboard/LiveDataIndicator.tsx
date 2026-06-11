@@ -1,3 +1,7 @@
+import { StatusPill } from "@/components/layout/StatusPill"
+import { proCard } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
+
 type LiveDataIndicatorProps = {
   isLive: Record<string, boolean>
   lastUpdated?: string | null
@@ -14,30 +18,31 @@ function timeAgo(iso?: string | null): string {
   return `${Math.floor(h / 24)}d ago`
 }
 
-function SourceDot({
-  label,
-  live,
-}: {
-  label: string
-  live: boolean
-}) {
-  return (
-    <span className={live ? "text-green-600" : "text-muted-foreground"}>
-      ● {label} {live ? "Live" : "Off"}
-    </span>
-  )
-}
-
 export function LiveDataIndicator({ isLive, lastUpdated }: LiveDataIndicatorProps) {
+  const sources = [
+    { label: "Reddit", live: isLive.reddit ?? true },
+    { label: "Dev.to", live: isLive.devto ?? true },
+    { label: "HN", live: isLive.hackernews ?? true },
+    {
+      label: "News",
+      live: !!(isLive.newsapi || isLive.guardian || isLive.gnews),
+    },
+    { label: "YouTube", live: !!isLive.youtube },
+  ]
+
   return (
-    <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-      <span>Data sources:</span>
-      <SourceDot label="Reddit" live={isLive.reddit ?? true} />
-      <SourceDot label="Dev.to" live={isLive.devto ?? true} />
-      <SourceDot label="HN" live={isLive.hackernews ?? true} />
-      <SourceDot label="News" live={!!(isLive.newsapi || isLive.guardian || isLive.gnews)} />
-      <SourceDot label="YouTube" live={!!isLive.youtube} />
-      <span className="text-border">Updated {timeAgo(lastUpdated)}</span>
+    <div className={cn(proCard, "flex flex-wrap items-center gap-2 px-4 py-3 sm:px-5")}>
+      <span className="mr-1 text-xs font-medium text-muted-foreground">Data sources</span>
+      {sources.map((s) => (
+        <StatusPill
+          key={s.label}
+          label={s.live ? `${s.label} Live` : `${s.label} Off`}
+          live={s.live}
+        />
+      ))}
+      <span className="ml-auto text-xs text-muted-foreground">
+        Updated {timeAgo(lastUpdated)}
+      </span>
     </div>
   )
 }

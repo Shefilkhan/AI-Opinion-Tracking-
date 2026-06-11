@@ -22,29 +22,56 @@ AI_TIMEOUT_SECONDS = 25.0
 _settings = get_settings()
 AI_PROVIDER = os.getenv("AI_PROVIDER", _settings.ai_provider or "groq").lower()
 
-groq_client = None
-anthropic_client = None
+_groq_client: Any = None
+_groq_client_key: str | None = None
+_anthropic_client: Any = None
+_anthropic_client_key: str | None = None
 
-if AI_PROVIDER == "groq" or os.getenv("GROQ_API_KEY") or _settings.groq_api_key.strip():
-    try:
-        from groq import Groq
 
-        _groq_key = os.getenv("GROQ_API_KEY", _settings.groq_api_key).strip()
-        if _groq_key:
-            groq_client = Groq(api_key=_groq_key)
-            logger.info("Groq AI client initialized (free tier)")
-    except Exception as exc:
-        logger.error("Groq init failed: %s", exc)
+def get_groq_client():
+    """Lazy Groq client — reads GROQ_API_KEY at call time (not import time)."""
+    global _groq_client, _groq_client_key
+    settings = get_settings()
+    key = os.getenv("GROQ_API_KEY", settings.groq_api_key).strip()
+    if not key:
+        _groq_client = None
+        _groq_client_key = None
+        return None
+    if _groq_client is None or _groq_client_key != key:
+        try:
+            from groq import Groq
 
-_anthropic_key = os.getenv("ANTHROPIC_API_KEY", _settings.anthropic_api_key).strip()
-if _anthropic_key:
-    try:
-        import anthropic
+            _groq_client = Groq(api_key=key)
+            _groq_client_key = key
+            logger.info("Groq AI client initialized")
+        except Exception as exc:
+            logger.error("Groq init failed: %s", exc)
+            _groq_client = None
+            _groq_client_key = None
+    return _groq_client
 
-        anthropic_client = anthropic.Anthropic(api_key=_anthropic_key)
-        logger.info("Anthropic Claude client initialized (fallback)")
-    except Exception as exc:
-        logger.error("Anthropic init failed: %s", exc)
+
+def get_anthropic_client():
+    """Lazy Anthropic client for fallback."""
+    global _anthropic_client, _anthropic_client_key
+    settings = get_settings()
+    key = os.getenv("ANTHROPIC_API_KEY", settings.anthropic_api_key).strip()
+    if not key:
+        _anthropic_client = None
+        _anthropic_client_key = None
+        return None
+    if _anthropic_client is None or _anthropic_client_key != key:
+        try:
+            import anthropic
+
+            _anthropic_client = anthropic.Anthropic(api_key=key)
+            _anthropic_client_key = key
+            logger.info("Anthropic Claude client initialized (fallback)")
+        except Exception as exc:
+            logger.error("Anthropic init failed: %s", exc)
+            _anthropic_client = None
+            _anthropic_client_key = None
+    return _anthropic_client
 
 SYSTEM_PROMPT = """You are Pulse AI, an intelligent assistant for OpinionPulse
 — a social media public opinion tracking platform.
@@ -264,10 +291,11 @@ Use this real data to give a specific, accurate answer.
 
 
 def _call_groq(messages: list[dict[str, str]], system_prompt: str) -> str:
-    if groq_client is None:
+    client = get_groq_client()
+    if client is None:
         raise RuntimeError("GROQ_API_KEY not configured")
     formatted_messages = [{"role": "system", "content": system_prompt}] + messages
-    response = groq_client.chat.completions.create(
+    response = client.chat.completions.create(
         model=GROQ_MODEL,
         messages=formatted_messages,
         max_tokens=1024,
@@ -278,9 +306,10 @@ def _call_groq(messages: list[dict[str, str]], system_prompt: str) -> str:
 
 
 def _call_anthropic(messages: list[dict[str, str]], system_prompt: str) -> str:
-    if anthropic_client is None:
+    client = get_anthropic_client()
+    if client is None:
         raise RuntimeError("ANTHROPIC_API_KEY not configured")
-    response = anthropic_client.messages.create(
+    response = client.messages.create(
         model=ANTHROPIC_MODEL,
         max_tokens=1024,
         system=system_prompt,
@@ -295,7 +324,7 @@ async def call_ai_provider(
 ) -> str:
     """Call Groq first, fall back to Anthropic if available."""
 
-    if groq_client:
+    if get_groq_client():
         try:
             result = await asyncio.wait_for(
                 asyncio.to_thread(_call_groq, messages, system_prompt),
@@ -306,7 +335,7 @@ async def call_ai_provider(
         except Exception as exc:
             logger.error("Groq API error: %s", exc)
 
-    if anthropic_client:
+    if get_anthropic_client():
         try:
             result = await asyncio.wait_for(
                 asyncio.to_thread(_call_anthropic, messages, system_prompt),
@@ -318,7 +347,7 @@ async def call_ai_provider(
             logger.error("Anthropic fallback error: %s", exc)
 
     raise RuntimeError(
-        "No AI provider configured. Add GROQ_API_KEY to .env.local"
+        "No AI provider configured. Add GROQ_API_KEY to backend .env"
     )
 
 
@@ -436,8 +465,8 @@ async def process_chat_message(
         if "GROQ_API_KEY" in error_msg or "No AI provider" in error_msg:
             friendly_msg = (
                 "Pulse AI needs an API key to respond.\n\n"
-                "Add `GROQ_API_KEY` to your backend `.env.local` "
-                "file.\n\nGet a free key at: console.groq.com"
+                "Add `GROQ_API_KEY` to your backend `.env` file, "
+                "then restart the server.\n\nGet a free key at: console.groq.com"
             )
         elif "rate_limit" in error_msg.lower():
             friendly_msg = (
@@ -445,7 +474,7 @@ async def process_chat_message(
             )
         elif "invalid_api_key" in error_msg.lower():
             friendly_msg = (
-                "Invalid API key. Please check your GROQ_API_KEY in .env.local"
+                "Invalid API key. Please check your GROQ_API_KEY in .env"
             )
         else:
             friendly_msg = (

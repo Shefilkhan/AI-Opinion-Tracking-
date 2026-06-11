@@ -35,9 +35,9 @@ export function AiInsightOfTheDay() {
     <section className={cn(proCard, "border-l-4 border-l-primary p-5")}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className={sectionTitle}>
-          🤖 AI Insight of the Day
+          AI Insight of the Day
         </h2>
-        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-primary">
+        <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
           <Sparkles className="size-3" />
           Powered by Claude
         </span>

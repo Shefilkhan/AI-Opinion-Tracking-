@@ -1,6 +1,5 @@
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { Loader2, LogOut } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { SettingsSidebar } from "@/components/settings/SettingsSidebar"
 import { SettingsMobileTabs } from "@/components/settings/SettingsMobileTabs"
 import { useSettingsSection } from "@/components/settings/useSettingsSection"
@@ -12,10 +11,10 @@ import { AppearanceSettings } from "@/components/settings/AppearanceSettings"
 import { PrivacySettings } from "@/components/settings/PrivacySettings"
 import { BillingSettings } from "@/components/settings/BillingSettings"
 import type { SettingsSectionId } from "@/components/settings/settingsNav"
+import { InlineNotice } from "@/components/layout/InlineNotice"
 import { Button } from "@/components/ui/button"
-import { btnPrimary, pageTitle } from "@/lib/ui-classes"
+import { btnPrimary } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
-import { useAuth } from "@/contexts/AuthContext"
 
 function UnsavedBanner() {
   const { activeUnsaved } = useSettingsUnsaved()
@@ -33,16 +32,12 @@ function UnsavedBanner() {
   }
 
   return (
-    <div
-      className="mb-6 flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-      role="alert"
-    >
-      <p className="text-sm font-medium text-foreground">You have unsaved changes</p>
-      <div className="flex gap-2">
+    <InlineNotice variant="warning" title="You have unsaved changes" className="mb-6">
+      <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
           variant="outline"
-          className="h-10 px-4 py-2"
+          className="h-9 px-3"
           onClick={() => activeUnsaved.onDiscard()}
           disabled={saving}
         >
@@ -50,7 +45,7 @@ function UnsavedBanner() {
         </Button>
         <Button
           type="button"
-          className={cn("h-10 gap-2 px-4 py-2", btnPrimary)}
+          className={cn("h-9 gap-2 px-3", btnPrimary)}
           onClick={handleSave}
           disabled={saving}
         >
@@ -58,7 +53,7 @@ function UnsavedBanner() {
           Save
         </Button>
       </div>
-    </div>
+    </InlineNotice>
   )
 }
 
@@ -83,53 +78,23 @@ function SettingsSectionContent({ section }: { section: SettingsSectionId }) {
 
 function SettingsLayoutInner() {
   const { activeSection, setSection } = useSettingsSection()
-  const { logout } = useAuth()
-  const navigate = useNavigate()
-
-  async function handleLogout() {
-    await logout()
-    navigate("/")
-  }
 
   return (
-    <div className="settings-page w-full">
-      <div className="settings-header mb-6 flex items-center justify-between gap-4">
-        <div>
-          <h1 className={pageTitle}>
-            Settings
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Manage your account and preferences
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleLogout}
-          className="h-10 shrink-0 gap-2 border-border px-4 text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400"
-        >
-          <LogOut className="size-4" aria-hidden />
-          Logout
-        </Button>
-      </div>
+    <div className="w-full">
+      <SettingsMobileTabs activeSection={activeSection} onSelect={setSection} />
 
-      <hr className="settings-divider border-border" />
-
-      <SettingsMobileTabs
-        activeSection={activeSection}
-        onSelect={setSection}
-      />
-
-      <div className="settings-body mt-6 flex gap-0">
-        <aside className="settings-sidebar sticky top-6 hidden self-start md:block">
-          <SettingsSidebar activeSection={activeSection} onSelect={setSection} />
+      <div className="mt-6 flex flex-col gap-8 md:flex-row md:gap-10 lg:gap-12">
+        <aside className="hidden shrink-0 md:block md:w-56 lg:w-60">
+          <div className="sticky top-24">
+            <SettingsSidebar activeSection={activeSection} onSelect={setSection} />
+          </div>
         </aside>
 
-        <main className="settings-content min-w-0 flex-1 md:border-l md:border-border md:pl-10">
+        <main className="min-w-0 flex-1 md:border-l md:border-border md:pl-8 lg:pl-10">
           <UnsavedBanner />
           <div
             key={activeSection}
-            className="settings-section-animate w-full max-w-3xl space-y-6"
+            className="settings-section-animate w-full max-w-2xl space-y-6"
           >
             <SettingsSectionContent section={activeSection} />
           </div>

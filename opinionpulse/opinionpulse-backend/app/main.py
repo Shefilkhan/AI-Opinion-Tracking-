@@ -16,6 +16,7 @@ from app.api.routes import (
     chat,
     dashboard,
     health,
+    personal_alerts,
     search,
     settings as settings_routes,
     users,
@@ -107,6 +108,7 @@ app.include_router(ai.router)
 app.include_router(chat.router)
 app.include_router(users.router)
 app.include_router(settings_routes.router)
+app.include_router(personal_alerts.router)
 
 _uploads = Path(__file__).resolve().parent.parent / "uploads"
 _uploads.mkdir(parents=True, exist_ok=True)

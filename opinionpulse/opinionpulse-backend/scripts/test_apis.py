@@ -41,21 +41,24 @@ def _test_currents(s) -> str:
 
 def _test_reddit() -> str:
     import requests
+    import xml.etree.ElementTree as ET
     from app.core.config import get_settings
 
     ua = get_settings().reddit_user_agent.strip() or "Mozilla/5.0 OpinionPulse/1.0"
     resp = requests.get(
-        "https://www.reddit.com/search.json",
+        "https://www.reddit.com/search.rss",
         params={"q": QUERY, "sort": "new", "limit": 5, "t": "day"},
-        headers={"User-Agent": ua, "Accept": "application/json"},
+        headers={"User-Agent": ua},
         timeout=15,
     )
-    if resp.status_code == 403:
-        raise RuntimeError(
-            "HTTP 403 — Reddit blocked the request. Set REDDIT_CLIENT_ID/SECRET or use a browser-like User-Agent."
-        )
     resp.raise_for_status()
-    posts = resp.json().get("data", {}).get("children", [])
+    root = ET.fromstring(resp.content)
+    namespaces = {'atom': 'http://www.w3.org/2005/Atom'}
+    entries = root.findall('.//atom:entry', namespaces)
+    posts = [
+        e for e in entries 
+        if "/comments/" in (e.find('atom:link', namespaces).attrib.get('href') if e.find('atom:link', namespaces) is not None else "")
+    ]
     return f"{len(posts)} posts"
 
 

@@ -13,7 +13,10 @@ function SettingsLegacyRedirect() {
 
 export function SettingsPage() {
   return (
-    <DashboardLayout title="" subtitle="" hidePageHeader>
+    <DashboardLayout
+      title="Settings"
+      subtitle="Manage your account and preferences"
+    >
       <SettingsLayout />
     </DashboardLayout>
   )

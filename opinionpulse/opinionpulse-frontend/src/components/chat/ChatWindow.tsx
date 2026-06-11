@@ -33,7 +33,7 @@ const STARTER_SUGGESTIONS = [
 const WELCOME_MESSAGE: ChatMessageItem = {
   id: "welcome",
   role: "assistant",
-  content: `Hi! I'm **Pulse AI** 👋
+  content: `Hi! I'm **Pulse AI**.
 
 I can analyze real-time public opinion from Reddit, YouTube, NewsAPI, and 7 more sources.
 
@@ -245,8 +245,8 @@ export function ChatWindow({
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto px-4 py-6">
-        <div className="mx-auto w-full max-w-3xl space-y-6">
+      <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+        <div className="mx-auto w-full max-w-3xl space-y-5">
           {messages.map((message) => (
             <MessageBubble
               key={message.id}
@@ -279,7 +279,7 @@ export function ChatWindow({
         </div>
       )}
 
-      <div className="border-t border-border px-4 py-4">
+      <div className="sticky bottom-0 z-10 border-t border-border bg-background px-4 py-3 sm:px-6">
         <div className="mx-auto w-full max-w-3xl">
           <div className="flex items-end gap-2">
             <div className="relative flex-1">

@@ -1,8 +1,8 @@
 import { ExternalLink } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import type { DebateItem } from "@/api/dashboard"
+import { PageSection } from "@/components/layout/PageSection"
 import { platformBadge } from "@/lib/api/sentiment"
-import { sectionTitle } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 type DebateListProps = {
@@ -13,10 +13,7 @@ export function DebateList({ debates }: DebateListProps) {
   const navigate = useNavigate()
 
   return (
-    <section>
-      <h2 className={cn(sectionTitle, "mb-4")}>
-        Latest Opinion Debates
-      </h2>
+    <PageSection title="Latest Opinion Debates">
       <ul className="divide-y divide-border">
         {debates.map((d) => {
           const plat = platformBadge(d.platform)
@@ -44,7 +41,7 @@ export function DebateList({ debates }: DebateListProps) {
                   </button>
                   <span
                     className={cn(
-                      "mt-2 inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-semibold",
+                      "mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
                       plat.className
                     )}
                   >
@@ -55,12 +52,12 @@ export function DebateList({ debates }: DebateListProps) {
                   </p>
                   <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-muted">
                     <div
-                      className="bg-green-500"
+                      className="bg-success"
                       style={{ width: `${d.positive_pct}%` }}
                       title={`${d.positive_pct}% positive`}
                     />
                     <div
-                      className="bg-red-500"
+                      className="bg-destructive"
                       style={{ width: `${d.negative_pct}%` }}
                       title={`${d.negative_pct}% negative`}
                     />
@@ -89,6 +86,6 @@ export function DebateList({ debates }: DebateListProps) {
           )
         })}
       </ul>
-    </section>
+    </PageSection>
   )
 }

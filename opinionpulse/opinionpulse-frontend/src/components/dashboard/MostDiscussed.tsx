@@ -1,8 +1,8 @@
 import { Loader2, Minus, RefreshCw, TrendingDown, TrendingUp } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import type { MostDiscussedItem } from "@/api/dashboard"
+import { PageSection } from "@/components/layout/PageSection"
 import { platformBadge } from "@/lib/api/sentiment"
-import { sectionTitle } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 type MostDiscussedProps = {
@@ -24,28 +24,28 @@ function formatUpdatedAgo(iso?: string | null): string {
 }
 
 function sentimentPctColor(pct: number): string {
-  if (pct > 60) return "text-green-600"
-  if (pct < 40) return "text-red-600"
-  return "text-gray-600"
+  if (pct > 60) return "text-success"
+  if (pct < 40) return "text-destructive"
+  return "text-muted-foreground"
 }
 
 function TrendIcon({ trend }: { trend: MostDiscussedItem["trend"] }) {
   if (trend === "up") {
     return (
-      <span className="inline-flex items-center gap-0.5 text-xs text-green-600">
+      <span className="inline-flex items-center gap-0.5 text-xs text-success">
         <TrendingUp className="size-3.5" /> Up
       </span>
     )
   }
   if (trend === "down") {
     return (
-      <span className="inline-flex items-center gap-0.5 text-xs text-red-600">
+      <span className="inline-flex items-center gap-0.5 text-xs text-destructive">
         <TrendingDown className="size-3.5" /> Down
       </span>
     )
   }
   return (
-    <span className="inline-flex items-center gap-0.5 text-xs text-gray-500">
+    <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
       <Minus className="size-3.5" /> Stable
     </span>
   )
@@ -67,9 +67,9 @@ function MostDiscussedSkeleton() {
 }
 
 function rankBorder(rank: number): string {
-  if (rank === 1) return "border-l-4 border-yellow-400 pl-3"
-  if (rank === 2) return "border-l-4 border-gray-400 pl-3"
-  if (rank === 3) return "border-l-4 border-orange-400 pl-3"
+  if (rank === 1) return "border-l-4 border-primary/40 pl-3"
+  if (rank === 2) return "border-l-4 border-muted-foreground/30 pl-3"
+  if (rank === 3) return "border-l-4 border-primary/20 pl-3"
   return "pl-3"
 }
 
@@ -82,31 +82,31 @@ export function MostDiscussed({
 }: MostDiscussedProps) {
   const navigate = useNavigate()
 
-  return (
-    <section>
-      <div className="mb-1 flex flex-wrap items-center gap-2">
-        <h2 className={sectionTitle}>
-          📈 Most Discussed This Week
-        </h2>
-        {isRefreshing && (
-          <Loader2 className="size-4 animate-spin text-muted-foreground" />
-        )}
-        {onRefresh && (
-          <button
-            type="button"
-            onClick={onRefresh}
-            disabled={isRefreshing}
-            className="ml-auto rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            aria-label="Refresh most discussed"
-          >
-            <RefreshCw className={cn("size-4", isRefreshing && "animate-spin")} />
-          </button>
-        )}
-      </div>
-      <p className="mb-4 text-sm text-muted-foreground">
-        Ranked by total engagement across all platforms
-      </p>
+  const headerAction = (
+    <div className="flex items-center gap-2">
+      {isRefreshing && (
+        <Loader2 className="size-4 animate-spin text-muted-foreground" />
+      )}
+      {onRefresh && (
+        <button
+          type="button"
+          onClick={onRefresh}
+          disabled={isRefreshing}
+          className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          aria-label="Refresh most discussed"
+        >
+          <RefreshCw className={cn("size-4", isRefreshing && "animate-spin")} />
+        </button>
+      )}
+    </div>
+  )
 
+  return (
+    <PageSection
+      title="Most Discussed This Week"
+      description="Ranked by total engagement across all platforms"
+      action={headerAction}
+    >
       {isLoading ? (
         <MostDiscussedSkeleton />
       ) : items.length === 0 ? (
@@ -132,15 +132,12 @@ export function MostDiscussed({
                     navigate(`/search?q=${encodeURIComponent(query)}`)
                   }
                   className={cn(
-                    "flex w-full flex-wrap items-center gap-3 py-4 text-left transition-colors hover:bg-accent/50",
+                    "flex w-full flex-wrap items-center gap-3 rounded-[var(--radius-xl)] p-4 text-left transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm hover:bg-card/60 backdrop-blur-sm border border-transparent hover:border-primary/20",
                     rankBorder(rank)
                   )}
                 >
-                  <span className="w-8 shrink-0 text-[28px] font-bold leading-none text-muted-foreground/40">
+                  <span className="w-8 shrink-0 text-[28px] font-medium leading-none text-muted-foreground/30">
                     #{rank}
-                  </span>
-                  <span className="text-xl" aria-hidden>
-                    {item.emoji}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-base font-medium text-foreground">
@@ -152,7 +149,7 @@ export function MostDiscussed({
                         title={`${pos}% positive`}
                       >
                         <div
-                          className="h-full bg-green-500"
+                          className="h-full bg-success"
                           style={{ width: `${pos}%` }}
                         />
                       </div>
@@ -197,6 +194,6 @@ export function MostDiscussed({
           {formatUpdatedAgo(lastUpdated)}
         </p>
       )}
-    </section>
+    </PageSection>
   )
 }

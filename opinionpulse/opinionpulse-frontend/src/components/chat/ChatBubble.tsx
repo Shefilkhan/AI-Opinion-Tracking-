@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react"
-import { Activity, X } from "lucide-react"
+import { useState } from "react"
+import { MessageCircle, X } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { ChatWindow } from "@/components/chat/ChatWindow"
 import { useAuth } from "@/contexts/AuthContext"
@@ -11,19 +11,6 @@ export function ChatBubble() {
   const location = useLocation()
   const navigate = useNavigate()
   const [isOpen, setIsOpen] = useState(false)
-  const [hasNewMessage, setHasNewMessage] = useState(false)
-  const [showTooltip, setShowTooltip] = useState(true)
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!isOpen) setHasNewMessage(true)
-    }, 30000)
-    return () => clearTimeout(timer)
-  }, [isOpen])
-
-  useEffect(() => {
-    if (isOpen) setShowTooltip(false)
-  }, [isOpen])
 
   if (loading || !isAuthenticated || location.pathname === "/chat") {
     return null
@@ -49,35 +36,14 @@ export function ChatBubble() {
         </div>
       )}
 
-      {!isOpen && showTooltip && (
-        <div className="chat-slide-up fixed bottom-24 right-6 z-40 rounded-[var(--radius-md)] border border-border bg-card px-3 py-2 text-xs whitespace-nowrap text-foreground shadow-none">
-          Ask Pulse AI anything
-          <div className="absolute right-6 bottom-0 translate-y-full border-4 border-transparent border-t-border" />
-        </div>
-      )}
-
       <button
         type="button"
-        onClick={() => {
-          setIsOpen((open) => !open)
-          setHasNewMessage(false)
-          setShowTooltip(false)
-        }}
-        className="group fixed right-6 bottom-6 z-50 flex size-14 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-none transition-colors duration-200 hover:bg-accent hover:text-accent-foreground"
+        onClick={() => setIsOpen((open) => !open)}
+        title={isOpen ? "Close Pulse AI" : "Ask Pulse AI"}
+        className="group fixed right-6 bottom-6 z-50 flex size-14 items-center justify-center rounded-full border border-border bg-primary text-primary-foreground shadow-none transition-colors duration-150 hover:bg-primary/90"
         aria-label={isOpen ? "Close Pulse AI chat" : "Open Pulse AI chat"}
       >
-        <span className="relative flex items-center justify-center">
-          {isOpen ? (
-            <X size={22} />
-          ) : (
-            <Activity size={22} />
-          )}
-        </span>
-        {hasNewMessage && !isOpen && (
-          <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full border-2 border-background bg-destructive text-[9px] font-medium text-primary-foreground">
-            1
-          </span>
-        )}
+        {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
       </button>
     </>
   )

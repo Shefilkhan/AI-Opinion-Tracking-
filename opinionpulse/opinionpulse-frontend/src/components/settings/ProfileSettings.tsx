@@ -22,7 +22,7 @@ import {
 import { inputSurface } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
-const inputClass = cn(inputSurface, "h-11 w-full rounded-xl px-3 py-2")
+const inputClass = cn(inputSurface, "h-10 w-full px-3")
 
 export function ProfileSettings() {
   const { showToast } = useToast()
@@ -146,7 +146,7 @@ export function ProfileSettings() {
     >
       <FormField label="Profile photo" htmlFor="avatar-upload">
         <div className="flex items-center gap-4">
-          <div className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-primary">
+          <div className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-lg)] border border-border bg-primary">
             {avatarSrc ? (
               <img src={avatarSrc} alt="" className="size-full object-cover" />
             ) : (
@@ -163,7 +163,7 @@ export function ProfileSettings() {
           <label
             htmlFor="avatar-upload"
             className={cn(
-              "inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium transition-colors duration-200",
+              "inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-[var(--radius-md)] border border-border px-4 py-2 text-sm font-medium transition-colors duration-150",
               "hover:border-primary/30 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20",
               uploadingAvatar && "pointer-events-none opacity-60"
             )}

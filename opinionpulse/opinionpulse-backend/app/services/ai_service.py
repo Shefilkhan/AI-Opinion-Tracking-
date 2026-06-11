@@ -128,8 +128,7 @@ Return ONLY the JSON object. No markdown, no explanation."""
         set_cached(cache_key, summary, AI_CACHE_TTL)
         return summary
     except Exception as exc:
-        logger.error("❌ AI Summary failed: %s", exc)
-        print(f"❌ AI Summary failed: {exc}")
+        logger.error("AI Summary failed: %s", exc)
         return _fallback_summary(query)
 
 
@@ -209,8 +208,7 @@ Return ONLY the JSON object. Be objective and balanced."""
         set_cached(cache_key, analysis, AI_CACHE_TTL)
         return analysis
     except Exception as exc:
-        logger.error("❌ AI Debate failed: %s", exc)
-        print(f"❌ AI Debate failed: {exc}")
+        logger.error("AI Debate failed: %s", exc)
         return _fallback_debate(topic)
 
 
@@ -319,8 +317,7 @@ Be specific and data-driven. Return ONLY the JSON object."""
         set_cached(cache_key, prediction, AI_CACHE_TTL)
         return prediction
     except Exception as exc:
-        logger.error("❌ AI Prediction failed: %s", exc)
-        print(f"❌ AI Prediction failed: {exc}")
+        logger.error("AI Prediction failed: %s", exc)
         return _fallback_prediction(query)
 
 

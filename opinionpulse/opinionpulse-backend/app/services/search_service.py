@@ -144,7 +144,6 @@ async def run_search(
     sources = _resolve_sources(platform, configured)
 
     logger.info('🔍 Searching for: "%s" sources=%s', query, sources)
-    print(f'🔍 Searching for: "{query}"')
 
     tasks = [_fetch_source(name, query, time_range) for name in sources]
     settled = await asyncio.gather(*tasks)

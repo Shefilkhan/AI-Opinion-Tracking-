@@ -16,6 +16,7 @@ function GitHubIcon({ className }: { className?: string }) {
 import { getSettingsStatus } from "@/api/settings"
 import { updateAccountPassword } from "@/api/account"
 import { ApiError } from "@/api/client"
+import { PageSection } from "@/components/layout/PageSection"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,10 +29,10 @@ import {
   type AccountSettingsState,
 } from "@/lib/userSettingsStore"
 import { getPasswordStrength } from "@/lib/settingsValidation"
-import { inputSurface } from "@/lib/ui-classes"
+import { cardTitle, inputSurface, proCard } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
-const inputClass = cn(inputSurface, "h-11 w-full rounded-lg px-3 py-2")
+const inputClass = cn(inputSurface, "h-10 w-full px-3")
 
 type PasswordForm = {
   current: string
@@ -126,157 +127,160 @@ export function AccountSettings() {
         saving={saving}
         saveLabel="Save account preferences"
       >
-        <div className="space-y-4 rounded-lg border border-border p-4">
-          <h3 className="text-sm font-semibold text-foreground">Change password</h3>
-          <FormField label="Current password" htmlFor="current-pw" error={passwordErrors.current}>
-            <Input
-              id="current-pw"
-              type="password"
-              value={passwordForm.current}
-              onChange={(e) =>
-                setPasswordForm((p) => ({ ...p, current: e.target.value }))
-              }
-              className={inputClass}
-              autoComplete="current-password"
-            />
-          </FormField>
-          <FormField label="New password" htmlFor="new-pw" error={passwordErrors.next}>
-            <Input
-              id="new-pw"
-              type="password"
-              value={passwordForm.next}
-              onChange={(e) => setPasswordForm((p) => ({ ...p, next: e.target.value }))}
-              className={inputClass}
-              autoComplete="new-password"
-            />
-            {passwordForm.next && (
-              <p className="mt-1 text-xs">
-                Strength:{" "}
-                <span
-                  className={cn(
-                    "font-medium capitalize",
-                    strength === "strong" && "text-success",
-                    strength === "fair" && "text-amber-600",
-                    strength === "weak" && "text-destructive"
-                  )}
-                >
-                  {strength}
-                </span>
-              </p>
-            )}
-          </FormField>
-          <FormField label="Confirm new password" htmlFor="confirm-pw" error={passwordErrors.confirm}>
-            <Input
-              id="confirm-pw"
-              type="password"
-              value={passwordForm.confirm}
-              onChange={(e) =>
-                setPasswordForm((p) => ({ ...p, confirm: e.target.value }))
-              }
-              className={inputClass}
-              autoComplete="new-password"
-            />
-          </FormField>
-          <Button
-            type="button"
-            onClick={handlePasswordSave}
-            disabled={passwordSaving}
-            className="min-h-11 px-5 py-2.5"
-          >
-            {passwordSaving ? "Updating…" : "Update password"}
-          </Button>
-        </div>
+        <PageSection title="Change password" className="mb-0">
+          <div className={cn(proCard, "space-y-4 bg-muted/20 p-4 sm:p-5")}>
+            <FormField label="Current password" htmlFor="current-pw" error={passwordErrors.current}>
+              <Input
+                id="current-pw"
+                type="password"
+                value={passwordForm.current}
+                onChange={(e) =>
+                  setPasswordForm((p) => ({ ...p, current: e.target.value }))
+                }
+                className={inputClass}
+                autoComplete="current-password"
+              />
+            </FormField>
+            <FormField label="New password" htmlFor="new-pw" error={passwordErrors.next}>
+              <Input
+                id="new-pw"
+                type="password"
+                value={passwordForm.next}
+                onChange={(e) => setPasswordForm((p) => ({ ...p, next: e.target.value }))}
+                className={inputClass}
+                autoComplete="new-password"
+              />
+              {passwordForm.next && (
+                <p className="text-xs">
+                  Strength:{" "}
+                  <span
+                    className={cn(
+                      "font-medium capitalize",
+                      strength === "strong" && "text-success",
+                      strength === "fair" && "text-primary",
+                      strength === "weak" && "text-destructive"
+                    )}
+                  >
+                    {strength}
+                  </span>
+                </p>
+              )}
+            </FormField>
+            <FormField label="Confirm new password" htmlFor="confirm-pw" error={passwordErrors.confirm}>
+              <Input
+                id="confirm-pw"
+                type="password"
+                value={passwordForm.confirm}
+                onChange={(e) =>
+                  setPasswordForm((p) => ({ ...p, confirm: e.target.value }))
+                }
+                className={inputClass}
+                autoComplete="new-password"
+              />
+            </FormField>
+            <Button
+              type="button"
+              onClick={handlePasswordSave}
+              disabled={passwordSaving}
+              className="min-h-10 px-5"
+            >
+              {passwordSaving ? "Updating…" : "Update password"}
+            </Button>
+          </div>
+        </PageSection>
 
-        <div className="space-y-3 rounded-lg border border-border p-4">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                Two-factor authentication
-              </p>
+        <PageSection title="Two-factor authentication" className="mb-0">
+          <div className={cn(proCard, "bg-muted/20 p-4 sm:p-5")}>
+            <div className="flex items-center justify-between gap-4">
               <p className="text-sm text-muted-foreground">
                 Add an extra layer of security to your account.
               </p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={draft.twoFactorEnabled}
-              onClick={() =>
-                setDraft((p) => ({ ...p, twoFactorEnabled: !p.twoFactorEnabled }))
-              }
-              className={cn(
-                "relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500",
-                draft.twoFactorEnabled ? "bg-primary" : "bg-muted"
-              )}
-            >
-              <span
-                className={cn(
-                  "inline-block size-5 rounded-full bg-white shadow transition-transform",
-                  draft.twoFactorEnabled ? "translate-x-5" : "translate-x-0"
-                )}
-              />
-            </button>
-          </div>
-          {draft.twoFactorEnabled && (
-            <p className="rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
-              Scan the QR code with your authenticator app (setup UI placeholder). In
-              production, complete enrollment via your security provider.
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">Connected accounts</h3>
-          {draft.connectedAccounts.map((acc) => (
-            <div
-              key={acc.provider}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-4"
-            >
-              <div className="flex items-center gap-3">
-                {acc.provider === "github" ? (
-                  <GitHubIcon className="size-5" />
-                ) : (
-                  <span className="text-sm font-bold text-primary">G</span>
-                )}
-                <div>
-                  <p className="text-sm font-medium capitalize">{acc.provider}</p>
-                  {acc.connected && acc.email && (
-                    <p className="text-xs text-muted-foreground">{acc.email}</p>
-                  )}
-                </div>
-              </div>
-              <Button
+              <button
                 type="button"
-                variant={acc.connected ? "outline" : "default"}
-                className="min-h-11 px-4 py-2"
-                onClick={() => toggleProvider(acc.provider)}
+                role="switch"
+                aria-checked={draft.twoFactorEnabled}
+                onClick={() =>
+                  setDraft((p) => ({ ...p, twoFactorEnabled: !p.twoFactorEnabled }))
+                }
+                className={cn(
+                  "relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/20",
+                  draft.twoFactorEnabled ? "bg-primary" : "bg-muted"
+                )}
               >
-                {acc.connected ? "Disconnect" : "Connect"}
-              </Button>
+                <span
+                  className={cn(
+                    "inline-block size-5 rounded-full bg-white shadow transition-transform",
+                    draft.twoFactorEnabled ? "translate-x-5" : "translate-x-0"
+                  )}
+                />
+              </button>
             </div>
-          ))}
-        </div>
+            {draft.twoFactorEnabled && (
+              <p className="mt-3 rounded-[var(--radius-md)] bg-muted/60 px-3 py-2 text-sm text-muted-foreground">
+                Scan the QR code with your authenticator app (setup UI placeholder). In
+                production, complete enrollment via your security provider.
+              </p>
+            )}
+          </div>
+        </PageSection>
 
-        {statusQuery.data && (
-          <div className="space-y-2 rounded-lg border border-border p-4 text-sm">
-            <h3 className="font-semibold text-foreground">API status</h3>
-            {(
-              [
-                ["Backend", statusQuery.data.backend_connected],
-                ["GDELT", statusQuery.data.gdelt_available],
-                ["YouTube", statusQuery.data.youtube_configured],
-                ["Reddit", statusQuery.data.reddit_configured],
-                ["Email SMTP", statusQuery.data.email_configured],
-              ] as const
-            ).map(([label, ok]) => (
-              <div key={label} className="flex justify-between">
-                <span className="text-muted-foreground">{label}</span>
-                <Badge className={ok ? "bg-success/5 text-success" : "bg-muted text-muted-foreground"}>
-                  {ok ? "OK" : "Missing"}
-                </Badge>
+        <PageSection title="Connected accounts" className="mb-0">
+          <div className="space-y-3">
+            {draft.connectedAccounts.map((acc) => (
+              <div
+                key={acc.provider}
+                className={cn(
+                  proCard,
+                  "flex flex-wrap items-center justify-between gap-3 bg-muted/20 p-4 sm:p-5"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  {acc.provider === "github" ? (
+                    <GitHubIcon className="size-5" />
+                  ) : (
+                    <span className="text-sm font-bold text-primary">G</span>
+                  )}
+                  <div>
+                    <p className="text-sm font-medium capitalize">{acc.provider}</p>
+                    {acc.connected && acc.email && (
+                      <p className="text-xs text-muted-foreground">{acc.email}</p>
+                    )}
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant={acc.connected ? "outline" : "default"}
+                  className="min-h-10 px-4"
+                  onClick={() => toggleProvider(acc.provider)}
+                >
+                  {acc.connected ? "Disconnect" : "Connect"}
+                </Button>
               </div>
             ))}
           </div>
+        </PageSection>
+
+        {statusQuery.data && (
+          <PageSection title="API status" className="mb-0">
+            <div className={cn(proCard, "space-y-2 bg-muted/20 p-4 text-sm sm:p-5")}>
+              {(
+                [
+                  ["Backend", statusQuery.data.backend_connected],
+                  ["GDELT", statusQuery.data.gdelt_available],
+                  ["YouTube", statusQuery.data.youtube_configured],
+                  ["Reddit", statusQuery.data.reddit_configured],
+                  ["Email SMTP", statusQuery.data.email_configured],
+                ] as const
+              ).map(([label, ok]) => (
+                <div key={label} className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">{label}</span>
+                  <Badge className={ok ? "bg-success/5 text-success" : "bg-muted text-muted-foreground"}>
+                    {ok ? "OK" : "Missing"}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </PageSection>
         )}
       </SettingsPanel>
 
@@ -284,12 +288,13 @@ export function AccountSettings() {
         title="Danger zone"
         description="Irreversible actions for your account."
         showSave={false}
+        danger
       >
-        <div className="space-y-4">
+        <div className="flex flex-wrap gap-3">
           <Button
             type="button"
             variant="outline"
-            className="min-h-11 px-4 py-2"
+            className="min-h-10 px-4"
             onClick={() => showToast("Data export started (demo).")}
           >
             Export my data
@@ -297,7 +302,7 @@ export function AccountSettings() {
           <Button
             type="button"
             variant="destructive"
-            className="min-h-11 px-4 py-2"
+            className="min-h-10 px-4"
             onClick={() => setDeleteOpen(true)}
           >
             Delete account
@@ -312,8 +317,8 @@ export function AccountSettings() {
           aria-modal="true"
           aria-labelledby="delete-account-title"
         >
-          <div className={cn("w-full max-w-md rounded-lg border border-border bg-card p-5 shadow-lg")}>
-            <h3 id="delete-account-title" className="text-lg font-semibold text-destructive">
+          <div className={cn(proCard, "w-full max-w-md p-6 shadow-lg")}>
+            <h3 id="delete-account-title" className={cn(cardTitle, "text-destructive")}>
               Delete account
             </h3>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -331,7 +336,7 @@ export function AccountSettings() {
               <Button
                 type="button"
                 variant="outline"
-                className="px-4 py-2"
+                className="px-4"
                 onClick={() => {
                   setDeleteOpen(false)
                   setDeleteEmail("")
@@ -342,7 +347,7 @@ export function AccountSettings() {
               <Button
                 type="button"
                 variant="destructive"
-                className="px-4 py-2"
+                className="px-4"
                 disabled={
                   !confirmEmail ||
                   deleteEmail.trim().toLowerCase() !== confirmEmail.toLowerCase()

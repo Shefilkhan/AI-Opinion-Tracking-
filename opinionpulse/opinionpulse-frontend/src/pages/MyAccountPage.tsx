@@ -12,26 +12,26 @@ import {
   Download,
   Loader2,
   Lock,
-  LogOut,
   MessageCircle,
   Search,
   Settings,
   Trash2,
-  User,
 } from "lucide-react"
 import { ApiError } from "@/api/client"
 import { getAccountProfile, updateAccountPassword } from "@/api/account"
-import { logoutUser } from "@/api/auth"
 import { getUserStats, uploadUserAvatar } from "@/api/users"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { InlineNotice } from "@/components/layout/InlineNotice"
+import { PageSection } from "@/components/layout/PageSection"
+import { StatCard } from "@/components/layout/StatCard"
+import { Button } from "@/components/ui/button"
 import { LoadingState } from "@/components/ui/LoadingState"
 import { useToast } from "@/components/ui/toast"
 import { formatNumber, formatTimeAgo, resolveMediaUrl } from "@/lib/formatUtils"
 import {
   btnPrimary,
-  cardTitle,
   inputSurface,
-  pageTitle,
+  labelText,
   proCard,
   sectionTitle,
 } from "@/lib/ui-classes"
@@ -118,11 +118,6 @@ export function MyAccountPage() {
     passwordMutation.mutate()
   }
 
-  function handleLogout() {
-    logoutUser()
-    navigate("/")
-  }
-
   function handleExportData() {
     const exportData = {
       profile: userProfile,
@@ -143,7 +138,10 @@ export function MyAccountPage() {
 
   if (profileQuery.isLoading) {
     return (
-      <DashboardLayout title="" subtitle="" hidePageHeader>
+      <DashboardLayout
+        title="My Account"
+        subtitle="Manage your profile and account settings"
+      >
         <LoadingState label="Loading account…" />
       </DashboardLayout>
     )
@@ -152,374 +150,324 @@ export function MyAccountPage() {
   const displayName = userProfile?.full_name || userProfile?.name || "User"
 
   return (
-    <DashboardLayout title="" subtitle="" hidePageHeader>
-      <div className="relative min-h-full bg-background">
-        <div className="relative z-10 w-full">
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <h1 className={pageTitle}>My Account</h1>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                Manage your profile and account settings
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-            >
-              <LogOut size={15} />
-              Log out
-            </button>
-          </div>
-
-          <div className={cn(proCard, "mb-6 p-6")}>
-            <div className="flex items-start gap-5">
-              <div className="relative shrink-0">
-                <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-primary text-2xl font-bold text-primary-foreground">
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt="Avatar"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    displayName[0]?.toUpperCase() || "U"
-                  )}
-                  {uploadingAvatar && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                      <Loader2 size={20} className="animate-spin text-white" />
-                    </div>
-                  )}
-                </div>
-                <label
-                  htmlFor="avatar-upload"
-                  className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-background bg-primary transition-colors hover:bg-primary/90"
-                >
-                  <Camera size={12} className="text-primary-foreground" />
-                </label>
-                <input
-                  id="avatar-upload"
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="sr-only"
-                  onChange={handleAvatarUpload}
-                  disabled={uploadingAvatar}
-                />
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <div className="mb-1 flex items-center gap-3">
-                  <h2 className={cn(sectionTitle, "text-xl")}>{displayName}</h2>
-                  {userProfile?.is_email_verified ? (
-                    <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                      <CheckCircle size={11} />
-                      Verified
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
-                      <AlertCircle size={11} />
-                      Unverified
-                    </span>
-                  )}
-                </div>
-                <p className="mb-1 text-sm text-muted-foreground">{userProfile?.email}</p>
-                {userProfile?.username && (
-                  <p className="text-sm text-muted-foreground">@{userProfile.username}</p>
+    <DashboardLayout
+      title="My Account"
+      subtitle="Manage your profile and account settings"
+    >
+      <div className={cn(proCard, "mb-8 overflow-hidden")}>
+        <div className="border-b border-border bg-muted/20 px-5 py-6 sm:px-6">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+            <div className="relative shrink-0">
+              <div className="flex size-20 items-center justify-center overflow-hidden rounded-[var(--radius-lg)] bg-primary text-2xl font-medium text-primary-foreground">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Avatar"
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  displayName[0]?.toUpperCase() || "U"
                 )}
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Member since{" "}
-                  {userProfile?.created_at
-                    ? new Date(userProfile.created_at).toLocaleDateString("en-US", {
-                        month: "long",
-                        year: "numeric",
-                      })
-                    : "Unknown"}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => navigate("/settings#profile")}
-                className="flex shrink-0 items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-accent"
-              >
-                <Settings size={14} />
-                Edit Profile
-              </button>
-            </div>
-
-            {userProfile?.bio && (
-              <p className="mt-4 border-t border-border pt-4 text-sm leading-relaxed text-muted-foreground">
-                {userProfile.bio}
-              </p>
-            )}
-          </div>
-
-          <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-            <StatCard
-              icon={<Search size={18} className="text-primary" />}
-              iconBg="bg-primary/10"
-              value={formatNumber(stats?.total_searches ?? 0)}
-              label="Total Searches"
-            />
-            <StatCard
-              icon={<MessageCircle size={18} className="text-blue-600" />}
-              iconBg="bg-blue-100"
-              value={formatNumber(stats?.total_chats ?? 0)}
-              label="AI Conversations"
-            />
-            <StatCard
-              icon={<Bookmark size={18} className="text-green-600" />}
-              iconBg="bg-green-100"
-              value={formatNumber(stats?.saved_searches ?? 0)}
-              label="Saved Searches"
-            />
-            <StatCard
-              icon={<Clock size={18} className="text-orange-600" />}
-              iconBg="bg-orange-100"
-              value={
-                stats?.last_active ? formatTimeAgo(stats.last_active) : "Today"
-              }
-              label="Last Active"
-            />
-          </div>
-
-          <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div className={cn(proCard, "p-6")}>
-              <div className="mb-4 flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
-                  <Lock size={15} className="text-muted-foreground" />
-                </div>
-                <h3 className={cardTitle}>Change Password</h3>
-              </div>
-
-              <div className="space-y-3">
-                <PasswordField
-                  label="Current Password"
-                  value={passwords.current}
-                  onChange={(v) => setPasswords((p) => ({ ...p, current: v }))}
-                  placeholder="Enter current password"
-                />
-                <PasswordField
-                  label="New Password"
-                  value={passwords.new}
-                  onChange={(v) => setPasswords((p) => ({ ...p, new: v }))}
-                  placeholder="Enter new password"
-                />
-                <PasswordField
-                  label="Confirm New Password"
-                  value={passwords.confirm}
-                  onChange={(v) => setPasswords((p) => ({ ...p, confirm: v }))}
-                  placeholder="Confirm new password"
-                />
-
-                {passwordError && (
-                  <p className="flex items-center gap-1 text-xs text-red-500">
-                    <AlertCircle size={11} />
-                    {passwordError}
-                  </p>
-                )}
-                {passwordSuccess && (
-                  <p className="flex items-center gap-1 text-xs text-green-600">
-                    <CheckCircle size={11} />
-                    Password updated successfully
-                  </p>
-                )}
-
-                <button
-                  type="button"
-                  onClick={handlePasswordChange}
-                  disabled={passwordMutation.isPending}
-                  className={cn("flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-medium transition-all disabled:cursor-not-allowed disabled:opacity-50", btnPrimary)}
-                >
-                  {passwordMutation.isPending ? (
-                    <>
-                      <Loader2 size={14} className="animate-spin" />
-                      Updating...
-                    </>
-                  ) : (
-                    "Update Password"
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div className={cn(proCard, "p-6")}>
-              <div className="mb-4 flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
-                  <User size={15} className="text-muted-foreground" />
-                </div>
-                <h3 className={cardTitle}>Account Details</h3>
-              </div>
-
-              <div className="space-y-4">
-                <DetailRow
-                  label="Full Name"
-                  value={displayName}
-                  actionLabel="Edit"
-                  onAction={() => navigate("/settings#profile")}
-                />
-                <div className="flex items-center justify-between border-b border-border py-3">
-                  <div>
-                    <p className="mb-0.5 text-xs text-muted-foreground">Email Address</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-foreground">
-                        {userProfile?.email || "—"}
-                      </p>
-                      {userProfile?.is_email_verified && (
-                        <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700">
-                          ✓ Verified
-                        </span>
-                      )}
-                    </div>
+                {uploadingAvatar && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                    <Loader2 size={20} className="animate-spin text-white" />
                   </div>
-                </div>
-                <DetailRow
-                  label="Username"
-                  value={
-                    userProfile?.username
-                      ? `@${userProfile.username}`
-                      : "Not set"
-                  }
-                  actionLabel={userProfile?.username ? "Edit" : "Add"}
-                  onAction={() => navigate("/settings#profile")}
-                />
-                <div className="border-b border-border py-3">
-                  <p className="mb-0.5 text-xs text-muted-foreground">Account Role</p>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
-                    {userProfile?.role === "ADMIN" ? "👑 Admin" : "👤 User"}
-                  </span>
-                </div>
-                <div className="py-3">
-                  <p className="mb-0.5 text-xs text-muted-foreground">Member Since</p>
-                  <p className="text-sm font-medium text-foreground">
-                    {userProfile?.created_at
-                      ? new Date(userProfile.created_at).toLocaleDateString(
-                          "en-US",
-                          {
-                            weekday: "long",
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          }
-                        )
-                      : "—"}
-                  </p>
-                </div>
+                )}
               </div>
-            </div>
-          </div>
-
-          <div className={cn(proCard, "mb-6 p-6")}>
-            <h3 className={cn(cardTitle, "mb-4")}>Quick Actions</h3>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <QuickAction
-                icon={Search}
-                label="New Search"
-                onClick={() => navigate("/search")}
-              />
-              <QuickAction
-                icon={MessageCircle}
-                label="Ask Pulse AI"
-                onClick={() => navigate("/chat")}
-              />
-              <QuickAction
-                icon={Settings}
-                label="Settings"
-                onClick={() => navigate("/settings")}
-              />
-              <QuickAction
-                icon={BarChart2}
-                label="View Reports"
-                onClick={() => navigate("/reports")}
-              />
-            </div>
-          </div>
-
-          <div className={cn(proCard, "border-red-200 p-6")}>
-            <h3 className="mb-1 flex items-center gap-2 font-semibold text-red-600">
-              <AlertTriangle size={16} />
-              Danger Zone
-            </h3>
-            <p className="mb-4 text-xs text-muted-foreground">
-              These actions are permanent and cannot be undone.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={handleExportData}
-                className="flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-accent"
+              <label
+                htmlFor="avatar-upload"
+                className="absolute -bottom-1 -right-1 flex size-7 cursor-pointer items-center justify-center rounded-full border-2 border-background bg-primary transition-colors hover:bg-primary/90"
               >
-                <Download size={14} />
-                Export My Data
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowDeleteModal(true)}
-                className="flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition-all hover:bg-red-50"
-              >
-                <Trash2 size={14} />
-                Delete Account
-              </button>
+                <Camera size={12} className="text-primary-foreground" />
+              </label>
+              <input
+                id="avatar-upload"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={handleAvatarUpload}
+                disabled={uploadingAvatar}
+              />
             </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <h2 className={sectionTitle}>{displayName}</h2>
+                {userProfile?.is_email_verified ? (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-success/20 bg-success/5 px-2 py-0.5 text-xs font-medium text-success">
+                    <CheckCircle size={11} />
+                    Verified
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-accent/50 px-2 py-0.5 text-xs font-medium text-foreground">
+                    <AlertCircle size={11} />
+                    Unverified
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">{userProfile?.email}</p>
+              {userProfile?.username && (
+                <p className="text-sm text-muted-foreground">@{userProfile.username}</p>
+              )}
+              <p className="mt-2 text-xs text-muted-foreground">
+                Member since{" "}
+                {userProfile?.created_at
+                  ? new Date(userProfile.created_at).toLocaleDateString("en-US", {
+                      month: "long",
+                      year: "numeric",
+                    })
+                  : "Unknown"}
+              </p>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate("/settings#profile")}
+              className="h-10 shrink-0 gap-2"
+            >
+              <Settings size={14} />
+              Edit Profile
+            </Button>
           </div>
         </div>
+
+        {userProfile?.bio && (
+          <p className="px-5 py-4 text-sm leading-relaxed text-muted-foreground sm:px-6">
+            {userProfile.bio}
+          </p>
+        )}
       </div>
+
+      <PageSection title="Activity" className="mb-8">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <StatCard
+            icon={Search}
+            value={formatNumber(stats?.total_searches ?? 0)}
+            label="Total Searches"
+          />
+          <StatCard
+            icon={MessageCircle}
+            value={formatNumber(stats?.total_chats ?? 0)}
+            label="AI Conversations"
+          />
+          <StatCard
+            icon={Bookmark}
+            value={formatNumber(stats?.saved_searches ?? 0)}
+            label="Saved Searches"
+          />
+          <StatCard
+            icon={Clock}
+            value={stats?.last_active ? formatTimeAgo(stats.last_active) : "Today"}
+            label="Last Active"
+          />
+        </div>
+      </PageSection>
+
+      <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-2">
+        <PageSection
+          title="Change Password"
+          description="Update your password to keep your account secure."
+          className="mb-0"
+        >
+          <div className={cn(proCard, "space-y-4 bg-muted/20 p-5 sm:p-6")}>
+            <PasswordField
+              label="Current Password"
+              value={passwords.current}
+              onChange={(v) => setPasswords((p) => ({ ...p, current: v }))}
+              placeholder="Enter current password"
+            />
+            <PasswordField
+              label="New Password"
+              value={passwords.new}
+              onChange={(v) => setPasswords((p) => ({ ...p, new: v }))}
+              placeholder="Enter new password"
+            />
+            <PasswordField
+              label="Confirm New Password"
+              value={passwords.confirm}
+              onChange={(v) => setPasswords((p) => ({ ...p, confirm: v }))}
+              placeholder="Confirm new password"
+            />
+
+            {passwordError && (
+              <InlineNotice variant="warning" className="text-sm">
+                {passwordError}
+              </InlineNotice>
+            )}
+            {passwordSuccess && (
+              <InlineNotice variant="success" className="text-sm">
+                Password updated successfully
+              </InlineNotice>
+            )}
+
+            <Button
+              type="button"
+              onClick={handlePasswordChange}
+              disabled={passwordMutation.isPending}
+              className={cn("w-full gap-2", btnPrimary)}
+            >
+              {passwordMutation.isPending ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Lock size={14} />
+                  Update Password
+                </>
+              )}
+            </Button>
+          </div>
+        </PageSection>
+
+        <PageSection title="Account Details" className="mb-0">
+          <div className={cn(proCard, "bg-muted/20 p-5 sm:p-6")}>
+            <div className="space-y-0">
+              <DetailRow
+                label="Full Name"
+                value={displayName}
+                actionLabel="Edit"
+                onAction={() => navigate("/settings#profile")}
+              />
+              <div className="flex items-center justify-between border-b border-border py-3">
+                <div>
+                  <p className="mb-0.5 text-xs text-muted-foreground">Email Address</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-foreground">
+                      {userProfile?.email || "—"}
+                    </p>
+                    {userProfile?.is_email_verified && (
+                      <span className="rounded-full border border-success/20 bg-success/5 px-1.5 py-0.5 text-[10px] font-medium text-success">
+                        Verified
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <DetailRow
+                label="Username"
+                value={
+                  userProfile?.username
+                    ? `@${userProfile.username}`
+                    : "Not set"
+                }
+                actionLabel={userProfile?.username ? "Edit" : "Add"}
+                onAction={() => navigate("/settings#profile")}
+              />
+              <div className="border-b border-border py-3">
+                <p className="mb-0.5 text-xs text-muted-foreground">Account Role</p>
+                <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
+                  {userProfile?.role === "ADMIN" ? "Admin" : "User"}
+                </span>
+              </div>
+              <div className="py-3">
+                <p className="mb-0.5 text-xs text-muted-foreground">Member Since</p>
+                <p className="text-sm font-medium text-foreground">
+                  {userProfile?.created_at
+                    ? new Date(userProfile.created_at).toLocaleDateString("en-US", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })
+                    : "—"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </PageSection>
+      </div>
+
+      <PageSection title="Quick Actions" className="mb-8">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <QuickAction
+            icon={Search}
+            label="New Search"
+            onClick={() => navigate("/search")}
+          />
+          <QuickAction
+            icon={MessageCircle}
+            label="Ask Pulse AI"
+            onClick={() => navigate("/chat")}
+          />
+          <QuickAction
+            icon={Settings}
+            label="Settings"
+            onClick={() => navigate("/settings")}
+          />
+          <QuickAction
+            icon={BarChart2}
+            label="View Reports"
+            onClick={() => navigate("/reports")}
+          />
+        </div>
+      </PageSection>
+
+      <PageSection
+        title="Danger Zone"
+        description="These actions are permanent and cannot be undone."
+        className="mb-0"
+      >
+        <div className={cn(proCard, "border-destructive/20 bg-destructive/5 p-5 sm:p-6")}>
+          <div className="flex flex-wrap gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleExportData}
+              className="gap-2"
+            >
+              <Download size={14} />
+              Export My Data
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => setShowDeleteModal(true)}
+              className="gap-2"
+            >
+              <Trash2 size={14} />
+              Delete Account
+            </Button>
+          </div>
+        </div>
+      </PageSection>
 
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className={cn(proCard, "w-full max-w-md p-6 shadow-xl")}>
-            <h3 className={cn(sectionTitle, "text-lg")}>Delete account?</h3>
+            <h3 className={cn(sectionTitle, "flex items-center gap-2")}>
+              <AlertTriangle size={18} className="text-destructive" />
+              Delete account?
+            </h3>
             <p className="mt-2 text-sm text-muted-foreground">
               Account deletion is not yet available. Contact support if you need
               your data removed.
             </p>
             <div className="mt-6 flex justify-end gap-3">
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => setShowDeleteModal(false)}
-                className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="destructive"
                 onClick={() => {
                   setShowDeleteModal(false)
                   showToast("Account deletion is not yet available.", "error")
                 }}
-                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
               >
                 Delete Account
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       )}
     </DashboardLayout>
-  )
-}
-
-function StatCard({
-  icon,
-  iconBg,
-  value,
-  label,
-}: {
-  icon: React.ReactNode
-  iconBg: string
-  value: string
-  label: string
-}) {
-  return (
-    <div className={cn(proCard, "p-5 text-center")}>
-      <div
-        className={`mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl ${iconBg}`}
-      >
-        {icon}
-      </div>
-      <p className="text-2xl font-bold text-foreground">{value}</p>
-      <p className="mt-1 text-xs text-muted-foreground">{label}</p>
-    </div>
   )
 }
 
@@ -536,15 +484,13 @@ function PasswordField({
 }) {
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium text-muted-foreground">
-        {label}
-      </label>
+      <label className={cn(labelText, "mb-1.5 block text-xs")}>{label}</label>
       <input
         type="password"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={cn(inputSurface, "w-full rounded-xl px-3 py-2.5")}
+        className={cn(inputSurface, "w-full")}
       />
     </div>
   )
@@ -591,7 +537,10 @@ function QuickAction({
     <button
       type="button"
       onClick={onClick}
-      className="group flex flex-col items-center gap-2 rounded-xl border border-border p-4 transition-all hover:border-primary/30 hover:bg-accent"
+      className={cn(
+        proCard,
+        "group flex flex-col items-center gap-2 bg-muted/20 p-4 transition-colors duration-150 hover:border-primary/30 hover:bg-accent/50"
+      )}
     >
       <Icon
         size={20}

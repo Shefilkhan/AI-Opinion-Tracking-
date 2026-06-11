@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react"
 import { Download } from "lucide-react"
+import { PageSection } from "@/components/layout/PageSection"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { SettingsPanel } from "@/components/settings/SettingsPanel"
@@ -11,6 +12,9 @@ import {
   type BillingSettings as BillingSettingsData,
   type BillingPlan,
 } from "@/lib/userSettingsStore"
+import { proCard, tableHeader, tableRow } from "@/lib/ui-classes"
+import { cn } from "@/lib/utils"
+
 const PLAN_LABELS: Record<BillingPlan, string> = {
   free: "Free",
   pro: "Pro",
@@ -48,20 +52,19 @@ export function BillingSettings() {
         saving={saving}
         saveLabel="Save billing info"
       >
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border p-4">
-          <div>
-            <p className="text-sm text-muted-foreground">Current plan</p>
-            <div className="mt-1 flex items-center gap-2">
-              <span className="text-xl font-semibold text-foreground">
-                {PLAN_LABELS[draft.plan]}
-              </span>
-              <Badge variant="secondary">{draft.plan === "free" ? "Active" : "Active"}</Badge>
+        <PageSection title="Current plan" className="mb-0">
+          <div className={cn(proCard, "flex flex-wrap items-center justify-between gap-4 bg-muted/20 p-4 sm:p-5")}>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-medium text-foreground">
+                  {PLAN_LABELS[draft.plan]}
+                </span>
+                <Badge variant="secondary">Active</Badge>
+              </div>
             </div>
-          </div>
-          <div className="flex gap-2">
             <Button
               type="button"
-              className="min-h-11 px-4 py-2"
+              className="min-h-10 px-4"
               onClick={() => {
                 setDraft((p) => ({
                   ...p,
@@ -72,38 +75,38 @@ export function BillingSettings() {
               {draft.plan === "enterprise" ? "Downgrade" : "Upgrade plan"}
             </Button>
           </div>
-        </div>
+        </PageSection>
 
-        <div className="rounded-lg border border-border p-4">
-          <h3 className="text-sm font-semibold text-foreground">Payment method</h3>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {draft.cardBrand} ending in {draft.cardLast4}
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            className="mt-3 min-h-11 px-4 py-2"
-            onClick={() => showToast("Payment method update (demo).")}
-          >
-            Update payment method
-          </Button>
-        </div>
+        <PageSection title="Payment method" className="mb-0">
+          <div className={cn(proCard, "bg-muted/20 p-4 sm:p-5")}>
+            <p className="text-sm text-muted-foreground">
+              {draft.cardBrand} ending in {draft.cardLast4}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-3 min-h-10 px-4"
+              onClick={() => showToast("Payment method update (demo).")}
+            >
+              Update payment method
+            </Button>
+          </div>
+        </PageSection>
 
-        <div>
-          <h3 className="mb-3 text-sm font-semibold text-foreground">Billing history</h3>
-          <div className="overflow-x-auto rounded-lg border border-border">
+        <PageSection title="Billing history" className="mb-0">
+          <div className={cn(proCard, "overflow-x-auto bg-muted/20")}>
             <table className="w-full min-w-[400px] text-left text-sm">
-              <thead className="border-b border-border bg-muted/50">
-                <tr>
-                  <th className="px-4 py-3 font-medium text-muted-foreground">Date</th>
-                  <th className="px-4 py-3 font-medium text-muted-foreground">Amount</th>
-                  <th className="px-4 py-3 font-medium text-muted-foreground">Status</th>
-                  <th className="px-4 py-3 font-medium text-muted-foreground">Invoice</th>
+              <thead>
+                <tr className={tableHeader}>
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Amount</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Invoice</th>
                 </tr>
               </thead>
               <tbody>
                 {INVOICES.map((row) => (
-                  <tr key={row.id} className="border-b border-border last:border-0">
+                  <tr key={row.id} className={tableRow}>
                     <td className="px-4 py-3 text-foreground">{row.date}</td>
                     <td className="px-4 py-3 text-foreground">{row.amount}</td>
                     <td className="px-4 py-3">
@@ -126,17 +129,19 @@ export function BillingSettings() {
               </tbody>
             </table>
           </div>
-        </div>
+        </PageSection>
       </SettingsPanel>
 
-      <SettingsPanel title="Danger zone" showSave={false}>
-        <p className="text-sm text-muted-foreground">
-          Cancel your subscription. You will retain access until the end of the billing period.
-        </p>
+      <SettingsPanel
+        title="Danger zone"
+        description="Cancel your subscription. You will retain access until the end of the billing period."
+        showSave={false}
+        danger
+      >
         <Button
           type="button"
           variant="destructive"
-          className="mt-4 min-h-11 px-4 py-2"
+          className="min-h-10 px-4"
           onClick={() => showToast("Subscription cancellation (demo).", "error")}
         >
           Cancel subscription

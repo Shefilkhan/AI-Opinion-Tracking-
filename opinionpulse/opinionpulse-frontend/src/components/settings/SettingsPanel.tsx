@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { btnPrimary, proCard, sectionTitle } from "@/lib/ui-classes"
+import { btnPrimary, proCard, sectionDescription, sectionTitle } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 type SettingsPanelProps = {
@@ -12,6 +12,7 @@ type SettingsPanelProps = {
   saveLabel?: string
   saving?: boolean
   showSave?: boolean
+  danger?: boolean
 }
 
 export function SettingsPanel({
@@ -22,23 +23,31 @@ export function SettingsPanel({
   saveLabel = "Save changes",
   saving = false,
   showSave = true,
+  danger = false,
 }: SettingsPanelProps) {
   return (
-    <div className={cn(proCard, "p-5")}>
-      <div className="mb-6 border-b border-border pb-4">
-        <h2 className={sectionTitle}>{title}</h2>
+    <div className={cn(proCard, "overflow-hidden", danger && "border-destructive/20")}>
+      <div className="border-b border-border px-5 py-5 sm:px-6">
+        <h2
+          className={cn(
+            sectionTitle,
+            danger && "text-destructive"
+          )}
+        >
+          {title}
+        </h2>
         {description && (
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+          <p className={cn(sectionDescription, "mt-1")}>{description}</p>
         )}
       </div>
-      <div className="space-y-6">{children}</div>
+      <div className="space-y-6 px-5 py-6 sm:px-6">{children}</div>
       {showSave && onSave && (
-        <div className="mt-8 flex justify-end border-t border-border pt-6">
+        <div className="flex justify-end border-t border-border bg-muted/20 px-5 py-4 sm:px-6">
           <Button
             type="button"
             onClick={onSave}
             disabled={saving}
-            className={cn("min-h-11 gap-2 px-5 py-2.5", btnPrimary)}
+            className={cn("min-h-10 gap-2 px-5", btnPrimary)}
           >
             {saving && <Loader2 className="size-4 animate-spin" aria-hidden />}
             {saving ? "Saving…" : saveLabel}
@@ -52,7 +61,7 @@ export function SettingsPanel({
 export function FieldError({ message }: { message?: string | null }) {
   if (!message) return null
   return (
-    <p className="mt-1 text-sm text-destructive" role="alert">
+    <p className="mt-1.5 text-sm text-destructive" role="alert">
       {message}
     </p>
   )
@@ -72,13 +81,13 @@ export function FormField({
   hint?: string
 }) {
   return (
-    <div>
-      <label htmlFor={htmlFor} className="mb-1.5 block text-sm font-medium text-foreground">
+    <div className="space-y-1.5">
+      <label htmlFor={htmlFor} className="block text-sm font-medium text-foreground">
         {label}
       </label>
       {children}
       {hint && !error && (
-        <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
+        <p className="text-xs text-muted-foreground">{hint}</p>
       )}
       <FieldError message={error} />
     </div>

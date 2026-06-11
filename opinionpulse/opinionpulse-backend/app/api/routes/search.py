@@ -50,13 +50,16 @@ async def search_opinions(
         sentiment=body.sentiment,
         sort_by=body.sort_by,
     )
-    search_service.record_search_history(
-        db,
-        current_user.id,
-        body.query,
-        data["total_results"],
-        data["sentiment_summary"],
-    )
+    try:
+        search_service.record_search_history(
+            db,
+            current_user.id,
+            body.query,
+            data["total_results"],
+            data["sentiment_summary"],
+        )
+    except Exception as hist_err:
+        logger.warning("Could not save search history: %s", hist_err)
     return SearchResponse(**data)
 
 

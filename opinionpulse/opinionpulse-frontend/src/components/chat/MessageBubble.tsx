@@ -1,6 +1,6 @@
 import { useState } from "react"
 import ReactMarkdown from "react-markdown"
-import { Copy } from "lucide-react"
+import { Copy, Sparkles } from "lucide-react"
 import type { PulseChatDataUsed } from "@/api/chat"
 import { SuggestionsBar } from "@/components/chat/SuggestionsBar"
 import { cn } from "@/lib/utils"
@@ -70,7 +70,11 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
             : "border border-border bg-accent text-accent-foreground"
         )}
       >
-        {isUser ? "U" : "⚡"}
+        {isUser ? (
+          "U"
+        ) : (
+          <Sparkles size={12} className="text-accent-foreground" aria-hidden />
+        )}
       </div>
 
       <div
@@ -81,7 +85,7 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
       >
         <div
           className={cn(
-            "rounded-[var(--radius-lg)] px-4 py-3 text-sm leading-relaxed",
+            "rounded-[var(--radius-lg)] px-3.5 py-2.5 text-sm leading-relaxed",
             isUser
               ? "rounded-tr-[var(--radius-sm)] bg-primary text-primary-foreground"
               : message.isError

@@ -12,8 +12,8 @@ export function WikipediaSummaryCard({ wiki }: WikipediaSummaryCardProps) {
     <div className={cn(proCard, "border-l-4 border-l-primary p-5")}>
       <div className="flex flex-row gap-4">
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-            📖 Wikipedia
+          <p className="text-xs font-medium text-primary">
+            Wikipedia
           </p>
           <h3 className={cn(cardTitle, "mt-1")}>{wiki.title}</h3>
           <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted-foreground">

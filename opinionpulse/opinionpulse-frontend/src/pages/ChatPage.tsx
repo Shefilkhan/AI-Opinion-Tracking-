@@ -16,13 +16,13 @@ import {
 } from "@/api/chat"
 import { ChatWindow } from "@/components/chat/ChatWindow"
 import type { ChatMessageItem } from "@/components/chat/MessageBubble"
+import { EmptyState } from "@/components/layout/EmptyState"
 import {
   btnPrimary,
   inputSurface,
   navItemActive,
   navItemInactive,
   pageShell,
-  proCard,
 } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
@@ -114,14 +114,14 @@ export function ChatPage() {
 
   return (
     <div className={cn("flex h-screen w-full overflow-hidden", pageShell)}>
-      <div className="flex w-64 shrink-0 flex-col border-r border-border bg-card lg:w-72 xl:w-80">
-        <div className="border-b border-border p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex size-7 items-center justify-center rounded-[var(--radius-md)] bg-primary text-primary-foreground">
-                <Sparkles size={14} />
+      <div className="flex w-52 shrink-0 flex-col border-r border-border bg-card lg:w-56">
+        <div className="border-b border-border px-3 py-3">
+          <div className="mb-2.5 flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="flex size-6 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-primary text-primary-foreground">
+                <Sparkles size={12} />
               </div>
-              <span className="font-serif-display text-sm font-medium text-foreground">
+              <span className="truncate font-serif-display text-sm font-medium text-foreground">
                 Pulse AI
               </span>
             </div>
@@ -129,34 +129,34 @@ export function ChatPage() {
               type="button"
               onClick={startNewChat}
               className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium",
+                "flex shrink-0 items-center gap-1 px-2 py-1.5 text-xs font-medium",
                 btnPrimary
               )}
             >
               <Plus size={12} />
-              New Chat
+              New
             </button>
           </div>
           <input
             type="search"
-            placeholder="Search conversations..."
+            placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className={cn(inputSurface, "w-full px-3 py-2")}
+            className={cn(inputSurface, "w-full px-2.5 py-1.5 text-sm")}
           />
         </div>
 
-        <div className="flex-1 overflow-y-auto py-2">
+        <div className="flex-1 overflow-y-auto py-1.5">
           {loadingList ? (
-            <p className="px-4 py-6 text-center text-sm text-muted-foreground">Loading...</p>
+            <p className="px-3 py-6 text-center text-sm text-muted-foreground">Loading...</p>
           ) : filtered.length === 0 ? (
-            <div className="px-4 py-8 text-center">
-              <MessageCircle size={32} className="mx-auto mb-2 text-muted-foreground/50" />
-              <p className="text-sm text-muted-foreground">No conversations yet</p>
-              <p className="mt-1 text-xs text-muted-foreground/70">
-                Start by asking Pulse AI anything
-              </p>
-            </div>
+            <EmptyState
+              compact
+              icon={MessageCircle}
+              title="No conversations yet"
+              description="Start by asking Pulse AI anything"
+              className="px-3"
+            />
           ) : (
             filtered.map((conv) => (
               <div
@@ -168,21 +168,21 @@ export function ChatPage() {
                   if (e.key === "Enter") void loadConversation(conv.conversation_id)
                 }}
                 className={cn(
-                  "group mx-2 flex cursor-pointer items-start gap-2 rounded-[var(--radius-lg)] px-3 py-3 transition-colors",
+                  "group mx-1.5 flex cursor-pointer items-start gap-2 rounded-[var(--radius-md)] px-2.5 py-2.5 transition-colors",
                   activeConvId === conv.conversation_id
                     ? navItemActive
                     : navItemInactive
                 )}
               >
                 <MessageCircle
-                  size={14}
+                  size={13}
                   className="mt-0.5 shrink-0 text-muted-foreground"
                 />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">
                     {conv.first_message || "New conversation"}
                   </p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
                     {conv.message_count} messages ·{" "}
                     {formatTimeAgo(conv.started_at)}
                   </p>
@@ -202,7 +202,7 @@ export function ChatPage() {
           )}
         </div>
 
-        <div className="border-t border-border p-4">
+        <div className="border-t border-border px-3 py-3">
           <Link
             to="/dashboard"
             className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -214,26 +214,16 @@ export function ChatPage() {
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col bg-background">
-        <div className="flex h-full w-full flex-1 flex-col p-4 sm:p-5 lg:p-6 xl:p-8">
-          <div
-            className={cn(
-              "mx-auto flex h-full w-full max-w-5xl flex-col overflow-hidden",
-              proCard,
-              "xl:max-w-none"
-            )}
-          >
-            <ChatWindow
-              mode="full"
-              conversationId={activeConvId}
-              initialMessages={loadedMessages}
-              onConversationChange={(id) => {
-                setActiveConvId(id)
-                void refreshConversations()
-              }}
-              key={activeConvId ?? "new"}
-            />
-          </div>
-        </div>
+        <ChatWindow
+          mode="full"
+          conversationId={activeConvId}
+          initialMessages={loadedMessages}
+          onConversationChange={(id) => {
+            setActiveConvId(id)
+            void refreshConversations()
+          }}
+          key={activeConvId ?? "new"}
+        />
       </div>
     </div>
   )

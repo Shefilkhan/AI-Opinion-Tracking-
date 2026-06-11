@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react"
 import type { SettingsSectionId } from "@/components/settings/settingsNav"
+import { navItemActive, navItemInactive } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 type SettingsNavItemProps = {
@@ -24,23 +25,13 @@ export function SettingsNavItem({
       type="button"
       onClick={() => onSelect(section)}
       className={cn(
-        "flex w-full cursor-pointer items-center rounded-lg text-sm transition-all duration-150 ease-in-out",
-        compact ? "shrink-0 gap-2 px-3 py-2 text-xs" : "gap-2.5 px-3.5 py-2.5",
-        active
-          ? "bg-accent font-medium text-accent-foreground"
-          : "font-normal text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+        "flex w-full min-h-10 cursor-pointer items-center rounded-[var(--radius-md)] pr-3 text-sm font-medium transition-colors duration-150",
+        compact ? "shrink-0 gap-2 px-3 text-xs" : "gap-3",
+        active ? navItemActive : navItemInactive
       )}
       aria-current={active ? "true" : undefined}
     >
-      <Icon
-        className={cn(
-          "size-4 shrink-0",
-          active
-            ? "text-accent-foreground"
-            : "text-muted-foreground"
-        )}
-        aria-hidden
-      />
+      <Icon className="size-4 shrink-0" aria-hidden />
       <span className="truncate">{label}</span>
     </button>
   )
