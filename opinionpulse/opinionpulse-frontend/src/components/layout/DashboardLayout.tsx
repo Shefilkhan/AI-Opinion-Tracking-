@@ -43,6 +43,7 @@ type NavItem = {
 const mainNav: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Search", href: "/search", icon: Search },
+  { label: "Compare", href: "/compare", icon: Activity },
   { label: "Ask Pulse AI", href: "/chat", icon: MessageCircle, badge: "AI" },
   { label: "Reports", href: "/reports", icon: FileText },
   { label: "Alerts", href: "/alerts", icon: Bell },

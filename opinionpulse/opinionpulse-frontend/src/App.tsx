@@ -10,6 +10,7 @@ import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage"
 import { GoogleCallbackPage } from "@/pages/auth/GoogleCallbackPage"
 import { DashboardPage } from "@/pages/DashboardPage"
 import { SearchPage } from "@/pages/SearchPage"
+import { ComparePage } from "@/pages/ComparePage"
 import { ReportsPage } from "@/pages/ReportsPage"
 import { AlertsPage } from "@/pages/AlertsPage"
 import { SettingsPage, SettingsLegacyRedirect } from "@/pages/SettingsPage"
@@ -67,6 +68,14 @@ function App() {
         element={
           <ProtectedRoute>
             <SearchPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/compare"
+        element={
+          <ProtectedRoute>
+            <ComparePage />
           </ProtectedRoute>
         }
       />
