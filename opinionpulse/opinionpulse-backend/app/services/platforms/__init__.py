@@ -10,6 +10,9 @@ from app.services.platforms.news_api import get_trending_news, search_news
 from app.services.platforms.reddit_public import get_trending_reddit, search_reddit
 from app.services.platforms.wikipedia import get_wikipedia_summary
 from app.services.platforms.youtube_platform import get_trending_youtube, search_youtube
+from app.services.platforms.mastodon import search_mastodon
+from app.services.platforms.github import search_github
+from app.services.platforms.stackoverflow import search_stackoverflow
 
 __all__ = [
     "search_reddit",
@@ -25,4 +28,7 @@ __all__ = [
     "search_devto",
     "search_hackernews",
     "get_wikipedia_summary",
+    "search_mastodon",
+    "search_github",
+    "search_stackoverflow",
 ]

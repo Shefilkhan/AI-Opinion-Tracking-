@@ -21,6 +21,9 @@ from app.services.platforms import (
     search_mediastack,
     search_reddit,
     search_youtube,
+    search_mastodon,
+    search_github,
+    search_stackoverflow,
 )
 from app.services.platforms.platform_common import deduplicate_results, normalize_result
 from app.services.search_constants import SENTIMENT_TREND_24H
@@ -29,7 +32,7 @@ from app.services.sentiment_analysis import calculate_sentiment_summary
 logger = logging.getLogger(__name__)
 
 NEWS_SOURCES = ("newsapi", "guardian", "mediastack", "currents", "gnews")
-TECH_SOURCES = ("devto", "hackernews")
+TECH_SOURCES = ("devto", "hackernews", "github", "stackoverflow")
 
 
 def apis_configured() -> dict[str, bool]:
@@ -45,6 +48,9 @@ def apis_configured() -> dict[str, bool]:
         "devto": True,
         "hackernews": True,
         "wikipedia": True,
+        "mastodon": True,
+        "github": True,
+        "stackoverflow": True,
     }
 
 
@@ -53,7 +59,7 @@ def platforms_live_status() -> dict[str, bool]:
 
 
 def _source_enabled(name: str, configured: dict[str, bool]) -> bool:
-    if name in ("reddit", "devto", "hackernews", "wikipedia"):
+    if name in ("reddit", "devto", "hackernews", "wikipedia", "mastodon", "github", "stackoverflow"):
         return True
     return configured.get(name, False)
 
@@ -69,7 +75,7 @@ def _resolve_sources(platform_filter: str, configured: dict[str, bool]) -> list[
     if pf == "tech":
         return list(TECH_SOURCES)
     if pf == "all":
-        sources = ["reddit", "youtube", *TECH_SOURCES]
+        sources = ["reddit", "youtube", "mastodon", *TECH_SOURCES]
         sources.extend(s for s in NEWS_SOURCES if _source_enabled(s, configured))
         return sources
     return []
@@ -86,6 +92,9 @@ def _fetcher_for(name: str) -> Callable[..., list[dict]] | None:
         "gnews": search_gnews,
         "devto": search_devto,
         "hackernews": search_hackernews,
+        "mastodon": search_mastodon,
+        "github": search_github,
+        "stackoverflow": search_stackoverflow,
     }.get(name)
 
 

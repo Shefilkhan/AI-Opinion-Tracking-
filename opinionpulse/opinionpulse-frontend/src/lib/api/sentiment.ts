@@ -188,6 +188,9 @@ export function platformDisplayName(platform: string): string {
     guardian: "Guardian",
     devto: "Dev.to",
     hackernews: "Hacker News",
+    mastodon: "Mastodon",
+    github: "GitHub",
+    stackoverflow: "StackOverflow",
   }
   return map[platform] ?? platform
 }
@@ -232,6 +235,24 @@ export function platformBadge(
         label: "HN",
         className: "bg-orange-600 text-white",
         icon: "Y",
+      }
+    case "mastodon":
+      return {
+        label: "Mastodon",
+        className: "bg-indigo-500 text-white",
+        icon: "M",
+      }
+    case "github":
+      return {
+        label: "GitHub",
+        className: "bg-slate-800 text-white",
+        icon: "Gh",
+      }
+    case "stackoverflow":
+      return {
+        label: "StackOverflow",
+        className: "bg-orange-500 text-white",
+        icon: "SO",
       }
     case "news": {
       const pub = sourceLabel?.split("·")[0]?.trim() || sourceLabel?.split(".")[0]

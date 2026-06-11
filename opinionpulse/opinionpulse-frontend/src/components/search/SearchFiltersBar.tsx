@@ -38,8 +38,11 @@ export function SearchFiltersBar({ filters, onChange }: SearchFiltersBarProps) {
             { value: "all", label: "All" },
             { value: "reddit", label: "Reddit" },
             { value: "youtube", label: "YouTube" },
-            { value: "news", label: "News" },
-            { value: "tech", label: "Tech" },
+            { value: "mastodon", label: "Mastodon" },
+            { value: "github", label: "GitHub" },
+            { value: "stackoverflow", label: "StackOverflow" },
+            { value: "tech", label: "Tech Blogs" },
+            { value: "news", label: "News Sites" },
           ]}
         />
       </FilterRow>
