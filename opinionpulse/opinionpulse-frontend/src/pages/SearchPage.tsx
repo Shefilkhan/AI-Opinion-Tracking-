@@ -20,6 +20,8 @@ import { SearchFiltersBar } from "@/components/search/SearchFiltersBar"
 import { SourcesStatusBar } from "@/components/search/SourcesStatusBar"
 import { WikipediaSummaryCard } from "@/components/search/WikipediaSummaryCard"
 import { SearchSentimentChart } from "@/components/search/SearchSentimentChart"
+import { PlatformSentimentChart } from "@/components/search/PlatformSentimentChart"
+import { PlatformShareChart } from "@/components/search/PlatformShareChart"
 import { searchOpinions } from "@/lib/api/search"
 import type { SearchFilters, SearchResponse } from "@/lib/api/types"
 import { addRecentSearch } from "@/lib/recentSearchStorage"
@@ -221,6 +223,10 @@ export function SearchPage() {
                   />
                   <AiInsightsSection data={data} timeRange={filters.timeRange} />
                   <SearchSentimentChart data={data} />
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:gap-8">
+                    <PlatformSentimentChart data={data} />
+                    <PlatformShareChart data={data} />
+                  </div>
                   <ResultsFeed results={data.results} />
                 </div>
                 <div className="xl:col-span-4">
