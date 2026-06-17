@@ -230,6 +230,20 @@ export function buildMockSearchResponse(query: string): SearchResponse {
     total_results: raw.length,
     sentiment_summary: calculateSentimentSummary(raw),
     platforms_searched: ["reddit", "devto", "hackernews", "youtube", "news"],
+    platforms_live: {
+      reddit: true,
+      devto: true,
+      hackernews: true,
+      youtube: true,
+      news: true,
+    },
+    apis_configured: {
+      reddit: true,
+      devto: true,
+      hackernews: true,
+      youtube: true,
+      news: true,
+    },
     demo_mode: true,
     peak_discussion: "Today at 2:00 PM",
     most_active_platform: "reddit",
@@ -241,6 +255,10 @@ export function buildMockSearchResponse(query: string): SearchResponse {
     ],
     related_topics: ["#Trending", "#News", "#Analysis"],
     sentiment_trend: TREND_24H,
+    sentiment_forecast: [],
+    last_updated: new Date().toISOString(),
+    wiki_summary: null,
+    errors: null,
   }
 }
 

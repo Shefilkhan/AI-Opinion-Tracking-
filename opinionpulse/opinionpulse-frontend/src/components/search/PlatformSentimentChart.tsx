@@ -58,8 +58,8 @@ export function PlatformSentimentChart({ data }: PlatformSentimentChartProps) {
                 return (
                   <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-md">
                     <p className="font-medium text-foreground mb-1">{label}</p>
-                    {payload.map((p) => (
-                      <p key={p.dataKey} style={{ color: p.color }}>
+                    {payload.map((p, i) => (
+                      <p key={String(p.dataKey ?? p.name ?? i)} style={{ color: p.color }}>
                         {p.name}: {p.value}
                       </p>
                     ))}

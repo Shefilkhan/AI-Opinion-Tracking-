@@ -1,7 +1,7 @@
 import type { SearchResponse } from "@/lib/api/types"
 import { proCard, cardTitle } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
-import { analyzeSentiment, sentimentLabelColor } from "@/lib/api/sentiment"
+import { analyzeSentiment } from "@/lib/api/sentiment"
 
 type WordCloudChartProps = {
   data: SearchResponse

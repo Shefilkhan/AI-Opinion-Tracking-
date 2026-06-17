@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom"
 import { ChevronLeft, ChevronRight, TrendingDown, TrendingUp } from "lucide-react"
 import type { TrendingTopic } from "@/api/dashboard"
 import { PageSection } from "@/components/layout/PageSection"
-import { proCard } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 type TrendingTopicsRowProps = {

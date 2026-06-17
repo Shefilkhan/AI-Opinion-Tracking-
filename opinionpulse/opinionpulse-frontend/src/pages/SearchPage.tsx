@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { useSearchParams } from "react-router-dom"
-import { Loader2, Search, Sparkles, Download, FileText } from "lucide-react"
+import { AlertTriangle, Bot, Download, FileText, Loader2, Search, Sparkles } from "lucide-react"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { InlineNotice } from "@/components/layout/InlineNotice"
@@ -298,7 +298,13 @@ export function SearchPage() {
                   )}
 
                   {data.wiki_summary && (
-                    <WikipediaSummaryCard wiki={data.wiki_summary} />
+                    <WikipediaSummaryCard
+                      wiki={{
+                        title: data.wiki_summary.title,
+                        summary: data.wiki_summary.extract,
+                        url: data.wiki_summary.url,
+                      }}
+                    />
                   )}
                   <OpinionSummaryCard
                     data={data}

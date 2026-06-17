@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Loader2, GitCompare, Sparkles } from "lucide-react"
+import { Loader2, GitCompare } from "lucide-react"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { InlineNotice } from "@/components/layout/InlineNotice"

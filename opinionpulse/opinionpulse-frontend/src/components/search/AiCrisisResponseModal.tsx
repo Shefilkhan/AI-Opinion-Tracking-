@@ -4,7 +4,6 @@ import { useMutation } from "@tanstack/react-query"
 import { generateCrisisResponse, type AiCrisisResponse } from "@/api/ai"
 import { Button } from "@/components/ui/button"
 import { btnPrimary } from "@/lib/ui-classes"
-import { cn } from "@/lib/utils"
 
 export function AiCrisisResponseModal({
   topic,
