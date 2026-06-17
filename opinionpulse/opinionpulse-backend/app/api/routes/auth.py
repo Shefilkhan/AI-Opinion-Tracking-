@@ -13,9 +13,11 @@ from app.core.security import hash_password, verify_password
 from app.db.database import get_db
 from app.db.models import User
 from app.schemas.auth import (
+    AuthProvidersResponse,
     AuthSuccessResponse,
     ForgotPasswordRequest,
     ForgotPasswordResponse,
+    GoogleProviderStatus,
     LoginRequest,
     RegisterRequest,
     ResetPasswordRequest,
@@ -38,6 +40,7 @@ from app.services.google_auth_service import get_or_create_google_user
 from app.services.google_oauth_service import (
     build_authorization_url,
     exchange_code_for_user,
+    google_redirect_uri,
     is_google_oauth_configured,
     parse_oauth_state,
 )
@@ -451,17 +454,29 @@ def get_me(current_user: User = Depends(get_current_user)):
     return user_to_response(current_user)
 
 
+@router.get("/providers", response_model=AuthProvidersResponse)
+def auth_providers():
+    return AuthProvidersResponse(
+        google=GoogleProviderStatus(
+            configured=is_google_oauth_configured(),
+            redirect_uri=google_redirect_uri(),
+        )
+    )
+
+
 @router.get("/google")
 def google_login(
     redirect: str = Query("/dashboard", description="Frontend path after sign-in"),
 ):
+    frontend = settings.frontend_url.rstrip("/")
     if not is_google_oauth_configured():
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=(
-                "Google sign-in is not configured. Set GOOGLE_CLIENT_ID and "
-                "GOOGLE_CLIENT_SECRET in the backend .env file."
-            ),
+        message = (
+            "Google sign-in is not configured. Add GOOGLE_CLIENT_ID and "
+            "GOOGLE_CLIENT_SECRET to opinionpulse-backend/.env.local, then restart the backend."
+        )
+        return RedirectResponse(
+            f"{frontend}/auth/signin?error={quote(message)}",
+            status_code=302,
         )
     return RedirectResponse(build_authorization_url(redirect), status_code=302)
 

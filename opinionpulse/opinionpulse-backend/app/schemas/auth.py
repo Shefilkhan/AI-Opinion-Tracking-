@@ -110,5 +110,14 @@ OtpTypeLiteral = Literal[
 ]
 
 
+class GoogleProviderStatus(BaseModel):
+    configured: bool
+    redirect_uri: str
+
+
+class AuthProvidersResponse(BaseModel):
+    google: GoogleProviderStatus
+
+
 RegisterResponse = Union[RegisterPendingResponse, TokenResponse]
 LoginResponse = Union[LoginPendingResponse, TokenResponse]

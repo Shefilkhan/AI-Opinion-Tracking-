@@ -99,8 +99,8 @@ class Settings(BaseSettings):
 
     @property
     def expose_dev_otp_in_api(self) -> bool:
-        """Never expose OTP in API responses; codes are email-only."""
-        return False
+        """Expose OTP in API responses when email is not configured (local dev only)."""
+        return self.app_env == "development" and not self.email_configured
 
     @property
     def database_url(self) -> str:
