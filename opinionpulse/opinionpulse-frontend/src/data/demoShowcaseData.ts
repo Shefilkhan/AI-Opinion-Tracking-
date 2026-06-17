@@ -5,6 +5,9 @@ export const demoSources = [
   { name: "YouTube", live: true },
   { name: "NewsAPI", live: true },
   { name: "Guardian", live: true },
+  { name: "Bluesky", live: true },
+  { name: "Mastodon", live: true },
+  { name: "GitHub", live: true },
   { name: "HN", live: false },
 ] as const
 

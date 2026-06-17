@@ -55,7 +55,7 @@ export function HeroSection() {
 
           <p className="mb-4 max-w-lg text-lg leading-relaxed text-muted-foreground">
             OpinionPulse aggregates and analyzes public opinion from Reddit, YouTube,
-            NewsAPI, Guardian, and 6 more sources — powered by AI to detect debates,
+            NewsAPI, Guardian, Bluesky, Mastodon, GitHub, and 5 more sources — powered by AI to detect debates,
             predict trends, and summarize what millions are saying, instantly.
           </p>
 
@@ -88,7 +88,7 @@ export function HeroSection() {
             </span>
             <span className="flex items-center gap-1.5">
               <Check size={14} className="text-success" />
-              10 free data sources
+              13 free data sources
             </span>
             <span className="flex items-center gap-1.5">
               <Check size={14} className="text-success" />

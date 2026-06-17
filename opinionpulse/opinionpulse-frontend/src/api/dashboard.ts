@@ -101,3 +101,19 @@ export async function getMostDiscussed(): Promise<MostDiscussedItem[]> {
     auth: true,
   })
 }
+
+export async function getTopicsTable(params: {
+  sortBy: string
+  sortOrder: string
+  timeframe: string
+}) {
+  const qs = new URLSearchParams({
+    sort_by: params.sortBy,
+    sort_order: params.sortOrder,
+    timeframe: params.timeframe,
+  })
+  return apiRequest<import("@/types/dashboard").TopicsTableResponse>(
+    `/api/dashboard/topics-table?${qs.toString()}`,
+    { auth: true }
+  )
+}

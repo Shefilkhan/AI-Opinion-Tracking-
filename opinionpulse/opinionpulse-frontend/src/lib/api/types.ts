@@ -72,4 +72,6 @@ export type SearchResponse = {
     url: string
   } | null
   errors: string[] | null
+  locked_sources?: string[]
+  upgrade_message?: string | null
 }

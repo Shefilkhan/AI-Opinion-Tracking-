@@ -28,6 +28,7 @@ import { AiCrisisResponseModal } from "@/components/search/AiCrisisResponseModal
 import { searchOpinions } from "@/lib/api/search"
 import type { SearchFilters, SearchResponse } from "@/lib/api/types"
 import { addRecentSearch } from "@/lib/recentSearchStorage"
+import { useUsage } from "@/hooks/useUsage"
 import { cn } from "@/lib/utils"
 
 const DEFAULT_FILTERS: SearchFilters = {
@@ -51,6 +52,7 @@ const TIME_LABELS: Record<string, string> = {
 }
 
 export function SearchPage() {
+  const { usage, refresh: refreshUsage } = useUsage()
   const [crisisModalOpen, setCrisisModalOpen] = useState(false)
   const [searchParams, setSearchParams] = useSearchParams()
   const initialQ = searchParams.get("q") ?? ""
@@ -73,6 +75,7 @@ export function SearchPage() {
         setData(res)
         addRecentSearch(trimmed)
         setHasSearched(true)
+        void refreshUsage()
       } catch {
         setError("Couldn't load results")
         setData(null)
@@ -80,7 +83,7 @@ export function SearchPage() {
         setLoading(false)
       }
     },
-    [filters, setSearchParams]
+    [filters, setSearchParams, refreshUsage]
   )
 
   useEffect(() => {
@@ -104,10 +107,15 @@ export function SearchPage() {
 
   function handleExportCSV() {
     if (!data?.results?.length) return
-    
-    // Create CSV content
+
+    const maxRows = usage?.usage.csv_exports.limit
+    const exportRows =
+      maxRows != null && maxRows !== -1
+        ? data.results.slice(0, maxRows)
+        : data.results
+
     const headers = ["ID", "Platform", "Author", "Sentiment", "Sentiment Score", "Date", "Content", "URL"]
-    const rows = data.results.map(r => [
+    const rows = exportRows.map(r => [
       r.id,
       r.platform,
       r.author,
@@ -168,7 +176,7 @@ export function SearchPage() {
                   </h2>
                   <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
                     Search any topic, brand, person, or keyword to see what the
-                    world thinks across 10+ live sources
+                    world thinks across 13+ live sources
                   </p>
                 </div>
               )}
@@ -228,6 +236,10 @@ export function SearchPage() {
                 Hacker News need no keys. Check the backend terminal for
                 per-source logs.
               </InlineNotice>
+            )}
+
+            {data && data.upgrade_message && (
+              <InlineNotice variant="info">{data.upgrade_message}</InlineNotice>
             )}
 
             {hasSearched && (

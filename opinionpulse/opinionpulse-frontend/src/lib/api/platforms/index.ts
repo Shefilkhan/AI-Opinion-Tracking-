@@ -12,5 +12,8 @@ export const FREE_API_SOURCES = [
   "gnews",
   "devto",
   "hackernews",
+  "bluesky",
+  "mastodon",
+  "github",
   "wikipedia",
 ] as const

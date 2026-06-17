@@ -37,7 +37,7 @@ export const pricingPlans: PricingPlan[] = [
     tagline: "Perfect for individuals and researchers",
     features: [
       { text: "Up to 100 searches/month", included: true },
-      { text: "5 data sources (Reddit, HN, Dev.to, NewsAPI, Guardian)", included: true },
+      { text: "7 data sources (Reddit, HN, Dev.to, NewsAPI, Guardian, Bluesky, Mastodon)", included: true },
       { text: "Basic sentiment analysis", included: true },
       { text: "7-day search history", included: true },
       { text: "Wikipedia summary cards", included: true },
@@ -61,7 +61,7 @@ export const pricingPlans: PricingPlan[] = [
     highlighted: true,
     features: [
       { text: "Unlimited searches", included: true },
-      { text: "All 10 data sources", included: true },
+      { text: "All 13 data sources", included: true },
       { text: "Advanced sentiment analysis", included: true },
       { text: "30-day search history", included: true },
       { text: "Wikipedia summary cards", included: true },
@@ -121,7 +121,7 @@ export type ComparisonRow = {
 export const comparisonRows: ComparisonRow[] = [
   { category: "SEARCH & DATA", feature: "", starter: "", pro: "", enterprise: "" },
   { feature: "Monthly searches", starter: "100", pro: "Unlimited", enterprise: "Unlimited" },
-  { feature: "Data sources", starter: "5", pro: "10", enterprise: "10+custom" },
+  { feature: "Data sources", starter: "7", pro: "13", enterprise: "13+custom" },
   { feature: "Search history", starter: "7 days", pro: "30 days", enterprise: "1 year" },
   { feature: "Real-time data", starter: true, pro: true, enterprise: true },
 

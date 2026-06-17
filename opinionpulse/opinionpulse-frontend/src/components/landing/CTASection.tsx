@@ -30,7 +30,7 @@ export function CTASection() {
           <ScrollReveal delay={200}>
             <p className="mx-auto mb-8 max-w-xl text-lg text-muted-foreground">
               Join researchers and analysts using OpinionPulse to track what the
-              world thinks — powered by 10 live data sources and AI analysis.
+              world thinks — powered by 13 live data sources and AI analysis.
             </p>
           </ScrollReveal>
 
@@ -60,7 +60,7 @@ export function CTASection() {
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
               {[
                 "No credit card required",
-                "10 free data sources",
+                "13 free data sources",
                 "AI analysis included",
                 "Built for researchers",
               ].map((text) => (
@@ -75,7 +75,7 @@ export function CTASection() {
           <ScrollReveal delay={500}>
             <div className="mt-12 grid grid-cols-3 gap-6 border-t border-border pt-8">
               <div>
-                <p className="mb-1 text-2xl font-bold text-foreground">10+</p>
+                <p className="mb-1 text-2xl font-bold text-foreground">13+</p>
                 <p className="text-sm text-muted-foreground">Live data sources</p>
               </div>
               <div>

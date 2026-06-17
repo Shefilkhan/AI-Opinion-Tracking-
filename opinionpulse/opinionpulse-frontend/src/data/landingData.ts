@@ -37,7 +37,7 @@ export const trendingTopics = [
 ] as const
 
 export const liveStats = [
-  { value: 10, suffix: "+", label: "Data Sources Connected" },
+  { value: 13, suffix: "+", label: "Data Sources Connected" },
   { value: 100, suffix: "K+", label: "Posts Analyzed Daily" },
   { value: 3, suffix: "", label: "AI Features Built-in" },
   { value: 99, suffix: "%", label: "Uptime Guaranteed" },
@@ -51,9 +51,9 @@ export const features: {
   iconColor: string
 }[] = [
   {
-    title: "Search Across 10 Sources",
+    title: "Search Across 13 Sources",
     description:
-      "Reddit, YouTube, Guardian, NewsAPI, Hacker News, Dev.to and more — searched simultaneously in seconds.",
+      "Reddit, YouTube, Bluesky, Mastodon, GitHub, Guardian, NewsAPI, Hacker News, Dev.to and more — searched simultaneously in seconds.",
     icon: Search,
     containerBg: "bg-[#EDE9FE]",
     iconColor: "text-[#7C3AED]",
@@ -105,14 +105,14 @@ export const howItWorksSteps = [
     step: "01",
     title: "Search Any Topic",
     description:
-      "Type any keyword, brand, person, or event. OpinionPulse searches 10 sources simultaneously.",
+      "Type any keyword, brand, person, or event. OpinionPulse searches 13 sources simultaneously.",
     emoji: "🔍",
   },
   {
     step: "02",
     title: "We Gather Live Data",
     description:
-      "Real posts, articles, and videos are fetched from Reddit, YouTube, NewsAPI, and 7 more sources.",
+      "Real posts, articles, and videos are fetched from Reddit, YouTube, Bluesky, Mastodon, GitHub, and 8 more sources.",
     emoji: "📡",
   },
   {
@@ -167,7 +167,7 @@ export const pricingPlans = [
     name: "Free Local Demo",
     price: "$0",
     description: "Run OpinionPulse locally with live API integrations.",
-    features: ["10 data sources", "AI summaries", "Local development"],
+    features: ["13 data sources", "AI summaries", "Local development"],
     highlighted: false,
   },
   {
@@ -282,6 +282,9 @@ export const footerLinks = {
     { label: "NewsAPI", href: "#" },
     { label: "Hacker News", href: "#" },
     { label: "Dev.to", href: "#" },
+    { label: "Bluesky", href: "#" },
+    { label: "Mastodon", href: "#" },
+    { label: "GitHub", href: "#" },
     { label: "GNews", href: "#" },
     { label: "Currents", href: "#" },
     { label: "Mediastack", href: "#" },

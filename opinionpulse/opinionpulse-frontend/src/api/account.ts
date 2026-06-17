@@ -1,4 +1,5 @@
 import { apiRequest } from "@/api/client"
+import type { UsageStatus } from "@/api/usage"
 import type { UserProfile, UserStats } from "@/api/users"
 
 export type AccountProfile = UserProfile
@@ -35,4 +36,8 @@ export function updateAccountPassword(data: {
 
 export function getAccountStats() {
   return apiRequest<AccountStats>("/api/account/stats", { auth: true })
+}
+
+export function getAccountUsage() {
+  return apiRequest<UsageStatus>("/api/account/usage", { auth: true })
 }

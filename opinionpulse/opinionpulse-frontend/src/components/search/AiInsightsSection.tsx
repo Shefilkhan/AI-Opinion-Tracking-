@@ -1,5 +1,6 @@
 import { useAiInsights } from "@/hooks/useAiInsights"
 import type { SearchResponse } from "@/lib/api/types"
+import { AIFeatureCard } from "@/components/billing/AIFeatureCard"
 import { InlineNotice } from "@/components/layout/InlineNotice"
 import { AiDebateAnalysisCard } from "@/components/search/AiDebateAnalysisCard"
 import { AiOpinionSummaryCard } from "@/components/search/AiOpinionSummaryCard"
@@ -36,24 +37,30 @@ export function AiInsightsSection({ data, timeRange }: AiInsightsSectionProps) {
 
   return (
     <div className="space-y-6">
-      <AiOpinionSummaryCard
-        summary={summary.data}
-        loading={summary.loading}
-        error={summary.error}
-        onRetry={retry}
-      />
-      <AiDebateAnalysisCard
-        debate={debate.data}
-        loading={debate.loading}
-        error={debate.error}
-        onRetry={retry}
-      />
-      <AiTrendPredictionCard
-        prediction={predict.data}
-        loading={predict.loading}
-        error={predict.error}
-        onRetry={retry}
-      />
+      <AIFeatureCard feature="ai_opinion_summary">
+        <AiOpinionSummaryCard
+          summary={summary.data}
+          loading={summary.loading}
+          error={summary.error}
+          onRetry={retry}
+        />
+      </AIFeatureCard>
+      <AIFeatureCard feature="ai_debate_analysis">
+        <AiDebateAnalysisCard
+          debate={debate.data}
+          loading={debate.loading}
+          error={debate.error}
+          onRetry={retry}
+        />
+      </AIFeatureCard>
+      <AIFeatureCard feature="ai_trend_prediction">
+        <AiTrendPredictionCard
+          prediction={predict.data}
+          loading={predict.loading}
+          error={predict.error}
+          onRetry={retry}
+        />
+      </AIFeatureCard>
     </div>
   )
 }

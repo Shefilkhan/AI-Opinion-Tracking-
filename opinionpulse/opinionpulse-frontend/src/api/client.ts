@@ -1,4 +1,5 @@
 import { getToken } from "@/lib/authStore"
+import { triggerUpgradeModal } from "@/contexts/UpgradeModalContext"
 
 /** In dev, use Vite proxy (same origin). Override with VITE_API_BASE_URL in .env */
 const API_BASE =
@@ -8,11 +9,13 @@ const API_BASE =
 export class ApiError extends Error {
   status: number
   detail: string
+  limitExceeded?: boolean
 
-  constructor(status: number, detail: string) {
+  constructor(status: number, detail: string, limitExceeded = false) {
     super(detail)
     this.status = status
     this.detail = detail
+    this.limitExceeded = limitExceeded
   }
 }
 
@@ -20,6 +23,25 @@ type RequestOptions = {
   method?: string
   body?: unknown
   auth?: boolean
+}
+
+function parseLimitDetail(data: unknown): { message: string; upgradeTo: string } | null {
+  if (!data || typeof data !== "object") return null
+  const record = data as Record<string, unknown>
+  const detail = record.detail
+  if (detail && typeof detail === "object") {
+    const d = detail as Record<string, unknown>
+    if (d.error === "limit_exceeded") {
+      return {
+        message:
+          typeof d.message === "string"
+            ? d.message
+            : "Upgrade your plan to continue",
+        upgradeTo: typeof d.upgrade_to === "string" ? d.upgrade_to : "pro",
+      }
+    }
+  }
+  return null
 }
 
 function parseErrorDetail(data: unknown, fallback: string): string {
@@ -102,6 +124,17 @@ export async function apiRequest<T>(
   }
 
   if (!response.ok) {
+    if (response.status === 402) {
+      const limit = parseLimitDetail(data)
+      if (limit) {
+        triggerUpgradeModal(limit.message, limit.upgradeTo)
+      }
+      throw new ApiError(
+        402,
+        limit?.message ?? "Plan limit exceeded",
+        true
+      )
+    }
     throw new ApiError(
       response.status,
       parseErrorDetail(data, `Request failed (${response.status})`)

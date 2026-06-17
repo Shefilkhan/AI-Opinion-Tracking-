@@ -1,6 +1,8 @@
 import type { ReactNode } from "react"
 import type { SearchFilters } from "@/lib/api/types"
 import { SegmentedControl } from "@/components/layout/SegmentedControl"
+import { useUsage } from "@/hooks/useUsage"
+import { isPlatformFilterLocked, isTimeRangeLocked } from "@/lib/planAccess"
 import { proCard } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
@@ -26,36 +28,69 @@ function FilterRow({
   )
 }
 
+const PLATFORM_OPTIONS = [
+  { value: "all", label: "All" },
+  { value: "reddit", label: "Reddit" },
+  { value: "youtube", label: "YouTube" },
+  { value: "mastodon", label: "Mastodon" },
+  { value: "bluesky", label: "Bluesky" },
+  { value: "github", label: "GitHub" },
+  { value: "stackoverflow", label: "StackOverflow" },
+  { value: "tech", label: "Tech Blogs" },
+  { value: "news", label: "News Sites" },
+] as const
+
+const TIME_OPTIONS = [
+  { value: "24h", label: "Last 24h" },
+  { value: "7d", label: "Last 7 days" },
+  { value: "30d", label: "Last 30 days" },
+] as const
+
 export function SearchFiltersBar({ filters, onChange }: SearchFiltersBarProps) {
+  const { usage } = useUsage()
+  const allowedSources = usage?.features?.data_sources
+  const maxHistoryDays = usage?.features?.search_history_days
+
+  const platformOptions = PLATFORM_OPTIONS.map((opt) => {
+    const locked = isPlatformFilterLocked(opt.value, allowedSources)
+    return {
+      ...opt,
+      label: locked ? `${opt.label} 🔒` : opt.label,
+      disabled: locked,
+    }
+  })
+
+  const timeOptions = TIME_OPTIONS.map((opt) => {
+    const locked = isTimeRangeLocked(opt.value, maxHistoryDays)
+    return {
+      ...opt,
+      label: locked ? `${opt.label} 🔒` : opt.label,
+      disabled: locked,
+    }
+  })
+
   return (
     <div className={cn(proCard, "flex flex-col gap-4 p-4 sm:p-5")}>
       <FilterRow label="Platform">
         <SegmentedControl
           aria-label="Filter by platform"
           value={filters.platform}
-          onChange={(platform) => onChange({ ...filters, platform })}
-          options={[
-            { value: "all", label: "All" },
-            { value: "reddit", label: "Reddit" },
-            { value: "youtube", label: "YouTube" },
-            { value: "mastodon", label: "Mastodon" },
-            { value: "github", label: "GitHub" },
-            { value: "stackoverflow", label: "StackOverflow" },
-            { value: "tech", label: "Tech Blogs" },
-            { value: "news", label: "News Sites" },
-          ]}
+          onChange={(platform) => {
+            if (isPlatformFilterLocked(platform, allowedSources)) return
+            onChange({ ...filters, platform })
+          }}
+          options={platformOptions}
         />
       </FilterRow>
       <FilterRow label="Time Range">
         <SegmentedControl
           aria-label="Filter by time range"
           value={filters.timeRange}
-          onChange={(timeRange) => onChange({ ...filters, timeRange })}
-          options={[
-            { value: "24h", label: "Last 24h" },
-            { value: "7d", label: "Last 7 days" },
-            { value: "30d", label: "Last 30 days" },
-          ]}
+          onChange={(timeRange) => {
+            if (isTimeRangeLocked(timeRange, maxHistoryDays)) return
+            onChange({ ...filters, timeRange })
+          }}
+          options={timeOptions}
         />
       </FilterRow>
       <FilterRow label="Sentiment">

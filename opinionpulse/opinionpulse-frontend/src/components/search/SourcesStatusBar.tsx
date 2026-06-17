@@ -13,6 +13,10 @@ const SOURCE_LABELS: Record<string, string> = {
   gnews: "GNews",
   devto: "Dev.to",
   hackernews: "Hacker News",
+  bluesky: "Bluesky",
+  mastodon: "Mastodon",
+  github: "GitHub",
+  stackoverflow: "Stack Overflow",
   wikipedia: "Wikipedia",
 }
 

@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils"
 export type SegmentedOption<T extends string = string> = {
   value: T
   label: string
+  disabled?: boolean
 }
 
 type SegmentedControlProps<T extends string = string> = {
@@ -31,13 +32,19 @@ export function SegmentedControl<T extends string = string>({
     >
       {options.map((opt) => {
         const active = opt.value === value
+        const disabled = opt.disabled === true
         return (
           <button
             key={opt.value}
             type="button"
-            onClick={() => onChange(opt.value)}
+            disabled={disabled}
+            title={disabled ? "Available on Pro plan" : undefined}
+            onClick={() => {
+              if (!disabled) onChange(opt.value)
+            }}
             className={cn(
               "rounded-[calc(var(--radius-md)-2px)] px-3 py-1.5 text-sm font-medium transition-colors duration-150",
+              disabled && "cursor-not-allowed opacity-50",
               active
                 ? "bg-card text-foreground shadow-none ring-1 ring-border"
                 : "text-muted-foreground hover:text-foreground"

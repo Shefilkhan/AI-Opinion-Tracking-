@@ -191,6 +191,7 @@ export function platformDisplayName(platform: string): string {
     mastodon: "Mastodon",
     github: "GitHub",
     stackoverflow: "StackOverflow",
+    bluesky: "Bluesky",
   }
   return map[platform] ?? platform
 }
@@ -239,13 +240,13 @@ export function platformBadge(
     case "mastodon":
       return {
         label: "Mastodon",
-        className: "bg-indigo-500 text-white",
+        className: "bg-[#6364FF] text-white",
         icon: "M",
       }
     case "github":
       return {
         label: "GitHub",
-        className: "bg-slate-800 text-white",
+        className: "bg-[#181717] text-white",
         icon: "Gh",
       }
     case "stackoverflow":
@@ -253,6 +254,12 @@ export function platformBadge(
         label: "StackOverflow",
         className: "bg-orange-500 text-white",
         icon: "SO",
+      }
+    case "bluesky":
+      return {
+        label: "Bluesky",
+        className: "bg-[#1185FE] text-white",
+        icon: "B",
       }
     case "news": {
       const pub = sourceLabel?.split("·")[0]?.trim() || sourceLabel?.split(".")[0]

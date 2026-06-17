@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { AppearanceProvider } from "@/contexts/AppearanceContext"
 import { AuthProvider } from "@/contexts/AuthContext"
+import { UpgradeModalProvider } from "@/contexts/UpgradeModalContext"
 import { ToastProvider } from "@/components/ui/toast"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import {
@@ -22,7 +23,9 @@ function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <ToastProvider>
       <AuthProvider>
-        <AppearanceProvider>{children}</AppearanceProvider>
+        <UpgradeModalProvider>
+          <AppearanceProvider>{children}</AppearanceProvider>
+        </UpgradeModalProvider>
       </AuthProvider>
     </ToastProvider>
   )
