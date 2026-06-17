@@ -53,10 +53,8 @@ export function initThemeOnStartup(): void {
   root.classList.remove("dark", "light")
   if (saved === "dark") {
     root.classList.add("dark")
-  } else if (saved === "light") {
+  } else {
     root.classList.add("light")
-  } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-    root.classList.add("dark")
   }
 }
 

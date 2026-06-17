@@ -15,7 +15,7 @@ export function LandingContainer({
 
 export function LandingLabel({ children }: { children: ReactNode }) {
   return (
-    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-purple-600">
+    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-primary">
       {children}
     </p>
   )

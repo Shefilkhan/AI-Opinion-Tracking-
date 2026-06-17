@@ -18,7 +18,7 @@ export function LandingPage() {
         <HeroSection />
         <LiveStatsBar />
         <div
-          className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"
+          className="h-px bg-gradient-to-r from-transparent via-border to-transparent"
           aria-hidden
         />
         <FeaturesSection />

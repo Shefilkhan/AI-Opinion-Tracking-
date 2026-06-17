@@ -3,16 +3,19 @@ import { pricingPlans } from "@/data/pricingData"
 import { BillingToggle } from "@/components/pricing/BillingToggle"
 import { PricingCard } from "@/components/pricing/PricingCard"
 import { ComparisonTable } from "@/components/pricing/ComparisonTable"
+import { cn } from "@/lib/utils"
 
 type PricingPlansGridProps = {
   showComparison?: boolean
   showBetaNote?: boolean
+  showBillingToggle?: boolean
   className?: string
 }
 
 export function PricingPlansGrid({
   showComparison = true,
   showBetaNote = true,
+  showBillingToggle = true,
   className,
 }: PricingPlansGridProps) {
   const [isAnnual, setIsAnnual] = useState(false)
@@ -25,11 +28,18 @@ export function PricingPlansGrid({
 
   return (
     <div className={className}>
-      <div className="flex justify-center">
-        <BillingToggle isAnnual={isAnnual} onChange={setIsAnnual} />
-      </div>
+      {showBillingToggle && (
+        <div className="flex justify-center">
+          <BillingToggle isAnnual={isAnnual} onChange={setIsAnnual} />
+        </div>
+      )}
 
-      <div className="cards-grid mt-12 grid items-start gap-8 lg:grid-cols-3 lg:gap-6">
+      <div
+        className={cn(
+          "grid items-start gap-8 lg:grid-cols-3 lg:gap-6",
+          showBillingToggle ? "mt-10" : "mt-0"
+        )}
+      >
         {pricingPlans.map((plan) => (
           <div key={plan.id} className={orderClass(plan.id)}>
             <PricingCard plan={plan} isAnnual={isAnnual} />
@@ -38,8 +48,8 @@ export function PricingPlansGrid({
       </div>
 
       {showBetaNote && (
-        <p className="mt-8 text-center text-sm text-muted-foreground">
-          💡 Currently in beta — all features available free during development.
+        <p className="mt-10 text-center text-sm text-muted-foreground">
+          ⚡ Currently in beta — all features available free during development.
           Pricing activates at launch.
         </p>
       )}

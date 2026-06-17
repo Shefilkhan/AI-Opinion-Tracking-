@@ -23,7 +23,7 @@ export function PricingSection() {
         </ScrollReveal>
 
         <div className="mt-12">
-          <PricingPlansGrid showComparison={false} />
+          <PricingPlansGrid showComparison={false} showBillingToggle={false} />
         </div>
 
         <div className="mt-10 text-center">

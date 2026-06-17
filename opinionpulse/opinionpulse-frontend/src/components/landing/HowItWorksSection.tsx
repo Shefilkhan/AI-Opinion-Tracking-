@@ -26,7 +26,7 @@ export function HowItWorksSection() {
                 glowColor="124, 58, 237"
                 className="relative h-full p-8 text-center shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
               >
-                <div className="mx-auto mb-5 flex size-10 items-center justify-center rounded-full bg-purple-600 text-base font-bold text-white">
+                <div className="mx-auto mb-5 flex size-10 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground">
                   {step.step}
                 </div>
                 <span className="mb-4 block text-4xl" aria-hidden>
@@ -38,7 +38,7 @@ export function HowItWorksSection() {
 
               {i < howItWorksSteps.length - 1 && (
                 <ChevronRight
-                  className="pointer-events-none absolute -right-5 top-1/2 hidden size-6 -translate-y-1/2 text-purple-300 md:block"
+                  className="pointer-events-none absolute -right-5 top-1/2 hidden size-6 -translate-y-1/2 text-primary/40 md:block"
                   aria-hidden
                 />
               )}

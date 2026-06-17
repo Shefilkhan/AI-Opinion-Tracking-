@@ -2,7 +2,6 @@ import { Link } from "react-router-dom"
 import { Check, X } from "lucide-react"
 import type { PlanId, PricingPlan } from "@/data/pricingData"
 import { planPrices, ENTERPRISE_EMAIL } from "@/data/pricingData"
-import GlowCard from "@/components/ui/GlowCard"
 import { saveSelectedPlan } from "@/lib/planStorage"
 import { cn } from "@/lib/utils"
 
@@ -20,14 +19,14 @@ function PriceDisplay({ planId, isAnnual }: { planId: PlanId; isAnnual: boolean 
       <div className="flex items-end gap-1">
         <span
           key={`${planId}-${isAnnual}`}
-          className="text-5xl font-bold tracking-tight text-gray-900 transition-all duration-300"
+          className="text-5xl font-bold tracking-tight text-foreground transition-all duration-300"
         >
           ${amount}
         </span>
-        <span className="mb-2 text-lg text-gray-500">/mo</span>
+        <span className="mb-2 text-lg text-muted-foreground">/mo</span>
       </div>
       {isAnnual && (
-        <p className="mt-1 text-sm text-gray-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           billed ${p.annualTotal}/year
         </p>
       )}
@@ -49,7 +48,7 @@ export function PricingCard({ plan, isAnnual }: PricingCardProps) {
       href={ENTERPRISE_EMAIL}
       className={cn(
         "mt-8 flex w-full items-center justify-center rounded-xl px-6 py-3.5 text-sm font-semibold transition-all duration-300",
-        "bg-gray-900 text-white hover:bg-gray-700 hover:shadow-lg"
+        "bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900"
       )}
     >
       {plan.cta}
@@ -60,12 +59,11 @@ export function PricingCard({ plan, isAnnual }: PricingCardProps) {
       onClick={handleCta}
       className={cn(
         "mt-8 flex w-full items-center justify-center rounded-xl px-6 py-3.5 text-sm font-semibold transition-all duration-300",
-        plan.ctaVariant === "gradient" &&
-          "bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-purple-500/25 hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-300",
+        plan.ctaVariant === "gradient" && "btn-gradient hover:scale-[1.02]",
         plan.ctaVariant === "outline" &&
-          "border-2 border-gray-300 bg-white text-gray-900 hover:border-purple-500 hover:text-purple-600",
+          "border-2 border-border bg-card text-foreground hover:border-primary/40 hover:text-primary dark:border-white/15 dark:hover:border-primary/50",
         plan.ctaVariant === "dark" &&
-          "bg-gray-900 text-white hover:bg-gray-700"
+          "bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-950"
       )}
     >
       {plan.cta}
@@ -76,38 +74,38 @@ export function PricingCard({ plan, isAnnual }: PricingCardProps) {
     <div
       className={cn(
         "relative flex h-full flex-col",
-        isPro && "md:-mt-4 md:mb-4"
+        isPro && "md:-mt-3 md:mb-3"
       )}
     >
       {plan.badge && plan.badgePosition === "top" && (
-        <div className="mb-3 flex justify-center">
-          <span className="rounded-full bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-1 text-sm font-semibold text-white shadow-md">
+        <div className="mb-4 flex justify-center">
+          <span className="rounded-full bg-gradient-to-r from-violet-600 to-blue-600 px-4 py-1.5 text-sm font-semibold text-white shadow-md shadow-violet-500/25">
             {plan.badge}
           </span>
         </div>
       )}
 
-      <GlowCard
-        glowColor={isPro ? "168, 85, 247" : "139, 92, 246"}
+      <div
         className={cn(
-          "glow-card-pricing flex h-full flex-col rounded-[20px] p-8 shadow-lg transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+          "flex h-full flex-col rounded-2xl border bg-card p-8 shadow-lg transition-all duration-300",
           isPro &&
-            "glow-card-pro shadow-xl shadow-purple-200/60 md:scale-105 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-purple-200",
-          !isPro && "hover:-translate-y-1 hover:shadow-xl"
+            "border-primary/30 shadow-xl shadow-primary/10 ring-1 ring-primary/20 md:scale-[1.03] hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/15",
+          !isPro && "border-border hover:-translate-y-0.5 hover:shadow-xl dark:border-white/10 dark:bg-white/[0.03]"
         )}
       >
         {plan.badge && plan.badgePosition === "corner" ? (
           <div className="flex items-start justify-between gap-3">
-            <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
-            <span className="shrink-0 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+            <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
+            <span className="shrink-0 rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground dark:border-white/10 dark:bg-white/5">
               {plan.badge}
             </span>
           </div>
         ) : (
-          <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
+          <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
         )}
+
         <PriceDisplay planId={plan.id} isAnnual={isAnnual} />
-        <p className="mt-3 text-sm text-gray-600">{plan.tagline}</p>
+        <p className="mt-3 text-sm text-muted-foreground">{plan.tagline}</p>
 
         <ul className="mt-8 flex-1 space-y-3">
           {plan.features.map((f) => (
@@ -115,13 +113,13 @@ export function PricingCard({ plan, isAnnual }: PricingCardProps) {
               key={f.text}
               className={cn(
                 "flex items-start gap-2.5 text-sm",
-                f.included ? "text-gray-700" : "text-gray-400"
+                f.included ? "text-foreground" : "text-muted-foreground/60"
               )}
             >
               {f.included ? (
-                <Check className="mt-0.5 size-4 shrink-0 text-green-600" />
+                <Check className="mt-0.5 size-4 shrink-0 text-success" />
               ) : (
-                <X className="mt-0.5 size-4 shrink-0 text-gray-300" />
+                <X className="mt-0.5 size-4 shrink-0 text-muted-foreground/40" />
               )}
               <span>{f.text}</span>
             </li>
@@ -129,15 +127,16 @@ export function PricingCard({ plan, isAnnual }: PricingCardProps) {
         </ul>
 
         {ctaEl}
+
         {plan.footnote && (
-          <p className="mt-3 text-center text-xs text-gray-500">
+          <p className="mt-3 text-center text-xs text-muted-foreground">
             {isEnterprise ? (
               <>
                 or{" "}
                 <Link
                   to="/auth/signup?plan=enterprise"
                   onClick={() => saveSelectedPlan("enterprise")}
-                  className="text-purple-600 hover:underline"
+                  className="font-medium text-primary hover:underline"
                 >
                   start with a 14-day free trial
                 </Link>
@@ -147,7 +146,7 @@ export function PricingCard({ plan, isAnnual }: PricingCardProps) {
             )}
           </p>
         )}
-      </GlowCard>
+      </div>
     </div>
   )
 }

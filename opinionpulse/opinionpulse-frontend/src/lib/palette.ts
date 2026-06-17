@@ -1,14 +1,14 @@
 /** Design tokens — keep in sync with :root in index.css */
 
 export const palette = {
-  background: "#faf9f7",
+  background: "#f8f7ff",
   card: "#ffffff",
-  foreground: "#1c1917",
-  mutedForeground: "#78716c",
-  primary: "#c96442",
-  border: "#e8e6e1",
-  destructive: "#dc2626",
-  success: "#16a34a",
+  foreground: "#0f172a",
+  mutedForeground: "#64748b",
+  primary: "#7c3aed",
+  border: "#e2e8f0",
+  destructive: "#ef4444",
+  success: "#22c55e",
 } as const
 
 /** Recharts cannot use Tailwind classes; use palette hex values */

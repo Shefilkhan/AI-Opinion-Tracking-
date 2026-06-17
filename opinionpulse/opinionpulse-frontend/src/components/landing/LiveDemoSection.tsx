@@ -1,116 +1,115 @@
-import { ScrollReveal } from "@/components/landing/ScrollReveal"
+import { useRef, useState, useEffect } from "react"
+import { ArrowDown, MousePointer2 } from "lucide-react"
+import { DemoBrowserMock } from "@/components/landing/demo/DemoBrowserMock"
+import { demoScrollSteps } from "@/data/demoShowcaseData"
+import {
+  demoTransforms,
+  useDemoScrollProgress,
+} from "@/hooks/useDemoScrollProgress"
 import { cn } from "@/lib/utils"
 
 export function LiveDemoSection() {
+  const sectionRef = useRef<HTMLElement>(null)
+  const progress = useDemoScrollProgress(sectionRef)
+  const [reducedMotion, setReducedMotion] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)")
+    const update = () => setReducedMotion(mq.matches)
+    update()
+    mq.addEventListener("change", update)
+    return () => mq.removeEventListener("change", update)
+  }, [])
+
+  const { rotateX, rotateY, translateZ, scale, innerScroll, activeStep } =
+    demoTransforms(progress, reducedMotion)
+
   return (
     <section
       id="demo"
-      className="relative overflow-hidden py-20"
-      style={{
-        background: "linear-gradient(135deg, #0f0f1a 0%, #1a0a2e 50%, #0d1117 100%)",
-      }}
+      ref={sectionRef}
+      className="relative border-t border-border bg-muted/20 dark:bg-[#0a0a14]/50"
+      style={{ minHeight: reducedMotion ? "auto" : "280vh" }}
     >
-      <div className="mx-auto max-w-6xl px-6">
-        <ScrollReveal className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="landing-orb-purple absolute left-1/4 top-20 size-[28rem] opacity-30" />
+        <div className="landing-orb-blue absolute bottom-20 right-1/4 size-80 opacity-25" />
+      </div>
+
+      <div
+        className={cn(
+          "mx-auto max-w-6xl px-6",
+          reducedMotion ? "py-20" : "sticky top-16 flex min-h-[calc(100vh-4rem)] flex-col justify-center py-12"
+        )}
+      >
+        <div className="relative z-10 mx-auto mb-10 max-w-2xl text-center">
+          <p className="landing-badge inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-widest">
+            Interactive demo
+          </p>
+          <h2 className="mt-4 font-serif-display text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
             See It In Action
           </h2>
-          <p className="mt-4 text-lg text-gray-400">
+          <p className="mt-3 text-lg text-muted-foreground">
             Real data, real sentiment, real insights
           </p>
-        </ScrollReveal>
+          {!reducedMotion && progress < 0.92 && (
+            <p className="mt-4 inline-flex items-center gap-2 text-sm text-primary animate-pulse">
+              <MousePointer2 className="size-4" />
+              Scroll to explore the product
+              <ArrowDown className="size-4" />
+            </p>
+          )}
+        </div>
 
-        <ScrollReveal className="relative mx-auto mt-16 max-w-5xl" delay={150}>
-          <div className="landing-glow-ring pointer-events-none absolute inset-0 -m-[5%]" aria-hidden />
-          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0d1117] shadow-2xl">
-            <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
-              <div className="flex gap-1.5">
-                <div className="size-3 rounded-full bg-red-500/80" />
-                <div className="size-3 rounded-full bg-yellow-500/80" />
-                <div className="size-3 rounded-full bg-green-500/80" />
-              </div>
-              <div className="flex-1 rounded-md bg-white/5 px-3 py-1 text-xs text-gray-500">
-                opinionpulse.io/search?q=Bitcoin
-              </div>
-            </div>
+        <div className="relative z-10 mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[160px_1fr] lg:gap-10">
+          <ol className="hidden lg:flex lg:flex-col lg:gap-3 lg:pt-8">
+            {demoScrollSteps.map((step, i) => (
+              <li
+                key={step.id}
+                className={cn(
+                  "rounded-xl border px-3 py-2.5 text-sm transition-all duration-300",
+                  i === activeStep
+                    ? "border-primary/40 bg-primary/10 font-semibold text-primary shadow-sm"
+                    : i < activeStep
+                      ? "border-border bg-card/50 text-muted-foreground"
+                      : "border-transparent text-muted-foreground/60"
+                )}
+              >
+                <span className="text-[10px] font-medium uppercase tracking-wider opacity-70">
+                  Step {i + 1}
+                </span>
+                <p className="mt-0.5">{step.label}</p>
+              </li>
+            ))}
+          </ol>
 
-            <div className="max-h-[480px] origin-top scale-[0.92] overflow-y-auto p-4 md:p-6">
-              <div className="mb-4 flex gap-2">
-                <div className="h-10 flex-1 rounded-lg border border-white/10 bg-white/5" />
-                <div className="h-10 w-24 rounded-lg bg-purple-600/80" />
-              </div>
-              <div className="mb-4 flex flex-wrap gap-2">
-                {["All", "Reddit", "YouTube", "News", "24h"].map((f) => (
-                  <span
-                    key={f}
-                    className="rounded-full border border-white/10 px-3 py-1 text-xs text-gray-400"
-                  >
-                    {f}
-                  </span>
-                ))}
-              </div>
-
-              <div className="grid gap-4 lg:grid-cols-3">
-                <div className="space-y-4 lg:col-span-2">
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                    <p className="text-xs text-gray-500">Wikipedia</p>
-                    <p className="mt-1 text-sm font-medium text-white">Bitcoin</p>
-                    <p className="mt-2 line-clamp-2 text-xs text-gray-400">
-                      Decentralized digital currency without a central bank...
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl border border-purple-500/30 bg-purple-500/10 p-4">
-                    <p className="text-xs font-medium text-purple-300">🤖 AI Opinion Analysis</p>
-                    <p className="mt-2 text-sm text-gray-300">
-                      &ldquo;Bitcoin faces a crisis of confidence as institutional support
-                      clashes with retail fear.&rdquo;
-                    </p>
-                  </div>
-
-                  {[
-                    {
-                      platform: "Reddit",
-                      title: "BTC drops 7% — what now?",
-                      swatch: "bg-orange-500/20",
-                    },
-                    {
-                      platform: "YouTube",
-                      title: "Why I'm still bullish on Bitcoin",
-                      swatch: "bg-red-500/20",
-                    },
-                    {
-                      platform: "News",
-                      title: "Regulators eye crypto ETFs",
-                      swatch: "bg-blue-500/20",
-                    },
-                  ].map((r) => (
-                    <div
-                      key={r.title}
-                      className="flex gap-3 rounded-xl border border-white/10 bg-white/5 p-3"
-                    >
-                      <div className={cn("size-10 shrink-0 rounded-lg", r.swatch)} />
-                      <div>
-                        <span className="text-[10px] text-gray-500">{r.platform}</span>
-                        <p className="text-sm font-medium text-white">{r.title}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-xs font-medium text-gray-400">Top Keywords</p>
-                  <ul className="mt-3 space-y-2 text-sm text-gray-300">
-                    <li>#bitcoin</li>
-                    <li>#crypto</li>
-                    <li>#etf</li>
-                    <li>#volatility</li>
-                  </ul>
-                </div>
-              </div>
+          <div
+            className="demo-stage mx-auto w-full max-w-5xl"
+            style={{ perspective: reducedMotion ? "none" : "1400px" }}
+          >
+            <div
+              className="demo-browser relative will-change-transform"
+              style={{
+                transformStyle: reducedMotion ? "flat" : "preserve-3d",
+                transform: reducedMotion
+                  ? undefined
+                  : `rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${translateZ}px) scale(${scale})`,
+              }}
+            >
+              <div className="landing-glow-ring pointer-events-none absolute -inset-[4%] opacity-60" aria-hidden />
+              <DemoBrowserMock innerScroll={innerScroll} />
             </div>
           </div>
-        </ScrollReveal>
+        </div>
+
+        {!reducedMotion && (
+          <div className="relative z-10 mx-auto mt-8 h-1.5 max-w-md overflow-hidden rounded-full bg-muted dark:bg-white/10">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-violet-600 to-blue-600 transition-[width] duration-150"
+              style={{ width: `${progress * 100}%` }}
+            />
+          </div>
+        )}
       </div>
     </section>
   )
