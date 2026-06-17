@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { UsageWidget } from "@/components/billing/UsageWidget"
+import { DashboardTopBar } from "@/components/dashboard/DashboardTopBar"
 import { Skeleton } from "@/components/ui/Skeleton"
 import { cn } from "@/lib/utils"
 import { pageShell } from "@/lib/ui-classes"
@@ -67,9 +68,9 @@ function NavLinkItem({
       to={item.href}
       onClick={onNavigate}
       className={cn(
-        "flex min-h-9 items-center gap-2.5 rounded-[9px] px-3 text-[13.5px] font-medium transition-[background,color] duration-150",
+        "flex min-h-9 items-center gap-2.5 rounded-[var(--dash-radius-sm)] border border-transparent px-3 text-[13px] font-medium transition-[background,color,border-color] duration-150",
         isActive
-          ? "bg-[var(--dash-accent-soft)] text-[var(--dash-accent)]"
+          ? "border-[var(--dash-accent-border)] bg-[var(--dash-accent-soft)] text-[var(--dash-accent)]"
           : "text-[var(--dash-text-mid)] hover:bg-[var(--dash-surface-alt)] hover:text-[var(--dash-text)]"
       )}
     >
@@ -121,6 +122,8 @@ type DashboardLayoutProps = {
   hidePageHeader?: boolean
   headerAction?: React.ReactNode
   dashShell?: boolean
+  toolbarLastUpdated?: string | null
+  toolbarIsLive?: boolean
 }
 
 export function DashboardLayout({
@@ -130,6 +133,8 @@ export function DashboardLayout({
   hidePageHeader = false,
   headerAction,
   dashShell = false,
+  toolbarLastUpdated,
+  toolbarIsLive = true,
 }: DashboardLayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
@@ -153,13 +158,13 @@ export function DashboardLayout({
     <>
       <Link
         to="/dashboard"
-        className="flex min-h-[60px] items-center gap-2.5 border-b border-[var(--dash-border)] px-4 py-3.5 transition-opacity hover:opacity-80 sm:px-5"
+        className="flex min-h-[56px] items-center gap-2.5 border-b border-[var(--dash-border)] px-4 py-3 transition-opacity hover:opacity-90 sm:px-5"
         onClick={() => setMobileOpen(false)}
       >
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[var(--dash-accent)] text-white">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-[var(--dash-radius-sm)] bg-[var(--dash-accent)] text-white shadow-sm">
           <Activity className="size-4" strokeWidth={2} aria-hidden />
         </span>
-        <span className="truncate text-base font-semibold text-[var(--dash-text)]">
+        <span className="truncate text-[15px] font-semibold tracking-[-0.01em] text-[var(--dash-text)]">
           OpinionPulse
         </span>
       </Link>
@@ -245,20 +250,27 @@ export function DashboardLayout({
   return (
     <div
       className={cn(
-        "flex min-h-screen w-full",
+        "flex h-screen w-full overflow-hidden",
         dashShell ? "dashboard-shell bg-[var(--dash-bg)] text-[var(--dash-text)]" : pageShell
       )}
     >
       <aside
         className={cn(
-          "relative z-20 hidden h-screen shrink-0 flex-col border-r border-[var(--dash-border)] bg-[var(--dash-surface)] md:flex md:w-60 lg:w-64"
+          "relative z-20 hidden h-full shrink-0 flex-col border-r border-[var(--dash-border)] bg-[var(--dash-sidebar-bg)] md:flex md:w-60 lg:w-64"
         )}
       >
         {sidebar}
       </aside>
 
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-        {!hidePageHeader && (
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
+        {dashShell && (
+          <DashboardTopBar
+            mobileMenu={mobileMenuTrigger}
+            lastUpdated={toolbarLastUpdated}
+            isLive={toolbarIsLive}
+          />
+        )}
+        {!hidePageHeader && !dashShell && (
           <header className="sticky top-0 z-40 flex min-h-[64px] shrink-0 items-center gap-4 border-b border-[var(--dash-border)] bg-[var(--dash-surface)]/95 px-5 py-3 backdrop-blur-sm sm:px-6 lg:px-10">
             {mobileMenuTrigger}
             <div className="min-w-0 flex-1">
@@ -274,7 +286,7 @@ export function DashboardLayout({
             {headerAction && <div className="shrink-0">{headerAction}</div>}
           </header>
         )}
-        {hidePageHeader && (
+        {hidePageHeader && !dashShell && (
           <div className="sticky top-0 z-40 flex min-h-14 shrink-0 items-center border-b border-[var(--dash-border)] bg-[var(--dash-surface)] px-5 py-2 md:hidden">
             {mobileMenuTrigger}
           </div>

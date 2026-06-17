@@ -1,6 +1,8 @@
 import type { PlatformPulse } from "@/api/dashboard"
 import { DashboardSection } from "@/components/dashboard/DashboardSection"
+import { platformBadge } from "@/lib/api/sentiment"
 import { dashCardStatic } from "@/lib/dash-classes"
+import { platformBrandColor } from "@/lib/platformBrandColors"
 import { cn } from "@/lib/utils"
 
 type PlatformPulsePanelProps = {
@@ -9,14 +11,23 @@ type PlatformPulsePanelProps = {
 
 export function PlatformPulsePanel({ items }: PlatformPulsePanelProps) {
   return (
-    <DashboardSection title="Social media pulse">
-      <div className={cn(dashCardStatic, "p-5")}>
-        <ul className="space-y-5">
-          {items.map((p) => (
-            <li key={p.platform}>
+    <DashboardSection
+      title="Social media pulse"
+      description="Live sentiment by platform"
+    >
+      <div className={cn(dashCardStatic, "divide-y divide-[var(--dash-border)] overflow-hidden p-0")}>
+        {items.map((p) => {
+          const badge = platformBadge(p.platform, p.label)
+          const brand = platformBrandColor(p.platform)
+
+          return (
+            <div key={p.platform} className="p-4 transition-colors hover:bg-[var(--dash-surface-alt)]/40">
               <div className="flex items-center gap-3">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--dash-accent-soft)] text-sm font-semibold text-[var(--dash-accent)]">
-                  {p.label.charAt(0)}
+                <span
+                  className="flex size-10 shrink-0 items-center justify-center rounded-[11px] text-sm font-bold text-white shadow-sm"
+                  style={{ backgroundColor: brand }}
+                >
+                  {badge.icon}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -36,24 +47,23 @@ export function PlatformPulsePanel({ items }: PlatformPulsePanelProps) {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-[var(--dash-text-faint)]">{p.mentions}</p>
+                  <p className="mt-0.5 truncate text-xs text-[var(--dash-text-faint)]">
+                    {p.mentions}
+                  </p>
                 </div>
-              </div>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-xs text-[var(--dash-text-faint)]">Sentiment</span>
-                <div className="h-1.5 flex-1 overflow-hidden rounded-sm bg-[var(--dash-surface-alt)]">
-                  <div
-                    className="h-full rounded-sm bg-[var(--dash-pos)]"
-                    style={{ width: `${p.positive_pct}%` }}
-                  />
-                </div>
-                <span className="text-xs font-semibold text-[var(--dash-pos)]">
+                <span className="shrink-0 text-sm font-semibold tabular-nums text-[var(--dash-pos)]">
                   {p.positive_pct}%
                 </span>
               </div>
-            </li>
-          ))}
-        </ul>
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--dash-surface-alt)]">
+                <div
+                  className="h-full rounded-full bg-[var(--dash-pos)] transition-[width] duration-300"
+                  style={{ width: `${p.positive_pct}%` }}
+                />
+              </div>
+            </div>
+          )
+        })}
       </div>
     </DashboardSection>
   )

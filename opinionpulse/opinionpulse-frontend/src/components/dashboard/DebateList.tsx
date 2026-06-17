@@ -1,10 +1,11 @@
-import { ExternalLink } from "lucide-react"
+import { ArrowUpRight, ExternalLink } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import type { DebateItem } from "@/api/dashboard"
 import { DashboardSection } from "@/components/dashboard/DashboardSection"
+import { DebateMedia } from "@/components/dashboard/DebateMedia"
+import { SentimentSplitBar } from "@/components/dashboard/SentimentSplitBar"
 import { dashCardStatic } from "@/lib/dash-classes"
 import { formatLiveDebateTimeAgo } from "@/lib/formatTimeAgo"
-import { platformDotColor, platformLabel } from "@/lib/platformDots"
 import { cn } from "@/lib/utils"
 
 type DebateListProps = {
@@ -15,77 +16,77 @@ export function DebateList({ debates }: DebateListProps) {
   const navigate = useNavigate()
 
   return (
-    <DashboardSection title="Latest opinion debates">
-      <div className={cn(dashCardStatic, "overflow-hidden")}>
-        {debates.map((d, i) => (
+    <DashboardSection
+      title="Latest opinion debates"
+      description="Recent posts and headlines from live sources"
+    >
+      <div className="flex flex-col gap-3">
+        {debates.map((d) => (
           <article
             key={d.id}
             className={cn(
-              "p-5",
-              i < debates.length - 1 && "border-b border-[var(--dash-border)]"
+              dashCardStatic,
+              "group overflow-hidden p-0"
             )}
           >
-            <div className="flex gap-3">
-              {d.thumbnail && (
-                <img
-                  src={d.thumbnail}
-                  alt=""
-                  className="h-16 w-24 shrink-0 rounded-lg object-cover"
-                />
-              )}
-              <div className="min-w-0 flex-1">
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate(`/search?q=${encodeURIComponent(d.query)}`)
-                  }
-                  className="w-full border-none bg-transparent p-0 text-left"
-                >
-                  <p className="text-[15px] font-semibold text-[var(--dash-text)] hover:text-[var(--dash-accent)]">
-                    {d.title}
-                  </p>
-                </button>
-                <span
-                  className="mt-2 inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium"
-                  style={{
-                    background: "var(--dash-surface-alt)",
-                    color: platformDotColor(d.platform),
-                  }}
-                >
-                  {platformLabel(d.platform)}
-                </span>
-                <p className="mt-2 line-clamp-2 text-[13px] text-[var(--dash-text-mid)]">
+            <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-stretch sm:p-4">
+              <DebateMedia
+                platform={d.platform}
+                thumbnail={d.thumbnail}
+                title={d.title}
+                sourceLabel={d.source_label}
+              />
+
+              <div className="flex min-w-0 flex-1 flex-col">
+                <div className="flex items-start justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate(`/search?q=${encodeURIComponent(d.query)}`)
+                    }
+                    className="min-w-0 flex-1 border-none bg-transparent p-0 text-left"
+                  >
+                    <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug text-[var(--dash-text)] transition-colors group-hover:text-[var(--dash-accent)]">
+                      {d.title}
+                    </h3>
+                  </button>
+                  <span className="shrink-0 whitespace-nowrap text-[11px] text-[var(--dash-text-faint)]">
+                    {formatLiveDebateTimeAgo(d.time_ago)}
+                  </span>
+                </div>
+
+                <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-[var(--dash-text-mid)]">
                   {d.summary}
                 </p>
-                <div className="mt-3 h-1.5 overflow-hidden rounded-sm bg-[var(--dash-surface-alt)]">
-                  <div className="flex h-full">
-                    <div
-                      className="bg-[var(--dash-pos)]"
-                      style={{ width: `${d.positive_pct}%` }}
-                    />
-                    <div
-                      className="bg-[var(--dash-neg)]"
-                      style={{ width: `${d.negative_pct}%` }}
-                    />
-                  </div>
+
+                <div className="mt-3">
+                  <SentimentSplitBar
+                    positive={d.positive_pct}
+                    negative={d.negative_pct}
+                    neutral={d.neutral_pct}
+                  />
                 </div>
-                <p className="mt-2 text-xs text-[var(--dash-text-faint)]">
-                  {formatLiveDebateTimeAgo(d.time_ago)}
-                </p>
+
                 {d.source_url && (
-                  <div className="mt-3 flex items-center justify-between border-t border-[var(--dash-border)] pt-2.5">
-                    <span className="flex max-w-[60%] items-center gap-1.5 truncate text-xs text-[var(--dash-text-faint)]">
-                      <ExternalLink className="size-3" strokeWidth={2} />
-                      {d.source_label || "Source"}
+                  <div className="mt-auto flex items-center justify-between gap-3 border-t border-[var(--dash-border)] pt-3">
+                    <span className="flex min-w-0 items-center gap-1.5 truncate text-[11px] text-[var(--dash-text-faint)]">
+                      <ExternalLink
+                        className="size-3 shrink-0"
+                        strokeWidth={2}
+                        aria-hidden
+                      />
+                      <span className="truncate">
+                        {d.source_label || "Source"}
+                      </span>
                     </span>
                     <a
                       href={d.source_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex shrink-0 items-center gap-1 text-xs font-semibold text-[var(--dash-accent)] no-underline hover:underline"
+                      className="inline-flex shrink-0 items-center gap-1 text-[12px] font-semibold text-[var(--dash-accent)] no-underline transition-opacity hover:opacity-80"
                     >
                       Visit source
-                      <ExternalLink className="size-2.5" strokeWidth={2} />
+                      <ArrowUpRight className="size-3.5" strokeWidth={2} />
                     </a>
                   </div>
                 )}

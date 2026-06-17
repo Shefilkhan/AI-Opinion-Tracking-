@@ -64,7 +64,12 @@ export function DashboardPage() {
 
   return (
 
-    <DashboardLayout hidePageHeader dashShell>
+    <DashboardLayout
+      hidePageHeader
+      dashShell
+      toolbarLastUpdated={data?.last_updated}
+      toolbarIsLive={data ? Object.values(data.is_live ?? {}).some(Boolean) : true}
+    >
 
       {isLoading && !data ? (
 
@@ -288,15 +293,15 @@ export function DashboardPage() {
 
 
 
-          <div className="grid grid-cols-1 gap-[var(--space-5)] lg:grid-cols-5 lg:gap-8">
+          <div className="mt-[var(--space-8)] grid grid-cols-1 gap-[var(--space-5)] lg:grid-cols-12 lg:gap-6">
 
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-7 xl:col-span-8">
 
               <DebateList debates={data.debates} />
 
             </div>
 
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-5 xl:col-span-4">
 
               <PlatformPulsePanel items={data.platform_pulse} />
 

@@ -33,25 +33,25 @@ export function LiveDataIndicator({ isLive, lastUpdated }: LiveDataIndicatorProp
     <div
       className={cn(
         dashCardStatic,
-        "flex flex-wrap items-center gap-2 px-4 py-3"
+        "flex flex-wrap items-center gap-x-2 gap-y-2 px-4 py-2.5"
       )}
     >
-      <span className="mr-1 text-xs font-semibold uppercase tracking-[0.04em] text-[var(--dash-text-faint)]">
+      <span className="mr-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--dash-text-faint)]">
         Sources
       </span>
       {sources.map((s) => (
         <span
           key={s.name}
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+            "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium",
             s.live
-              ? "bg-[var(--dash-pos-soft)] text-[var(--dash-pos)]"
-              : "bg-[var(--dash-surface-alt)] text-[var(--dash-text-faint)]"
+              ? "border-[var(--dash-pos-soft)] bg-[var(--dash-pos-soft)] text-[var(--dash-pos)]"
+              : "border-[var(--dash-border)] bg-[var(--dash-surface-alt)] text-[var(--dash-text-faint)]"
           )}
         >
           <span
             className={cn(
-              "size-[5px] rounded-full",
+              "size-1.5 rounded-full",
               s.live ? "bg-[var(--dash-pos)]" : "bg-[var(--dash-text-faint)]"
             )}
             aria-hidden
@@ -59,9 +59,11 @@ export function LiveDataIndicator({ isLive, lastUpdated }: LiveDataIndicatorProp
           {s.name}
         </span>
       ))}
-      <span className="ml-auto text-xs text-[var(--dash-text-faint)]">
-        {formatUpdatedLabel(lastUpdated)}
-      </span>
+      {lastUpdated && (
+        <span className="ml-auto text-[11px] text-[var(--dash-text-faint)]">
+          {formatUpdatedLabel(lastUpdated)}
+        </span>
+      )}
     </div>
   )
 }

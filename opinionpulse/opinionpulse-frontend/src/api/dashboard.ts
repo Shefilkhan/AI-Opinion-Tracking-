@@ -12,6 +12,7 @@ export type LiveDebateItem = {
   summary: string
   source_url?: string
   source_label?: string
+  thumbnail?: string | null
   platforms: string[]
   total_mentions: number
   total_engagement?: number
@@ -73,6 +74,7 @@ export type DebateItem = {
   summary: string
   positive_pct: number
   negative_pct: number
+  neutral_pct?: number
   time_ago: string
   query: string
   source_url?: string

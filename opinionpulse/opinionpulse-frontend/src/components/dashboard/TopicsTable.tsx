@@ -46,18 +46,18 @@ export function TopicsTable() {
         "overflow-hidden"
       )}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--dash-border)] px-5 py-[18px]">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--dash-border)] px-5 py-4">
         <div>
-          <h2 className="text-base font-semibold text-[var(--dash-text)]">
+          <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-[var(--dash-text)]">
             Trending topics
           </h2>
-          <p className="mt-0.5 text-[12.5px] text-[var(--dash-text-mid)]">
+          <p className="mt-0.5 text-[12px] text-[var(--dash-text-mid)]">
             Ranked by engagement across all platforms
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex rounded-lg bg-[var(--dash-surface-alt)] p-0.5">
+          <div className="flex rounded-[var(--dash-radius-sm)] border border-[var(--dash-border)] bg-[var(--dash-surface-alt)] p-0.5">
             {TIMEFRAMES.map((tf) => (
               <button
                 key={tf}
