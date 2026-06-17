@@ -1,9 +1,10 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Optional
 import uuid
 
 from sqlalchemy import (
     Boolean,
+    Date,
     DateTime,
     ForeignKey,
     Index,
@@ -12,6 +13,7 @@ from sqlalchemy import (
     String,
     Text,
     Float,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -52,6 +54,27 @@ class User(Base):
     lock_until: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    plan_id: Mapped[str] = mapped_column(
+        String(20), ForeignKey("plans.id"), default="starter", nullable=False
+    )
+    plan_status: Mapped[str] = mapped_column(
+        String(20), default="active", nullable=False
+    )
+    plan_started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    plan_renews_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    trial_ends_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    stripe_customer_id: Mapped[Optional[str]] = mapped_column(
+        String(255), nullable=True
+    )
+    stripe_subscription_id: Mapped[Optional[str]] = mapped_column(
+        String(255), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -62,6 +85,10 @@ class User(Base):
         nullable=False,
     )
 
+    plan: Mapped["Plan"] = relationship(back_populates="users")
+    usage_records: Mapped[list["UsageTracking"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
     email_otps: Mapped[list["EmailOTP"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
@@ -77,6 +104,75 @@ class User(Base):
     pulse_chat_messages: Mapped[list["PulseChatMessage"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+
+
+class Plan(Base):
+    __tablename__ = "plans"
+
+    id: Mapped[str] = mapped_column(String(20), primary_key=True)
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
+    price_monthly_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    searches_per_month: Mapped[int] = mapped_column(Integer, nullable=False)
+    data_sources_json: Mapped[object] = mapped_column(JSON, nullable=False)
+    search_history_days: Mapped[int] = mapped_column(Integer, nullable=False)
+    csv_export_max_rows: Mapped[int] = mapped_column(Integer, nullable=False)
+    ai_opinion_summary: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
+    ai_debate_analysis: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
+    ai_trend_prediction: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
+    realtime_alerts_max: Mapped[int] = mapped_column(
+        Integer, default=0, nullable=False
+    )
+    chat_messages_per_day: Mapped[int] = mapped_column(Integer, nullable=False)
+    chat_history_days: Mapped[int] = mapped_column(Integer, nullable=False)
+    api_access: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    team_members_max: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    sso_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    support_tier: Mapped[str] = mapped_column(
+        String(30), default="email", nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    users: Mapped[list["User"]] = relationship(back_populates="plan")
+
+
+class UsageTracking(Base):
+    __tablename__ = "usage_tracking"
+    __table_args__ = (UniqueConstraint("user_id", "period_start", name="uniq_user_period"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    period_start: Mapped[date] = mapped_column(Date, nullable=False)
+    period_end: Mapped[date] = mapped_column(Date, nullable=False)
+    searches_used: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    chat_messages_used_today: Mapped[int] = mapped_column(
+        Integer, default=0, nullable=False
+    )
+    chat_messages_today_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    csv_exports_used: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    ai_summary_calls: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    ai_debate_calls: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    ai_trend_calls: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    user: Mapped["User"] = relationship(back_populates="usage_records")
 
 
 class EmailOTP(Base):

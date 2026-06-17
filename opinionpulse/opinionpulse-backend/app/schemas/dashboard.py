@@ -91,3 +91,28 @@ class DashboardOverviewResponse(BaseModel):
     demo_mode: bool = False
     is_live: dict[str, bool] = {}
     last_updated: Optional[str] = None
+
+
+class SparklinePoint(BaseModel):
+    day: str
+    mentions: int
+
+
+class TopicTableRow(BaseModel):
+    id: str
+    name: str
+    mention_count: int
+    sentiment_positive_pct: int
+    sentiment_negative_pct: int
+    direction: Literal["up", "down", "flat"]
+    direction_pct: float
+    is_heated_debate: bool = False
+    platforms: list[str] = []
+    platform_count: int = 0
+    sparkline_data: list[SparklinePoint] = []
+    last_updated: str = ""
+
+
+class TopicsTableResponse(BaseModel):
+    topics: list[TopicTableRow]
+    timeframe: str = "7d"

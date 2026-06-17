@@ -19,6 +19,8 @@ from app.schemas.chat import (
     PulseConversationSummary,
 )
 from app.services import chat_history_service, chat_service
+from app.services.plan_limits import check_chat_limit
+from app.services.plan_service import increment_usage
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +36,8 @@ async def send_pulse_chat_message(
     message = body.message.strip()
     if not message:
         raise HTTPException(status_code=400, detail="Message cannot be empty")
+
+    check_chat_limit(current_user.id, db)
 
     conversation_id = body.conversation_id or str(uuid.uuid4())
 
@@ -76,6 +80,8 @@ async def send_pulse_chat_message(
         )
     except Exception as exc:
         logger.exception("DB save error (assistant message): %s", exc)
+
+    increment_usage(current_user.id, "chat_messages_used_today", db)
 
     data_used = result.get("data_used", {})
     return PulseChatMessageResponse(

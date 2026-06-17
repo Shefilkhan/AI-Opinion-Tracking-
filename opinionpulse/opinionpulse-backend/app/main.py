@@ -11,6 +11,7 @@ from sqlalchemy import create_engine, text
 
 from app.api.routes import (
     account,
+    admin,
     ai,
     auth,
     chat,
@@ -24,8 +25,13 @@ from app.api.routes import (
 from app.core.config import get_settings, reload_settings
 from app.core.startup_checks import log_env_check
 from app.db import models  # noqa: F401 — register models with metadata
-from app.db.database import Base, engine
-from app.db.schema_sync import ensure_chat_messages_schema, ensure_users_schema
+from app.db.database import Base, SessionLocal, engine
+from app.db.schema_sync import (
+    ensure_chat_messages_schema,
+    ensure_plans_schema,
+    ensure_users_schema,
+)
+from app.services.plan_service import load_plans, seed_default_plans
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -57,8 +63,12 @@ async def lifespan(app: FastAPI):
         ensure_database_exists()
         Base.metadata.create_all(bind=engine)
         ensure_users_schema(engine)
+    ensure_plans_schema(engine)
     ensure_chat_messages_schema(engine)
-    logger.info("chat_messages table ready")
+    with SessionLocal() as db:
+        seed_default_plans(db)
+        load_plans(db)
+    logger.info("Plans loaded; chat_messages table ready")
     yield
 
 
@@ -109,6 +119,7 @@ app.include_router(chat.router)
 app.include_router(users.router)
 app.include_router(settings_routes.router)
 app.include_router(personal_alerts.router)
+app.include_router(admin.router)
 
 _uploads = Path(__file__).resolve().parent.parent / "uploads"
 _uploads.mkdir(parents=True, exist_ok=True)

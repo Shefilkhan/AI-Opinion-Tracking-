@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
+from app.db.database import get_db
 from app.db.models import User
 from app.schemas.ai import (
     AiDebateRequest,
@@ -22,6 +24,8 @@ from app.services.ai_service import (
     predict_opinion_trend,
     generate_crisis_response,
 )
+from app.services.plan_limits import check_ai_feature_access
+from app.services.plan_service import increment_usage
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
@@ -35,12 +39,14 @@ def ai_status(current_user: User = Depends(get_current_user)):
 async def summarize_opinion(
     body: AiSummarizeRequest,
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     if not ai_available():
         raise HTTPException(
             status_code=503,
             detail="Add ANTHROPIC_API_KEY to enable AI features",
         )
+    check_ai_feature_access(current_user.id, "ai_opinion_summary", db)
     if not body.query.strip() or len(body.results) == 0:
         raise HTTPException(status_code=400, detail="No data to summarize")
 
@@ -49,6 +55,7 @@ async def summarize_opinion(
         body.results,
         body.sentiment_summary,
     )
+    increment_usage(current_user.id, "ai_summary_calls", db)
     return AiSummarizeResponse(summary=summary, ai_enabled=True)
 
 
@@ -56,16 +63,19 @@ async def summarize_opinion(
 async def analyze_debate_endpoint(
     body: AiDebateRequest,
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     if not ai_available():
         raise HTTPException(
             status_code=503,
             detail="Add ANTHROPIC_API_KEY to enable AI features",
         )
+    check_ai_feature_access(current_user.id, "ai_debate_analysis", db)
     if not body.topic.strip():
         raise HTTPException(status_code=400, detail="Topic required")
 
     analysis = await analyze_debate(body.topic.strip(), body.results)
+    increment_usage(current_user.id, "ai_debate_calls", db)
     return AiDebateResponse(debate=analysis, ai_enabled=True)
 
 
@@ -73,12 +83,14 @@ async def analyze_debate_endpoint(
 async def predict_trend(
     body: AiPredictRequest,
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     if not ai_available():
         raise HTTPException(
             status_code=503,
             detail="Add ANTHROPIC_API_KEY to enable AI features",
         )
+    check_ai_feature_access(current_user.id, "ai_trend_prediction", db)
     if not body.query.strip() or len(body.results) < 3:
         raise HTTPException(
             status_code=400, detail="Not enough data for prediction"
@@ -90,6 +102,7 @@ async def predict_trend(
         body.sentiment_summary,
         body.time_range,
     )
+    increment_usage(current_user.id, "ai_trend_calls", db)
     return AiPredictResponse(prediction=prediction, ai_enabled=True)
 
 

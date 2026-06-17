@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -12,6 +14,9 @@ from app.schemas.account import (
     AccountProfileUpdate,
     AccountStatsResponse,
 )
+from app.schemas.usage import UsageStatusResponse
+from app.services.plan_limits import plan_features_for_client
+from app.services.plan_service import get_or_create_usage, get_user_plan
 from app.services.user_profile_service import (
     apply_profile_updates,
     get_user_stats,
@@ -88,3 +93,55 @@ def get_account_stats(
     db: Session = Depends(get_db),
 ):
     return get_user_stats(db, current_user)
+
+
+def _usage_percent(used: int, limit: int) -> Optional[int]:
+    if limit == -1:
+        return None
+    if limit <= 0:
+        return 100
+    return min(round((used / limit) * 100), 100)
+
+
+@router.get("/usage", response_model=UsageStatusResponse)
+def get_usage_status(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    plan = get_user_plan(current_user.id, db)
+    usage = get_or_create_usage(current_user.id, db)
+    features = plan_features_for_client(plan)
+
+    return UsageStatusResponse(
+        plan={
+            "id": plan["id"],
+            "name": plan["name"],
+            "status": plan.get("_status", "active"),
+        },
+        usage={
+            "searches": {
+                "used": usage["searches_used"],
+                "limit": plan["searches_per_month"],
+                "percent": _usage_percent(
+                    usage["searches_used"], plan["searches_per_month"]
+                ),
+            },
+            "chat_messages_today": {
+                "used": usage["chat_messages_used_today"],
+                "limit": plan["chat_messages_per_day"],
+                "percent": _usage_percent(
+                    usage["chat_messages_used_today"],
+                    plan["chat_messages_per_day"],
+                ),
+            },
+            "csv_exports": {
+                "used": usage["csv_exports_used"],
+                "limit": plan["csv_export_max_rows"],
+            },
+        },
+        period={
+            "start": str(usage["period_start"]),
+            "end": str(usage["period_end"]),
+        },
+        features=features,
+    )

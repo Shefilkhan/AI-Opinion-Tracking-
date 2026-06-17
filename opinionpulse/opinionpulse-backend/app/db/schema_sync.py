@@ -116,6 +116,86 @@ def ensure_users_schema(engine: Engine) -> None:
                 )
             )
 
+        columns = {col["name"] for col in inspector.get_columns("users")}
+
+        subscription_cols = {
+            "plan_id": "VARCHAR(20) NOT NULL DEFAULT 'starter'",
+            "plan_status": "VARCHAR(20) NOT NULL DEFAULT 'active'",
+            "plan_started_at": "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP",
+            "plan_renews_at": "TIMESTAMP NULL",
+            "trial_ends_at": "TIMESTAMP NULL",
+            "stripe_customer_id": "VARCHAR(255) NULL",
+            "stripe_subscription_id": "VARCHAR(255) NULL",
+        }
+        for col_name, col_def in subscription_cols.items():
+            if col_name not in columns:
+                conn.execute(
+                    text(f"ALTER TABLE users ADD COLUMN {col_name} {col_def}")
+                )
+
+
+def ensure_plans_schema(engine: Engine) -> None:
+    """Create plans + usage_tracking tables if missing (legacy DBs)."""
+    inspector = inspect(engine)
+    table_names = inspector.get_table_names()
+
+    with engine.begin() as conn:
+        if "plans" not in table_names:
+            conn.execute(
+                text(
+                    """
+                    CREATE TABLE plans (
+                        id VARCHAR(20) PRIMARY KEY,
+                        name VARCHAR(50) NOT NULL,
+                        price_monthly_cents INT NOT NULL,
+                        searches_per_month INT NOT NULL,
+                        data_sources_json JSON NOT NULL,
+                        search_history_days INT NOT NULL,
+                        csv_export_max_rows INT NOT NULL,
+                        ai_opinion_summary TINYINT(1) DEFAULT 0,
+                        ai_debate_analysis TINYINT(1) DEFAULT 0,
+                        ai_trend_prediction TINYINT(1) DEFAULT 0,
+                        realtime_alerts_max INT DEFAULT 0,
+                        chat_messages_per_day INT NOT NULL,
+                        chat_history_days INT NOT NULL,
+                        api_access TINYINT(1) DEFAULT 0,
+                        team_members_max INT DEFAULT 1,
+                        sso_enabled TINYINT(1) DEFAULT 0,
+                        support_tier VARCHAR(30) DEFAULT 'email',
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                    """
+                )
+            )
+
+        if "usage_tracking" not in table_names:
+            conn.execute(
+                text(
+                    """
+                    CREATE TABLE usage_tracking (
+                        id VARCHAR(36) PRIMARY KEY,
+                        user_id INT NOT NULL,
+                        period_start DATE NOT NULL,
+                        period_end DATE NOT NULL,
+                        searches_used INT DEFAULT 0,
+                        chat_messages_used_today INT DEFAULT 0,
+                        chat_messages_today_date DATE NULL,
+                        csv_exports_used INT DEFAULT 0,
+                        ai_summary_calls INT DEFAULT 0,
+                        ai_debate_calls INT DEFAULT 0,
+                        ai_trend_calls INT DEFAULT 0,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                            ON UPDATE CURRENT_TIMESTAMP,
+                        UNIQUE KEY uniq_user_period (user_id, period_start),
+                        CONSTRAINT fk_usage_user
+                            FOREIGN KEY (user_id) REFERENCES users(id)
+                            ON DELETE CASCADE
+                    )
+                    """
+                )
+            )
+
 
 REQUIRED_CHAT_COLUMNS = {
     "id",

@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.db.database import get_db
 from app.db.models import SavedSearch, User
+from app.services.plan_limits import check_keyword_alert_limit
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/personal-alerts", tags=["personal-alerts"])
@@ -106,6 +107,8 @@ def create_personal_alert(
     keyword = body.keyword.strip()
     if not keyword:
         raise HTTPException(status_code=400, detail="Keyword is required")
+
+    check_keyword_alert_limit(current_user.id, db)
 
     meta = {"threshold": body.threshold, "frequency": body.frequency}
     row = SavedSearch(
