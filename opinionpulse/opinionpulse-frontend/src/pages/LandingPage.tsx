@@ -1,35 +1,26 @@
-import { Navbar } from "@/components/landing/Navbar"
-import { HeroSection } from "@/components/landing/HeroSection"
-import { LiveStatsBar } from "@/components/landing/LiveStatsBar"
-import { FeaturesSection } from "@/components/landing/FeaturesSection"
-import { HowItWorksSection } from "@/components/landing/HowItWorksSection"
-import { LiveDemoSection } from "@/components/landing/LiveDemoSection"
-import { TechStackSection } from "@/components/landing/TechStackSection"
-import { SocialProofSection } from "@/components/landing/SocialProofSection"
-import { PricingSection } from "@/components/landing/PricingSection"
-import { CTASection } from "@/components/landing/CTASection"
-import { Footer } from "@/components/landing/Footer"
+import "@/styles/landing-editorial.css"
+import { EditorialNavbar } from "@/components/landing/editorial/EditorialNavbar"
+import { EditorialHero } from "@/components/landing/editorial/EditorialHero"
+import { EditorialFeatures } from "@/components/landing/editorial/EditorialFeatures"
+import { EditorialBigPicture } from "@/components/landing/editorial/EditorialBigPicture"
+import { EditorialComparison } from "@/components/landing/editorial/EditorialComparison"
+import { EditorialQuote } from "@/components/landing/editorial/EditorialQuote"
+import { EditorialSteps } from "@/components/landing/editorial/EditorialSteps"
+import { EditorialFooter } from "@/components/landing/editorial/EditorialFooter"
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
+    <div className="landing-editorial min-h-screen">
+      <EditorialNavbar />
       <main>
-        <HeroSection />
-        <LiveStatsBar />
-        <div
-          className="h-px bg-gradient-to-r from-transparent via-border to-transparent"
-          aria-hidden
-        />
-        <FeaturesSection />
-        <HowItWorksSection />
-        <LiveDemoSection />
-        <TechStackSection />
-        <SocialProofSection />
-        <PricingSection />
-        <CTASection />
+        <EditorialHero />
+        <EditorialFeatures />
+        <EditorialBigPicture />
+        <EditorialComparison />
+        <EditorialQuote />
+        <EditorialSteps />
       </main>
-      <Footer />
+      <EditorialFooter />
     </div>
   )
 }
