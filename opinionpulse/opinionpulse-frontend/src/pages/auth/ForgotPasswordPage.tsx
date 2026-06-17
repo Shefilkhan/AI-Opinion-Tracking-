@@ -4,12 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { ApiError } from "@/api/client"
 import { forgotPassword } from "@/api/auth"
 import { AuthLayout } from "@/components/auth/AuthLayout"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/toast"
+import { authInputClass, authLabelClass } from "@/lib/auth/authUi"
 import { forgotPasswordSchema } from "@/lib/validations/auth"
-import { btnPrimary, inputSurface } from "@/lib/ui-classes"
-import { cn } from "@/lib/utils"
 import { z } from "zod"
 
 const emailSchema = forgotPasswordSchema
@@ -58,14 +55,14 @@ export function ForgotPasswordPage() {
           </p>
         )}
         <div>
-          <label htmlFor="email" className="mb-1.5 block text-sm text-muted-foreground">
+          <label htmlFor="email" className={authLabelClass}>
             Email Address
           </label>
-          <Input
+          <input
             id="email"
             type="email"
             placeholder="you@example.com"
-            className={inputSurface}
+            className={authInputClass({ error: Boolean(errors.email) })}
             autoComplete="email"
             aria-invalid={Boolean(errors.email)}
             {...register("email")}
@@ -74,15 +71,11 @@ export function ForgotPasswordPage() {
             <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
           )}
         </div>
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className={cn("w-full min-h-11", btnPrimary)}
-        >
+        <button type="submit" disabled={isSubmitting} className="le-btn-solid-full">
           {isSubmitting ? "Please wait…" : "Send reset code"}
-        </Button>
+        </button>
         <p className="text-center text-sm">
-          <Link to="/auth/signin" className="text-primary hover:underline">
+          <Link to="/auth/signin" className="le-auth-link">
             Back to sign in
           </Link>
         </p>

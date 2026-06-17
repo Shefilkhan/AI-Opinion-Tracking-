@@ -72,7 +72,8 @@ export type UserSettings = {
 const STORAGE_KEY = "opinionpulse_user_settings"
 
 export const ACCENT_PRESETS = [
-  { id: "violet", label: "Violet", value: "#7c3aed" },
+  { id: "forest", label: "Forest", value: "#2f3a2f" },
+  { id: "sage", label: "Sage", value: "#8a9a7a" },
   { id: "clay", label: "Clay", value: "#c96442" },
   { id: "terracotta", label: "Terracotta", value: "#b45309" },
   { id: "emerald", label: "Emerald", value: "#059669" },
@@ -100,7 +101,7 @@ const defaults: UserSettings = {
   },
   appearance: {
     theme: "light",
-    accentColor: ACCENT_PRESETS[0].value,
+    accentColor: "#2f3a2f",
     fontSize: "medium",
   },
   privacy: {

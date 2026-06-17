@@ -68,13 +68,13 @@ function NavLinkItem({
       to={item.href}
       onClick={onNavigate}
       className={cn(
-        "flex min-h-9 items-center gap-2.5 rounded-[var(--dash-radius-sm)] border border-transparent px-3 text-[13px] font-medium transition-[background,color,border-color] duration-150",
+        "relative flex min-h-10 items-center gap-3 rounded-[var(--dash-radius-sm)] px-4 text-[15px] font-medium transition-[color,background] duration-150",
         isActive
-          ? "border-[var(--dash-accent-border)] bg-[var(--dash-accent-soft)] text-[var(--dash-accent)]"
-          : "text-[var(--dash-text-mid)] hover:bg-[var(--dash-surface-alt)] hover:text-[var(--dash-text)]"
+          ? "text-[var(--dash-accent)] before:absolute before:left-0 before:top-1/2 before:h-8 before:w-1 before:-translate-y-1/2 before:rounded-r-full before:bg-[var(--dash-accent)] before:content-['']"
+          : "text-[var(--dash-text-mid)] hover:text-[var(--dash-text)]"
       )}
     >
-      <Icon className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+      <Icon className="size-5 shrink-0" strokeWidth={isActive ? 2.25 : 2} aria-hidden />
       <span className="truncate">{item.label}</span>
       {item.badge && (
         <span className="ml-auto rounded-full bg-[var(--dash-accent-soft)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--dash-accent)]">
@@ -98,7 +98,7 @@ function NavGroup({
 }) {
   return (
     <div>
-      <p className="mb-1.5 mt-5 px-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--dash-text-faint)] first:mt-2">
+      <p className="mb-2 mt-4 px-4 text-xs font-medium text-[var(--dash-text-faint)] first:mt-0">
         {label}
       </p>
       <div className="space-y-0.5">
@@ -130,15 +130,16 @@ export function DashboardLayout({
   title,
   subtitle,
   children,
-  hidePageHeader = false,
+  hidePageHeader,
   headerAction,
-  dashShell = false,
+  dashShell = true,
   toolbarLastUpdated,
   toolbarIsLive = true,
 }: DashboardLayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const hideHeader = hidePageHeader ?? dashShell
 
   const { user, logout } = useAuth()
 
@@ -158,17 +159,17 @@ export function DashboardLayout({
     <>
       <Link
         to="/dashboard"
-        className="flex min-h-[56px] items-center gap-2.5 border-b border-[var(--dash-border)] px-4 py-3 transition-opacity hover:opacity-90 sm:px-5"
+        className="flex min-h-[72px] items-center gap-3 border-b border-[var(--dash-border)] px-6 py-4 transition-opacity hover:opacity-90"
         onClick={() => setMobileOpen(false)}
       >
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-[var(--dash-radius-sm)] bg-[var(--dash-accent)] text-white shadow-sm">
-          <Activity className="size-4" strokeWidth={2} aria-hidden />
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-[var(--dash-radius-sm)] bg-[var(--dash-accent)] text-white shadow-sm">
+          <Activity className="size-5" strokeWidth={2} aria-hidden />
         </span>
-        <span className="truncate text-[15px] font-semibold tracking-[-0.01em] text-[var(--dash-text)]">
+        <span className="truncate font-serif-display text-[20px] font-semibold tracking-[-0.02em] text-[var(--dash-text)]">
           OpinionPulse
         </span>
       </Link>
-      <nav className="flex-1 overflow-y-auto p-3" aria-label="Main navigation">
+      <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Main navigation">
         <NavGroup
           label="Main"
           items={mainNav}
@@ -256,7 +257,7 @@ export function DashboardLayout({
     >
       <aside
         className={cn(
-          "relative z-20 hidden h-full shrink-0 flex-col border-r border-[var(--dash-border)] bg-[var(--dash-sidebar-bg)] md:flex md:w-60 lg:w-64"
+          "relative z-20 hidden h-full shrink-0 flex-col border-r border-[var(--dash-border)] bg-[var(--dash-sidebar-bg)] md:flex md:w-[250px] lg:w-[260px]"
         )}
       >
         {sidebar}
@@ -268,9 +269,10 @@ export function DashboardLayout({
             mobileMenu={mobileMenuTrigger}
             lastUpdated={toolbarLastUpdated}
             isLive={toolbarIsLive}
+            pageTitle={title ?? "Overview"}
           />
         )}
-        {!hidePageHeader && !dashShell && (
+        {!hideHeader && !dashShell && (
           <header className="sticky top-0 z-40 flex min-h-[64px] shrink-0 items-center gap-4 border-b border-[var(--dash-border)]/40 bg-[var(--dash-surface)]/60 px-5 py-3 backdrop-blur-md sm:px-6 lg:px-10">
             {mobileMenuTrigger}
             <div className="min-w-0 flex-1">
@@ -286,7 +288,7 @@ export function DashboardLayout({
             {headerAction && <div className="shrink-0">{headerAction}</div>}
           </header>
         )}
-        {hidePageHeader && !dashShell && (
+        {hideHeader && !dashShell && (
           <div className="sticky top-0 z-40 flex min-h-14 shrink-0 items-center border-b border-[var(--dash-border)]/40 bg-[var(--dash-surface)]/60 px-5 py-2 backdrop-blur-md md:hidden">
             {mobileMenuTrigger}
           </div>

@@ -1,20 +1,15 @@
 import { cn } from "@/lib/utils"
-import { inputSurface } from "@/lib/ui-classes"
 
-export const authLabelClass = "mb-1.5 block text-sm font-medium text-foreground"
+export const authLabelClass = "le-auth-label"
 
 export function authInputClass(options?: {
   error?: boolean
   success?: boolean
 }): string {
   return cn(
-    inputSurface,
-    "w-full rounded-[var(--radius-md)] px-4 py-3 min-h-[44px]",
-    options?.error &&
-      "border-destructive bg-destructive/5 focus:border-destructive focus:ring-destructive/20",
-    options?.success &&
-      !options?.error &&
-      "border-success focus:border-success focus:ring-success/20"
+    "le-auth-input",
+    options?.error && "le-auth-input-error",
+    options?.success && !options?.error && "le-auth-input-success"
   )
 }
 

@@ -2,6 +2,7 @@ import { Navigate, Route, Routes, useSearchParams } from "react-router-dom"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { UpgradeModal } from "@/components/billing/UpgradeModal"
 import { ChatBubble } from "@/components/chat/ChatBubble"
+import { AppearanceFab } from "@/components/ui/AppearanceFab"
 import { useUpgradeModal } from "@/contexts/UpgradeModalContext"
 import { LandingPage } from "@/pages/LandingPage"
 import { PricingPage } from "@/pages/PricingPage"
@@ -145,6 +146,7 @@ function AppRoutes() {
           <Route path="/projects/*" element={<Navigate to="/search" replace />} />
         </Routes>
         <ChatBubble />
+        <AppearanceFab />
         <UpgradeModal
           isOpen={isOpen}
           message={message}

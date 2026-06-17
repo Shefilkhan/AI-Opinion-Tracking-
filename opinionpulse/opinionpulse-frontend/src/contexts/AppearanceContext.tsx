@@ -28,7 +28,9 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
   )
 
   useEffect(() => {
-    applyAppearanceToDocument(appearance)
+    const isFirst = !document.documentElement.dataset.appearanceReady
+    applyAppearanceToDocument(appearance, { animate: !isFirst })
+    document.documentElement.dataset.appearanceReady = "1"
   }, [appearance])
 
   const setAppearance = useCallback((next: AppearanceSettings) => {

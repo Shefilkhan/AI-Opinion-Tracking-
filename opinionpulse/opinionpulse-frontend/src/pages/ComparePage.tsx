@@ -4,7 +4,6 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { InlineNotice } from "@/components/layout/InlineNotice"
 import {
-  pageShell,
   proCard,
   btnPrimary,
   sectionTitle,
@@ -61,13 +60,8 @@ export function ComparePage() {
   const showResults = hasSearched && (loading || (dataA && dataB) || error)
 
   return (
-    <div className={cn(pageShell, "min-h-screen w-full")}>
-      <div className="relative z-10 w-full">
-        <DashboardLayout
-          title="Compare Topics"
-          subtitle="Head-to-head analysis of public opinion"
-        >
-          <div className="flex w-full flex-col gap-6 lg:gap-8">
+    <DashboardLayout title="Compare Topics" subtitle="Head-to-head analysis of public opinion">
+      <div className="flex w-full flex-col gap-6 lg:gap-8">
             <section
               className={cn(
                 proCard,
@@ -185,8 +179,6 @@ export function ComparePage() {
               />
             )}
           </div>
-        </DashboardLayout>
-      </div>
-    </div>
+    </DashboardLayout>
   )
 }

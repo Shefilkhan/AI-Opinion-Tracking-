@@ -19,7 +19,6 @@ import {
   getPasswordStrength,
 } from "@/lib/auth/passwordStrength"
 import { signUpSchema, type SignUpFormValues } from "@/lib/validations/auth"
-import { btnPrimary } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 export function SignUpForm() {
@@ -86,10 +85,8 @@ export function SignUpForm() {
       )}
 
       <div className="mb-8">
-        <h2 className="font-serif-display mb-1 text-2xl font-medium text-foreground">
-          Create your account
-        </h2>
-        <p className="text-sm text-muted-foreground">
+        <h2 className="le-auth-form-title mb-1">Create your account</h2>
+        <p className="le-auth-form-subtitle">
           Start tracking public opinion in minutes. Free 14-day Pro trial included.
         </p>
       </div>
@@ -229,22 +226,22 @@ export function SignUpForm() {
               />
               <span
                 className={cn(
-                  "flex size-4 items-center justify-center rounded border-2 border-border transition-all duration-200",
-                  "peer-checked:border-primary peer-checked:bg-primary",
+                  "flex size-4 items-center justify-center rounded border-2 border-[var(--le-border)] transition-all duration-200",
+                  "peer-checked:border-[var(--le-forest)] peer-checked:bg-[var(--le-forest)]",
                   "peer-checked:[&_svg]:opacity-100",
                   errors.terms && "border-destructive"
                 )}
               >
-                <Check size={10} className="text-primary-foreground opacity-0" />
+                <Check size={10} className="text-white opacity-0" />
               </span>
             </span>
-            <span className="text-sm leading-relaxed text-muted-foreground">
+            <span className="text-sm leading-relaxed text-[var(--le-muted)]">
               I agree to the{" "}
-              <Link to="/" className="font-medium text-primary hover:underline">
+              <Link to="/" className="le-auth-link">
                 Terms of Service
               </Link>{" "}
               and{" "}
-              <Link to="/" className="font-medium text-primary hover:underline">
+              <Link to="/" className="le-auth-link">
                 Privacy Policy
               </Link>
             </span>
@@ -258,11 +255,7 @@ export function SignUpForm() {
       <button
         type="submit"
         disabled={isSubmitting || !isValid}
-        className={cn(
-          "flex w-full min-h-11 items-center justify-center gap-2 px-6 py-3 text-sm font-medium",
-          btnPrimary,
-          "disabled:cursor-not-allowed disabled:opacity-50"
-        )}
+        className="le-btn-solid-full"
       >
         {isSubmitting ? (
           <>
@@ -278,14 +271,14 @@ export function SignUpForm() {
       </button>
 
       <div className="flex items-center gap-3 py-1">
-        <div className="h-px flex-1 bg-border" />
-        <span className="text-xs font-medium text-muted-foreground">or continue with</span>
-        <div className="h-px flex-1 bg-border" />
+        <div className="le-auth-divider" />
+        <span className="text-xs font-medium text-[var(--le-muted)]">or continue with</span>
+        <div className="le-auth-divider" />
       </div>
 
       <GoogleSignInButton redirect={redirect} />
 
-      <p className="text-center text-xs text-muted-foreground">
+      <p className="text-center text-xs text-[var(--le-muted)]">
         By creating an account you agree to our terms. No credit card required for
         the 14-day Pro trial.
       </p>

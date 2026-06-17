@@ -9,6 +9,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { cn } from "@/lib/utils"
 
 export function EditorialNavbar() {
@@ -60,6 +61,7 @@ export function EditorialNavbar() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
+          <ThemeToggle />
           <Link to="/auth/signin" className="le-btn-outline">
             Login
           </Link>

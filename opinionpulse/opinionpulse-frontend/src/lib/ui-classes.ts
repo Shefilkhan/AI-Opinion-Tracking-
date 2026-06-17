@@ -12,7 +12,7 @@ export const pageShellParticles = pageShell
 
 /** Professional card used across dashboard/search pages */
 export const proCard =
-  "rounded-[var(--radius-lg)] border border-border/50 bg-card backdrop-blur-xl shadow-sm transition-all duration-300"
+  "rounded-[var(--dash-radius)] border border-[var(--dash-border)] bg-[var(--dash-surface)] shadow-[var(--dash-shadow)] transition-all duration-300"
 
 export const cardSurface =
   "rounded-[var(--radius-lg)] border border-border/50 bg-card backdrop-blur-xl text-card-foreground shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
@@ -33,7 +33,7 @@ export const sidebarSurface =
   "bg-card/40 backdrop-blur-xl border-border/40 transition-colors duration-200"
 
 export const btnPrimary =
-  "bg-primary text-primary-foreground rounded-[var(--radius-xl)] shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 font-medium"
+  "bg-primary text-primary-foreground rounded-full shadow-sm hover:shadow-md hover:opacity-95 active:scale-[0.98] transition-all duration-200 font-semibold"
 
 export const inputSurface =
   "h-11 px-4 rounded-[var(--radius-xl)] border border-border bg-card/80 backdrop-blur-sm text-foreground text-sm placeholder:text-muted-foreground transition-all duration-200 focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20 focus-visible:bg-background hover:border-primary/30"

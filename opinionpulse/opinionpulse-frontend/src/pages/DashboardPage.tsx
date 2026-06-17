@@ -1,336 +1,149 @@
 import { useState } from "react"
 
-import { Search, ThumbsDown, ThumbsUp, TrendingUp } from "lucide-react"
-
 import { useDashboard } from "@/hooks/useDashboard"
 
 import { AiInsightOfTheDay } from "@/components/dashboard/AiInsightOfTheDay"
 
 import { BetaAccessBanner } from "@/components/dashboard/BetaAccessBanner"
 
-import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader"
-
-import {
-
-  DashboardStatCard,
-
-  DashboardStatSkeleton,
-
-} from "@/components/dashboard/DashboardStatCard"
-
-import { DashboardSection } from "@/components/dashboard/DashboardSection"
-
 import { DebateList } from "@/components/dashboard/DebateList"
-
-import { LiveDataIndicator } from "@/components/dashboard/LiveDataIndicator"
 
 import { LiveDebates } from "@/components/dashboard/LiveDebates"
 
+import { OverviewPulseCards } from "@/components/dashboard/OverviewPulseCards"
+
 import { PlatformPulsePanel } from "@/components/dashboard/PlatformPulsePanel"
+
+import { RecentActivityPanel } from "@/components/dashboard/RecentActivityPanel"
 
 import { RecentSearchChips } from "@/components/dashboard/RecentSearchChips"
 
+import { SentimentDonutChart } from "@/components/dashboard/SentimentDonutChart"
+
 import { TopicsTable } from "@/components/dashboard/TopicsTable"
+
+import { WeeklyActivityChart } from "@/components/dashboard/WeeklyActivityChart"
+
+import { DashboardSection } from "@/components/dashboard/DashboardSection"
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 
 import { dashCardStatic } from "@/lib/dash-classes"
 
 import {
-
   getRecentSearches,
-
   removeRecentSearch,
-
 } from "@/lib/recentSearchStorage"
 
 import { getSelectedPlan } from "@/lib/planStorage"
 
 import { cn } from "@/lib/utils"
 
-
+function OverviewSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+        <div className="xl:col-span-7">
+          <div className={cn(dashCardStatic, "h-[220px] animate-pulse bg-[var(--dash-surface-alt)]")} />
+        </div>
+        <div className="xl:col-span-5">
+          <div className={cn(dashCardStatic, "h-[220px] animate-pulse bg-[var(--dash-surface-alt)]")} />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+        <div className="xl:col-span-7">
+          <div className={cn(dashCardStatic, "h-[320px] animate-pulse bg-[var(--dash-surface-alt)]")} />
+        </div>
+        <div className="xl:col-span-5">
+          <div className={cn(dashCardStatic, "h-[320px] animate-pulse bg-[var(--dash-surface-alt)]")} />
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export function DashboardPage() {
-
   const [recent, setRecent] = useState(getRecentSearches)
-
   const selectedPlan = getSelectedPlan()
-
-
-
   const { data, isLoading, isFetching, refetch } = useDashboard()
 
-
+  const liveSourceCount = data
+    ? Object.values(data.is_live ?? {}).filter(Boolean).length
+    : 0
 
   return (
-
     <DashboardLayout
-      hidePageHeader
-      dashShell
+      title="Overview"
       toolbarLastUpdated={data?.last_updated}
       toolbarIsLive={data ? Object.values(data.is_live ?? {}).some(Boolean) : true}
     >
-
       {isLoading && !data ? (
-
-        <div className="dashboard-shell flex flex-col">
-
-          <DashboardPageHeader
-
-            title="Dashboard"
-
-            subtitle="Trending opinions and social media pulse"
-
-          />
-
-          <div className="mt-[var(--space-5)] grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
-
-            {[0, 1, 2, 3].map((i) => (
-
-              <DashboardStatSkeleton key={i} />
-
-            ))}
-
-          </div>
-
-          <div className="mt-[var(--space-5)]">
-
-            <div className={cn(dashCardStatic, "h-14 animate-pulse bg-[var(--dash-surface-alt)]")} />
-
-          </div>
-
-          <div className="topics-table-wrapper">
-
-            <div className={cn(dashCardStatic, "h-64 animate-pulse bg-[var(--dash-surface-alt)]")} />
-
-          </div>
-
-          <div className="mt-[var(--space-8)]">
-
-            <LiveDebates isLoading />
-
-          </div>
-
-        </div>
-
+        <OverviewSkeleton />
       ) : data ? (
-
-        <div className="flex flex-col">
-
-          <DashboardPageHeader
-
-            title="Dashboard"
-
-            subtitle="Trending opinions and social media pulse"
-
-            lastUpdated={data.last_updated}
-
-          />
-
-
-
-          <div className="mt-[var(--space-5)]">
-
-            <LiveDataIndicator
-
-              isLive={data.is_live ?? {}}
-
-              lastUpdated={data.last_updated}
-
-            />
-
-          </div>
-
-
-
-          {selectedPlan && (
-
-            <div className="mt-[var(--space-4)]">
-
-              <BetaAccessBanner plan={selectedPlan} />
-
-            </div>
-
-          )}
-
-
+        <div className="flex flex-col gap-8">
+          {selectedPlan && <BetaAccessBanner plan={selectedPlan} />}
 
           {data.demo_mode && (
-
             <div
-
               className={cn(
-
                 dashCardStatic,
-
-                "mt-[var(--space-4)] px-4 py-3 text-[13px] text-[var(--dash-text-mid)]"
-
+                "px-4 py-3 text-sm text-[var(--dash-text-mid)]"
               )}
-
             >
-
               Some feeds are empty — add API keys in backend{" "}
-
-              <code className="text-[11px] text-[var(--dash-text)]">.env.local</code>{" "}
-
-              for full live coverage.
-
+              <code className="text-xs text-[var(--dash-text)]">.env.local</code> for full live
+              coverage.
             </div>
-
           )}
 
-
-
-          <div className="mt-[var(--space-5)] grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
-
-            <DashboardStatCard
-
-              label="Searches today"
-
-              value={data.stats.searches_today.value}
-
-              description={data.stats.searches_today.subtitle}
-
-              icon={Search}
-
-              iconBg="var(--dash-accent-soft)"
-
-              iconColor="var(--dash-accent)"
-
-              barWidth="65%"
-
-              barColor="var(--dash-accent)"
-
-            />
-
-            <DashboardStatCard
-
-              label="Topics trending"
-
-              value={data.stats.topics_trending.value}
-
-              description={data.stats.topics_trending.subtitle}
-
-              icon={TrendingUp}
-
-              iconBg="var(--dash-blue-soft)"
-
-              iconColor="var(--dash-blue)"
-
-              barWidth="72%"
-
-              barColor="var(--dash-blue)"
-
-            />
-
-            <DashboardStatCard
-
-              label="Positive sentiment"
-
-              value={data.stats.positive_sentiment.value}
-
-              description={data.stats.positive_sentiment.subtitle}
-
-              icon={ThumbsUp}
-
-              iconBg="var(--dash-pos-soft)"
-
-              iconColor="var(--dash-pos)"
-
-              barWidth={`${data.stats.positive_sentiment.progress ?? 50}%`}
-
-              barColor="var(--dash-pos)"
-
-            />
-
-            <DashboardStatCard
-
-              label="Negative sentiment"
-
-              value={data.stats.negative_sentiment.value}
-
-              description={data.stats.negative_sentiment.subtitle}
-
-              icon={ThumbsDown}
-
-              iconBg="var(--dash-neg-soft)"
-
-              iconColor="var(--dash-neg)"
-
-              barWidth={`${data.stats.negative_sentiment.progress ?? 30}%`}
-
-              barColor="var(--dash-neg)"
-
-            />
-
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+            <div className="xl:col-span-7">
+              <OverviewPulseCards stats={data.stats} sourcesLive={liveSourceCount || 13} />
+            </div>
+            <div className="xl:col-span-5">
+              <RecentActivityPanel items={data.live_debates ?? []} />
+            </div>
           </div>
 
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+            <div className="xl:col-span-7">
+              <WeeklyActivityChart platformPulse={data.platform_pulse} />
+            </div>
+            <div className="xl:col-span-5">
+              <SentimentDonutChart stats={data.stats} />
+            </div>
+          </div>
 
+          <LiveDebates
+            debates={data.live_debates ?? []}
+            isRefreshing={isFetching}
+            lastUpdated={data.last_updated}
+            onRefresh={() => void refetch()}
+          />
 
-          <div className="topics-table-wrapper">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+            <div className="lg:col-span-7">
+              <DebateList debates={data.debates} />
+            </div>
+            <div className="lg:col-span-5">
+              <PlatformPulsePanel items={data.platform_pulse} />
+            </div>
+          </div>
 
+          <div className="topics-table-wrapper !mt-0">
             <TopicsTable />
-
           </div>
-
-
 
           <AiInsightOfTheDay />
 
-
-
-          <LiveDebates
-
-            debates={data.live_debates ?? []}
-
-            isRefreshing={isFetching}
-
-            lastUpdated={data.last_updated}
-
-            onRefresh={() => void refetch()}
-
-          />
-
-
-
-          <div className="mt-[var(--space-8)] grid grid-cols-1 gap-[var(--space-5)] lg:grid-cols-12 lg:gap-6">
-
-            <div className="lg:col-span-7 xl:col-span-8">
-
-              <DebateList debates={data.debates} />
-
-            </div>
-
-            <div className="lg:col-span-5 xl:col-span-4">
-
-              <PlatformPulsePanel items={data.platform_pulse} />
-
-            </div>
-
-          </div>
-
-
-
           <DashboardSection title="Your recent searches">
-
             <RecentSearchChips
-
               items={recent}
-
               onRemove={(q) => setRecent(removeRecentSearch(q))}
-
             />
-
           </DashboardSection>
-
         </div>
-
       ) : null}
-
     </DashboardLayout>
-
   )
-
 }
-
-

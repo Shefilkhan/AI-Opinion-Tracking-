@@ -8,7 +8,6 @@ import { PasswordInput } from "@/components/auth/PasswordInput"
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton"
 import { authInputClass, authLabelClass } from "@/lib/auth/authUi"
 import { signInSchema, type SignInFormValues } from "@/lib/validations/auth"
-import { cn } from "@/lib/utils"
 
 export function SignInForm() {
   const navigate = useNavigate()
@@ -67,11 +66,9 @@ export function SignInForm() {
       )}
 
       <div className="mb-8">
-        <h2 className="font-serif-display mb-1 text-2xl font-medium text-foreground">
-          Sign in to OpinionPulse
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Track public opinion across 10 live data sources.
+        <h2 className="le-auth-form-title mb-1">Sign in to OpinionPulse</h2>
+        <p className="le-auth-form-subtitle">
+          Track public opinion across 13 live data sources.
         </p>
       </div>
 
@@ -117,23 +114,13 @@ export function SignInForm() {
           <p className="mt-1 text-sm text-destructive">{errors.password.message}</p>
         )}
         <div className="mt-2 flex justify-end">
-          <Link
-            to="/auth/forgot-password"
-            className="text-sm font-medium text-primary hover:underline"
-          >
+          <Link to="/auth/forgot-password" className="le-auth-link text-sm">
             Forgot password?
           </Link>
         </div>
       </div>
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className={cn(
-          "flex w-full min-h-11 items-center justify-center gap-2 px-6 py-3 text-sm font-medium btn-gradient",
-          "disabled:cursor-not-allowed disabled:opacity-50"
-        )}
-      >
+      <button type="submit" disabled={isSubmitting} className="le-btn-solid-full">
         {isSubmitting ? (
           <>
             <Loader2 size={16} className="animate-spin" />
@@ -148,9 +135,9 @@ export function SignInForm() {
       </button>
 
       <div className="flex items-center gap-3 py-1">
-        <div className="h-px flex-1 bg-border" />
-        <span className="text-xs font-medium text-muted-foreground">or continue with</span>
-        <div className="h-px flex-1 bg-border" />
+        <div className="le-auth-divider" />
+        <span className="text-xs font-medium text-[var(--le-muted)]">or continue with</span>
+        <div className="le-auth-divider" />
       </div>
 
       <GoogleSignInButton redirect={redirect} />
