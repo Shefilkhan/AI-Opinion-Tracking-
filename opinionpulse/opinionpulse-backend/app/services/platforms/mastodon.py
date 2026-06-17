@@ -1,89 +1,122 @@
-"""Mastodon API integration (Free public API)."""
+"""Mastodon API search (authenticated via access token)."""
 
 from __future__ import annotations
 
-import logging
-from typing import Any
-import re
 import html
+import re
+from urllib.parse import urlparse
 
 import requests
 
 from app.core.config import get_settings
 from app.services.cache_utils import cached
-from app.services.platforms.platform_common import build_result, log_platform_error, log_platform_success
+from app.services.platforms.platform_common import (
+    build_result,
+    log_platform_error,
+    log_platform_success,
+)
 
-logger = logging.getLogger(__name__)
 TIMEOUT = 12
 
 
-def _clean_html(html_str: str) -> str:
-    if not html_str:
+def _strip_html(html_content: str) -> str:
+    """Mastodon returns post content as HTML — strip tags for clean text."""
+    if not html_content:
         return ""
-    text = re.sub(r'<[^>]+>', ' ', html_str)
+    text = re.sub(r"<[^>]+>", "", html_content)
     text = html.unescape(text)
-    text = re.sub(r'\s+', ' ', text).strip()
-    return text
+    return re.sub(r"\s+", " ", text).strip()
 
 
-def _headers() -> dict[str, str]:
-    return {"User-Agent": "OpinionPulse/1.0"}
+def _instance_base() -> str:
+    settings = get_settings()
+    raw = (settings.mastodon_instance_url or "https://mastodon.social").strip()
+    return raw.rstrip("/")
 
 
-def search_mastodon(query: str, time_range: str = "24h", limit: int = 20) -> list[dict]:
+def _instance_label(base_url: str) -> str:
+    host = urlparse(base_url).hostname or "mastodon.social"
+    return host.replace("www.", "")
+
+
+def search_mastodon(query: str, time_range: str = "24h", limit: int = 15) -> list[dict]:
     cache_key = f"mastodon_{query}_{time_range}_{limit}"
 
     def fetch() -> list[dict]:
+        settings = get_settings()
+        token = (settings.mastodon_access_token or "").strip()
+        if not token:
+            print("⚠️ Mastodon: no access token configured, skipping")
+            return []
+
+        base_url = _instance_base()
+        instance = _instance_label(base_url)
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "User-Agent": "OpinionPulse/1.0",
+        }
+
         try:
-            url = f"https://mastodon.social/api/v2/search?q={requests.utils.quote(query)}&type=statuses&limit={limit}"
-            resp = requests.get(url, headers=_headers(), timeout=TIMEOUT)
-            resp.raise_for_status()
-            
-            data = resp.json()
-            statuses = data.get("statuses", [])
-            
-            results = []
+            resp = requests.get(
+                f"{base_url}/api/v2/search",
+                params={
+                    "q": query,
+                    "type": "statuses",
+                    "limit": limit,
+                    "resolve": "false",
+                },
+                headers=headers,
+                timeout=TIMEOUT,
+            )
+            if resp.status_code != 200:
+                print(
+                    f"⚠️ Mastodon search failed: {resp.status_code} {resp.text}"
+                )
+                return []
+
+            statuses = resp.json().get("statuses") or []
+            out: list[dict] = []
             for status in statuses:
-                content_html = status.get("content", "")
-                content = _clean_html(content_html)
+                content = _strip_html(status.get("content", ""))
                 if not content:
                     continue
-                
-                account = status.get("account", {})
-                author = account.get("username", "unknown")
-                author_display = account.get("display_name", author)
-                
-                # Try to get media attachments
-                media_attachments = status.get("media_attachments", [])
+
+                account = status.get("account") or {}
+                author = account.get("username") or "unknown"
+                display = account.get("display_name") or author
+                title = content[:120] + ("..." if len(content) > 120 else "")
+
                 image_url = None
-                for media in media_attachments:
+                for media in status.get("media_attachments") or []:
                     if media.get("type") == "image":
                         image_url = media.get("url")
                         break
-                
-                results.append(build_result(
+
+                row = build_result(
                     id=f"mastodon_{status.get('id')}",
                     platform="mastodon",
                     author=f"@{author}",
-                    title=f"Post by {author_display}",
+                    title=title,
                     content=content,
-                    source_url=status.get("url", ""),
-                    source_label="mastodon.social",
+                    source_url=status.get("url") or "",
+                    source_label=f"{instance} · @{author}",
                     query=query,
                     publication="Mastodon",
                     image_url=image_url,
-                    posted_at=status.get("created_at", ""),
+                    posted_at=status.get("created_at"),
                     engagement={
-                        "likes": status.get("favourites_count", 0),
-                        "shares": status.get("reblogs_count", 0),
-                        "comments": status.get("replies_count", 0),
+                        "likes": int(status.get("favourites_count") or 0),
+                        "shares": int(status.get("reblogs_count") or 0),
+                        "comments": int(status.get("replies_count") or 0),
                         "views": 0,
                     },
                     sentiment_text=content,
-                ))
-                
-            log_platform_success("Mastodon", query, len(results))
-            return results
+                )
+                if row:
+                    out.append(row)
+
+            log_platform_success("Mastodon", query, len(out))
+            return out
         except Exception as exc:
             log_platform_error("Mastodon", query, exc)
             return []

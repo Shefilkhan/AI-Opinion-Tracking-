@@ -14,6 +14,13 @@ from app.schemas.search import (
     SearchResponse,
 )
 from app.services import search_service
+from app.services.plan_limits import (
+    LimitExceededError,
+    check_search_limit,
+    check_time_range_access,
+    resolve_plan_sources,
+)
+from app.services.plan_service import get_user_plan, increment_usage
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["search"])
@@ -43,12 +50,25 @@ async def search_opinions(
         "✅" if configured["gnews"] else "❌",
     )
 
+    check_search_limit(current_user.id, db)
+    time_range = check_time_range_access(current_user.id, body.time_range, db)
+    allowed_sources, blocked_sources = resolve_plan_sources(
+        current_user.id, body.platform, db
+    )
+    if not allowed_sources:
+        raise LimitExceededError(
+            "No accessible data sources for your plan on this filter. "
+            "Upgrade to Pro for all 13+ sources.",
+            upgrade_to="pro",
+        )
+
     data = await search_service.run_search(
         query=body.query.strip(),
         platform=body.platform,
-        time_range=body.time_range,
+        time_range=time_range,
         sentiment=body.sentiment,
         sort_by=body.sort_by,
+        source_allowlist=allowed_sources,
     )
     try:
         search_service.record_search_history(
@@ -60,7 +80,16 @@ async def search_opinions(
         )
     except Exception as hist_err:
         logger.warning("Could not save search history: %s", hist_err)
-    return SearchResponse(**data)
+
+    increment_usage(current_user.id, "searches_used", db)
+
+    response_data = dict(data)
+    if blocked_sources:
+        response_data["locked_sources"] = blocked_sources
+        response_data["upgrade_message"] = (
+            f"{len(blocked_sources)} more sources available on Pro plan"
+        )
+    return SearchResponse(**response_data)
 
 
 @router.get("/search/history", response_model=SearchHistoryListResponse)
@@ -68,13 +97,19 @@ def list_search_history(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    rows = (
+    plan = get_user_plan(current_user.id, db)
+    max_days = plan.get("search_history_days", 7)
+    query = (
         db.query(SearchHistory)
         .filter(SearchHistory.user_id == current_user.id)
         .order_by(SearchHistory.searched_at.desc())
-        .limit(50)
-        .all()
     )
+    if max_days != -1:
+        from datetime import datetime, timedelta, timezone
+
+        cutoff = datetime.now(timezone.utc) - timedelta(days=max_days)
+        query = query.filter(SearchHistory.searched_at >= cutoff)
+    rows = query.limit(50).all()
     return SearchHistoryListResponse(
         items=[SearchHistoryItem.model_validate(r) for r in rows]
     )

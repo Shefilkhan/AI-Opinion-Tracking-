@@ -86,6 +86,8 @@ class SearchResponse(BaseModel):
     demo_mode: bool = False
     wiki_summary: Optional[WikiSummary] = None
     errors: Optional[list[str]] = None
+    locked_sources: Optional[list[str]] = None
+    upgrade_message: Optional[str] = None
     peak_discussion: Optional[str] = None
     most_active_platform: Optional[str] = None
     results: list[SearchResultItem]

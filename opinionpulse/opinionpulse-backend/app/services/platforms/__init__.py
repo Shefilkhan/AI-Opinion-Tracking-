@@ -13,6 +13,7 @@ from app.services.platforms.youtube_platform import get_trending_youtube, search
 from app.services.platforms.mastodon import search_mastodon
 from app.services.platforms.github import search_github
 from app.services.platforms.stackoverflow import search_stackoverflow
+from app.services.platforms.bluesky import search_bluesky
 
 __all__ = [
     "search_reddit",
@@ -31,4 +32,5 @@ __all__ = [
     "search_mastodon",
     "search_github",
     "search_stackoverflow",
+    "search_bluesky",
 ]

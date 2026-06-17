@@ -26,6 +26,7 @@ from app.services.platforms import (
     search_mastodon,
     search_github,
     search_stackoverflow,
+    search_bluesky,
 )
 from app.services.platforms.platform_common import deduplicate_results, normalize_result
 from app.services.search_constants import SENTIMENT_TREND_24H
@@ -50,9 +51,10 @@ def apis_configured() -> dict[str, bool]:
         "devto": True,
         "hackernews": True,
         "wikipedia": True,
-        "mastodon": True,
+        "mastodon": bool(s.mastodon_access_token.strip()),
         "github": True,
         "stackoverflow": True,
+        "bluesky": True,
     }
 
 
@@ -61,7 +63,16 @@ def platforms_live_status() -> dict[str, bool]:
 
 
 def _source_enabled(name: str, configured: dict[str, bool]) -> bool:
-    if name in ("reddit", "devto", "hackernews", "wikipedia", "mastodon", "github", "stackoverflow"):
+    if name in (
+        "reddit",
+        "devto",
+        "hackernews",
+        "wikipedia",
+        "mastodon",
+        "github",
+        "stackoverflow",
+        "bluesky",
+    ):
         return True
     return configured.get(name, False)
 
@@ -72,12 +83,18 @@ def _resolve_sources(platform_filter: str, configured: dict[str, bool]) -> list[
         return ["reddit"]
     if pf == "youtube":
         return ["youtube"]
+    if pf == "bluesky":
+        return ["bluesky"]
+    if pf == "mastodon":
+        return ["mastodon"]
+    if pf == "github":
+        return ["github"]
     if pf == "news":
         return [s for s in NEWS_SOURCES if _source_enabled(s, configured)]
     if pf == "tech":
         return list(TECH_SOURCES)
     if pf == "all":
-        sources = ["reddit", "youtube", "mastodon", *TECH_SOURCES]
+        sources = ["reddit", "youtube", "mastodon", "bluesky", *TECH_SOURCES]
         sources.extend(s for s in NEWS_SOURCES if _source_enabled(s, configured))
         return sources
     return []
@@ -97,6 +114,7 @@ def _fetcher_for(name: str) -> Callable[..., list[dict]] | None:
         "mastodon": search_mastodon,
         "github": search_github,
         "stackoverflow": search_stackoverflow,
+        "bluesky": search_bluesky,
     }.get(name)
 
 
@@ -150,9 +168,12 @@ async def run_search(
     time_range: str,
     sentiment: str,
     sort_by: str,
+    source_allowlist: list[str] | None = None,
 ) -> dict[str, Any]:
     configured = apis_configured()
     sources = _resolve_sources(platform, configured)
+    if source_allowlist is not None:
+        sources = [s for s in sources if s in source_allowlist]
 
     logger.info('🔍 Searching for: "%s" sources=%s', query, sources)
 

@@ -19,6 +19,9 @@ PUBLICATION_NAMES = {
     "guardian": "The Guardian",
     "devto": "Dev.to",
     "hackernews": "Hacker News",
+    "bluesky": "Bluesky",
+    "mastodon": "Mastodon",
+    "github": "GitHub",
 }
 
 
