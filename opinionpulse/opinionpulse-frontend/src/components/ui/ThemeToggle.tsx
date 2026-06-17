@@ -13,13 +13,15 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
   const isDark = resolved === "dark"
 
   function setTheme(next: "light" | "dark") {
+    if ((next === "dark") === isDark) return
     updateAppearance({ theme: next })
   }
 
   return (
     <div
       className={cn(
-        "inline-flex items-center rounded-full border border-border bg-muted/60 p-0.5",
+        "inline-flex items-center gap-1 rounded-full border p-0.5",
+        "border-[var(--le-border,var(--dash-border))] bg-[var(--le-surface,var(--dash-surface))]/90",
         className
       )}
       role="group"
@@ -31,10 +33,10 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
         aria-pressed={!isDark}
         aria-label="Light mode"
         className={cn(
-          "inline-flex size-8 items-center justify-center rounded-full transition-all duration-200",
+          "inline-flex size-8 items-center justify-center rounded-full transition-all duration-300 ease-in-out",
           !isDark
-            ? "bg-card text-foreground shadow-sm"
-            : "text-muted-foreground hover:text-foreground"
+            ? "bg-[var(--le-forest,var(--dash-accent))] text-white"
+            : "text-[var(--le-muted,var(--dash-text-faint))]"
         )}
       >
         <Sun className="size-4" />
@@ -45,10 +47,10 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
         aria-pressed={isDark}
         aria-label="Dark mode"
         className={cn(
-          "inline-flex size-8 items-center justify-center rounded-full transition-all duration-200",
+          "inline-flex size-8 items-center justify-center rounded-full transition-all duration-300 ease-in-out",
           isDark
-            ? "bg-primary/20 text-primary shadow-sm"
-            : "text-muted-foreground hover:text-foreground"
+            ? "bg-[var(--le-text,var(--dash-text))] text-[var(--le-bg,var(--dash-bg))]"
+            : "text-[var(--le-muted,var(--dash-text-faint))]"
         )}
       >
         <Moon className="size-4" />

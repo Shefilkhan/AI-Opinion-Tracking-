@@ -22,7 +22,6 @@ import {
   inputSurface,
   navItemActive,
   navItemInactive,
-  pageShell,
 } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
@@ -113,8 +112,8 @@ export function ChatPage() {
   )
 
   return (
-    <div className={cn("flex h-screen w-full overflow-hidden", pageShell)}>
-      <div className="flex w-52 shrink-0 flex-col border-r border-border bg-card lg:w-56">
+    <div className="dashboard-shell flex h-screen w-full overflow-hidden bg-[var(--dash-bg)] text-[var(--dash-text)]">
+      <div className="flex w-52 shrink-0 flex-col border-r border-[var(--dash-border)] bg-[var(--dash-surface)] lg:w-56">
         <div className="border-b border-border px-3 py-3">
           <div className="mb-2.5 flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">

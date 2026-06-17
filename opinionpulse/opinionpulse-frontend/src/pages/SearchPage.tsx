@@ -5,7 +5,6 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { InlineNotice } from "@/components/layout/InlineNotice"
 import {
-  pageShell,
   proCard,
   btnPrimary,
   sectionTitle,
@@ -152,13 +151,8 @@ export function SearchPage() {
   const showResults = hasSearched && (loading || data || error)
 
   return (
-    <div className={cn(pageShell, "min-h-screen w-full")}>
-      <div className="relative z-10 w-full">
-        <DashboardLayout
-          title="Search"
-          subtitle="Track public opinion across social media"
-        >
-          <div className="flex w-full flex-col gap-6 lg:gap-8">
+    <DashboardLayout title="Search" subtitle="Track public opinion across social media">
+      <div className="flex w-full flex-col gap-6 lg:gap-8">
             <section
               className={cn(
                 proCard,
@@ -374,8 +368,6 @@ export function SearchPage() {
               onClose={() => setCrisisModalOpen(false)}
             />
           )}
-        </DashboardLayout>
-      </div>
-    </div>
+    </DashboardLayout>
   )
 }
