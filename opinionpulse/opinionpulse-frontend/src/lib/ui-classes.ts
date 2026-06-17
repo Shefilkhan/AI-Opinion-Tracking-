@@ -1,7 +1,7 @@
 /** Shared Tailwind classes — Claude-inspired warm neutral system */
 
 export const pageShell =
-  "min-h-screen bg-background text-foreground transition-colors duration-200"
+  "min-h-screen bg-transparent text-foreground transition-colors duration-200"
 
 /** Full-width content area padding used inside DashboardLayout */
 export const pageContent =
@@ -30,7 +30,7 @@ export const surfaceInput =
   "rounded-[var(--radius-xl)] border border-border bg-muted/40 text-foreground placeholder:text-muted-foreground transition-all duration-200 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20 focus:bg-background"
 
 export const sidebarSurface =
-  "bg-[var(--bg-sidebar)] border-border transition-colors duration-200"
+  "bg-card/40 backdrop-blur-xl border-border/40 transition-colors duration-200"
 
 export const btnPrimary =
   "bg-primary text-primary-foreground rounded-[var(--radius-xl)] shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 font-medium"

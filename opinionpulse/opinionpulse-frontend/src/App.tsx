@@ -19,6 +19,7 @@ import { AlertsPage } from "@/pages/AlertsPage"
 import { SettingsPage, SettingsLegacyRedirect } from "@/pages/SettingsPage"
 import { MyAccountPage } from "@/pages/MyAccountPage"
 import { ChatPage } from "@/pages/ChatPage"
+import ThreeBackground from "@/components/ui/ThreeBackground"
 
 function LegacyVerifyRedirect({ type }: { type: "signup" | "login" }) {
   const [searchParams] = useSearchParams()
@@ -36,114 +37,122 @@ function AppRoutes() {
   const { isOpen, message, upgradeTo, close } = useUpgradeModal()
 
   return (
-    <>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/pricing" element={<PricingPage />} />
+    <div className="relative min-h-screen w-full bg-[var(--bg-landing)] text-foreground overflow-x-hidden transition-colors duration-300">
+      {/* Dynamic 3D Particle Canvas & Ambient Glow Gradient overlays */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <ThreeBackground />
+        <div className="absolute inset-0 bg-[var(--ov-landing)] pointer-events-none" />
+      </div>
 
-        <Route path="/auth/signup" element={<SignUpPage />} />
-        <Route path="/auth/signin" element={<SignInPage />} />
-        <Route path="/auth/verify-otp" element={<VerifyOtpPage />} />
-        <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
+      <div className="relative z-10 min-h-screen w-full flex flex-col">
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
 
-        <Route path="/signup" element={<Navigate to="/auth/signup" replace />} />
-        <Route path="/login" element={<Navigate to="/auth/signin" replace />} />
-        <Route
-          path="/verify-register-otp"
-          element={<LegacyVerifyRedirect type="signup" />}
-        />
-        <Route
-          path="/verify-login-otp"
-          element={<LegacyVerifyRedirect type="login" />}
-        />
+          <Route path="/auth/signup" element={<SignUpPage />} />
+          <Route path="/auth/signin" element={<SignInPage />} />
+          <Route path="/auth/verify-otp" element={<VerifyOtpPage />} />
+          <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
 
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
+          <Route path="/signup" element={<Navigate to="/auth/signup" replace />} />
+          <Route path="/login" element={<Navigate to="/auth/signin" replace />} />
+          <Route
+            path="/verify-register-otp"
+            element={<LegacyVerifyRedirect type="signup" />}
+          />
+          <Route
+            path="/verify-login-otp"
+            element={<LegacyVerifyRedirect type="login" />}
+          />
+
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/search"
+            element={
+              <ProtectedRoute>
+                <SearchPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/compare"
+            element={
+              <ProtectedRoute>
+                <ComparePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/chat"
+            element={
+              <ProtectedRoute>
+                <ChatPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <ReportsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/alerts"
+            element={
+              <ProtectedRoute>
+                <AlertsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/:section"
+            element={
+              <ProtectedRoute>
+                <SettingsLegacyRedirect />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/account"
+            element={
+              <ProtectedRoute>
+                <MyAccountPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/my-account" element={<Navigate to="/account" replace />} />
+          <Route path="/mentions" element={<Navigate to="/search" replace />} />
+          <Route path="/projects" element={<Navigate to="/search" replace />} />
+          <Route path="/projects/*" element={<Navigate to="/search" replace />} />
+        </Routes>
+        <ChatBubble />
+        <UpgradeModal
+          isOpen={isOpen}
+          message={message}
+          upgradeTo={upgradeTo}
+          onClose={close}
         />
-        <Route
-          path="/search"
-          element={
-            <ProtectedRoute>
-              <SearchPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/compare"
-          element={
-            <ProtectedRoute>
-              <ComparePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/chat"
-          element={
-            <ProtectedRoute>
-              <ChatPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/reports"
-          element={
-            <ProtectedRoute>
-              <ReportsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/alerts"
-          element={
-            <ProtectedRoute>
-              <AlertsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <SettingsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings/:section"
-          element={
-            <ProtectedRoute>
-              <SettingsLegacyRedirect />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/account"
-          element={
-            <ProtectedRoute>
-              <MyAccountPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/my-account" element={<Navigate to="/account" replace />} />
-        <Route path="/mentions" element={<Navigate to="/search" replace />} />
-        <Route path="/projects" element={<Navigate to="/search" replace />} />
-        <Route path="/projects/*" element={<Navigate to="/search" replace />} />
-      </Routes>
-      <ChatBubble />
-      <UpgradeModal
-        isOpen={isOpen}
-        message={message}
-        upgradeTo={upgradeTo}
-        onClose={close}
-      />
-    </>
+      </div>
+    </div>
   )
 }
 

@@ -71,15 +71,15 @@ export function SearchSentimentChart({ data }: SearchSentimentChartProps) {
       <div className="h-[220px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis dataKey="time" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} unit="%" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} />
+            <XAxis dataKey="time" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+            <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} domain={[0, 100]} unit="%" />
             <Tooltip content={<ChartTooltip />} />
             <Legend verticalAlign="bottom" height={36} />
             <Line
               type="monotone"
               dataKey="positive"
-              stroke="#16A34A"
+              stroke="var(--success)"
               strokeWidth={2}
               dot={false}
               name="Positive"
@@ -87,7 +87,7 @@ export function SearchSentimentChart({ data }: SearchSentimentChartProps) {
             <Line
               type="monotone"
               dataKey="negative"
-              stroke="#DC2626"
+              stroke="var(--destructive)"
               strokeWidth={2}
               dot={false}
               name="Negative"
@@ -95,7 +95,7 @@ export function SearchSentimentChart({ data }: SearchSentimentChartProps) {
             <Line
               type="monotone"
               dataKey="neutral"
-              stroke="#9CA3AF"
+              stroke="var(--muted-foreground)"
               strokeWidth={1.5}
               strokeDasharray="4 4"
               dot={false}

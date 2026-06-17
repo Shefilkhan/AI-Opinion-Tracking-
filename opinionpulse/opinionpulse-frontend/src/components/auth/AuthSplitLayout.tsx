@@ -184,7 +184,7 @@ export function AuthSplitLayout({
     <div className={cn("flex min-h-screen", pageShell)}>
       <div
         className={cn(
-          "relative hidden min-h-screen flex-col border-r border-border bg-muted/40",
+          "relative hidden min-h-screen flex-col border-r border-border/40 bg-card/25 backdrop-blur-xl",
           "md:flex md:w-1/2 lg:w-[55%]"
         )}
       >
@@ -193,7 +193,7 @@ export function AuthSplitLayout({
         </div>
       </div>
 
-      <div className="flex min-h-screen w-full flex-col overflow-y-auto bg-background md:w-1/2 lg:w-[45%]">
+      <div className="flex min-h-screen w-full flex-col overflow-y-auto bg-card/45 backdrop-blur-xl border-l border-border/40 md:w-1/2 lg:w-[45%]">
         <div className="auth-slide-in mx-auto flex w-full max-w-md flex-col justify-center px-6 py-8 md:min-h-screen md:px-10 md:py-12 lg:px-12">
           <div className="mb-8 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 md:hidden">

@@ -32,7 +32,7 @@
   --shadow-subtle: var(--shadow-subtle);
 }
 
-/* ── Light mode — lavender / purple SaaS ── */
+/* ── Global Light Mode Variables ── */
 :root {
   --radius: 12px;
 
@@ -42,11 +42,28 @@
   --gradient-hero-via: #8b5cf6;
   --gradient-hero-to: #ec4899;
 
-  --bg-primary: #f8f7ff;
-  --bg-secondary: #f0eeff;
-  --bg-tertiary: #e8e4ff;
-  --bg-card: #ffffff;
-  --bg-sidebar: #ffffff;
+  /* Landing 3D Canvas support */
+  --bg-landing: #eef2ff;
+  --nav-landing: rgba(255, 255, 255, 0.9);
+  --bdr-landing: rgba(15, 23, 42, 0.1);
+  --t1-landing: #0f172a;
+  --t2-landing: rgba(15, 23, 42, 0.62);
+  --t3-landing: rgba(15, 23, 42, 0.42);
+  --sf-landing: rgba(15, 23, 42, 0.04);
+  --sfb-landing: rgba(15, 23, 42, 0.1);
+  --cd-landing: rgba(255, 255, 255, 0.88);
+  --cdb-landing: rgba(15, 23, 42, 0.12);
+  --bar-landing: rgba(15, 23, 42, 0.08);
+  --url-landing: rgba(15, 23, 42, 0.06);
+  --urlt-landing: rgba(15, 23, 42, 0.38);
+  --live-landing: rgba(255, 255, 255, 0.96);
+  --ov-landing: radial-gradient(ellipse 65% 85% at 18% 55%, rgba(29, 78, 216, 0.05) 0%, transparent 65%), radial-gradient(ellipse 45% 65% at 82% 22%, rgba(109, 40, 217, 0.03) 0%, transparent 65%);
+
+  --bg-primary: #eef2ff; /* Translucent base background */
+  --bg-secondary: rgba(255, 255, 255, 0.25);
+  --bg-tertiary: rgba(15, 23, 42, 0.06);
+  --bg-card: rgba(255, 255, 255, 0.45);
+  --bg-sidebar: rgba(255, 255, 255, 0.35);
 
   --text-primary: #0f172a;
   --text-secondary: #475569;
@@ -66,9 +83,9 @@
   --foreground: var(--text-primary);
   --card: var(--bg-card);
   --card-foreground: var(--text-primary);
-  --popover: var(--bg-card);
+  --popover: rgba(255, 255, 255, 0.95);
   --popover-foreground: var(--text-primary);
-  --primary: #7c3aed;
+  --primary: #3b82f6;
   --primary-foreground: #ffffff;
   --secondary: var(--bg-tertiary);
   --secondary-foreground: var(--text-primary);
@@ -83,11 +100,12 @@
   --ring: var(--accent-primary);
   --shadow-subtle: var(--shadow-sm);
 
-  --dash-bg: #f3f4f6;
-  --dash-surface: #ffffff;
-  --dash-surface-alt: #f8f9fb;
-  --dash-border: rgba(15, 23, 42, 0.08);
-  --dash-border-hover: rgba(15, 23, 42, 0.14);
+  /* Dashboard Custom Theme variables */
+  --dash-bg: transparent; /* Make dashboard transparent so ThreeBackground shows through */
+  --dash-surface: rgba(255, 255, 255, 0.45); /* Glassmorphic card surface */
+  --dash-surface-alt: rgba(255, 255, 255, 0.25);
+  --dash-border: rgba(15, 23, 42, 0.06);
+  --dash-border-hover: rgba(15, 23, 42, 0.12);
   --dash-text: #0f172a;
   --dash-text-mid: #475569;
   --dash-text-faint: #94a3b8;
@@ -98,7 +116,7 @@
   --dash-shadow-hover: 0 2px 8px rgba(15, 23, 42, 0.06);
   --dash-radius: 10px;
   --dash-radius-sm: 8px;
-  --dash-sidebar-bg: #ffffff;
+  --dash-sidebar-bg: rgba(255, 255, 255, 0.35); /* Glassmorphic sidebar */
   --dash-pos: #16a34a;
   --dash-pos-soft: rgba(22, 163, 74, 0.1);
   --dash-neg: #dc2626;
@@ -117,7 +135,7 @@
   --space-10: 40px;
 }
 
-/* ── Dark mode — deep navy / purple ── */
+/* ── Global Dark Mode Variables ── */
 .dark {
   --gradient-from: #7c3aed;
   --gradient-to: #2563eb;
@@ -125,11 +143,28 @@
   --gradient-hero-via: #a855f7;
   --gradient-hero-to: #c084fc;
 
-  --bg-primary: #0a0a14;
-  --bg-secondary: #12121f;
-  --bg-tertiary: #1a1a2e;
-  --bg-card: rgba(255, 255, 255, 0.05);
-  --bg-sidebar: #0a0a14;
+  /* Landing 3D Canvas support */
+  --bg-landing: #060b1e;
+  --nav-landing: rgba(6, 11, 30, 0.6);
+  --bdr-landing: rgba(255, 255, 255, 0.07);
+  --t1-landing: #f1f5f9;
+  --t2-landing: rgba(241, 245, 249, 0.58);
+  --t3-landing: rgba(241, 245, 249, 0.4);
+  --sf-landing: rgba(255, 255, 255, 0.045);
+  --sfb-landing: rgba(255, 255, 255, 0.09);
+  --cd-landing: rgba(255, 255, 255, 0.04);
+  --cdb-landing: rgba(255, 255, 255, 0.09);
+  --bar-landing: rgba(255, 255, 255, 0.07);
+  --url-landing: rgba(255, 255, 255, 0.06);
+  --urlt-landing: rgba(241, 245, 249, 0.35);
+  --live-landing: rgba(10, 18, 40, 0.92);
+  --ov-landing: radial-gradient(ellipse 65% 85% at 18% 55%, rgba(29, 78, 216, 0.1) 0%, transparent 65%), radial-gradient(ellipse 45% 65% at 82% 22%, rgba(109, 40, 217, 0.08) 0%, transparent 65%);
+
+  --bg-primary: #060b1e;
+  --bg-secondary: rgba(255, 255, 255, 0.02);
+  --bg-tertiary: rgba(255, 255, 255, 0.05);
+  --bg-card: rgba(255, 255, 255, 0.035);
+  --bg-sidebar: rgba(6, 11, 30, 0.45);
 
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
@@ -149,9 +184,9 @@
   --foreground: var(--text-primary);
   --card: var(--bg-card);
   --card-foreground: var(--text-primary);
-  --popover: #12121f;
+  --popover: var(--bg-secondary);
   --popover-foreground: var(--text-primary);
-  --primary: #8b5cf6;
+  --primary: #3b82f6;
   --primary-foreground: #ffffff;
   --secondary: var(--bg-tertiary);
   --secondary-foreground: var(--text-primary);
@@ -159,18 +194,19 @@
   --muted-foreground: var(--text-secondary);
   --accent: var(--accent-light);
   --accent-foreground: var(--accent-text);
-  --destructive: #f87171;
-  --success: #4ade80;
+  --destructive: #ef4444;
+  --success: #10b981;
   --border: var(--border-color);
   --input: var(--border-color);
   --ring: var(--accent-primary);
   --shadow-subtle: var(--shadow-sm);
 
-  --dash-bg: #0f1117;
-  --dash-surface: #161821;
-  --dash-surface-alt: #1c1f2a;
-  --dash-border: rgba(255, 255, 255, 0.08);
-  --dash-border-hover: rgba(255, 255, 255, 0.14);
+  /* Dashboard Custom Theme variables */
+  --dash-bg: transparent; /* Make dashboard transparent so ThreeBackground shows through */
+  --dash-surface: rgba(255, 255, 255, 0.035); /* Glassmorphic card surface */
+  --dash-surface-alt: rgba(255, 255, 255, 0.02);
+  --dash-border: rgba(255, 255, 255, 0.06);
+  --dash-border-hover: rgba(255, 255, 255, 0.12);
   --dash-text: #f1f5f9;
   --dash-text-mid: #94a3b8;
   --dash-text-faint: #64748b;
@@ -181,7 +217,7 @@
   --dash-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.4);
   --dash-radius: 10px;
   --dash-radius-sm: 8px;
-  --dash-sidebar-bg: #12141c;
+  --dash-sidebar-bg: rgba(6, 11, 30, 0.45); /* Glassmorphic sidebar */
   --dash-pos: #4ade80;
   --dash-pos-soft: rgba(74, 222, 128, 0.12);
   --dash-neg: #f87171;
@@ -672,3 +708,48 @@ body {
     box-shadow: none !important;
   }
 }
+
+/* Redundant landing styles removed - integrated into root/dark config */
+
+.animate-trend-in {
+  animation: trendIn 3s ease-out forwards;
+}
+
+.animate-badge-pulse {
+  animation: badgePulse 2.2s infinite;
+}
+
+.animate-live-dot {
+  animation: liveDot 1.8s infinite;
+}
+
+.animate-float-card {
+  animation: floatCard 5.5s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 5s linear infinite;
+}
+
+@keyframes trendIn { 
+  0% { opacity: 0; transform: translateY(6px); } 
+  20% { opacity: 1; transform: translateY(0); } 
+  100% { opacity: 1; transform: translateY(0); } 
+}
+@keyframes badgePulse { 
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6); } 
+  60% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); } 
+}
+@keyframes liveDot { 
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 
+  60% { box-shadow: 0 0 0 5px rgba(34, 197, 94, 0); } 
+}
+@keyframes floatCard { 
+  0%, 100% { transform: translateY(0) rotate(-0.5deg); } 
+  50% { transform: translateY(-12px) rotate(-0.5deg); } 
+}
+@keyframes shimmer { 
+  0% { background-position: 200% center; } 
+  100% { background-position: -200% center; } 
+}
+

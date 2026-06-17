@@ -4,17 +4,6 @@ import * as THREE from "three"
 export default function ThreeBackground() {
   const mountRef = useRef<HTMLDivElement>(null)
   const animationRef = useRef<number | undefined>(undefined)
-  const sceneRef = useRef<{
-    scene: THREE.Scene
-    camera: THREE.PerspectiveCamera
-    renderer: THREE.WebGLRenderer
-    particles: THREE.Points
-    lines: THREE.LineSegments
-    accentParticles: THREE.Points
-    ring1: THREE.Mesh
-    ring2: THREE.Mesh
-    clock: THREE.Clock
-  } | null>(null)
 
   useEffect(() => {
     const mount = mountRef.current
@@ -29,15 +18,13 @@ export default function ThreeBackground() {
     }
 
     const scene = new THREE.Scene()
-    const clock = new THREE.Clock()
-
     const camera = new THREE.PerspectiveCamera(
       60,
       mount.clientWidth / mount.clientHeight,
       0.1,
       1000
     )
-    camera.position.set(0, 0, 28)
+    camera.position.z = 30
 
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
@@ -48,218 +35,158 @@ export default function ThreeBackground() {
     renderer.setClearColor(0x000000, 0)
     mount.appendChild(renderer.domElement)
 
-    const NODE_COUNT = window.devicePixelRatio < 2 ? 80 : 120
-    const SPREAD = 18
-
-    const positions: number[] = []
-    const nodePositions: THREE.Vector3[] = []
-
-    for (let i = 0; i < NODE_COUNT; i++) {
-      const phi = Math.acos(1 - (2 * (i + 0.5)) / NODE_COUNT)
-      const theta = Math.PI * (1 + Math.sqrt(5)) * i
-
-      const r = SPREAD * (0.7 + Math.random() * 0.6)
-      const x = r * Math.sin(phi) * Math.cos(theta)
-      const y = r * Math.sin(phi) * Math.sin(theta)
-      const z = r * Math.cos(phi)
-
-      positions.push(x, y, z)
-      nodePositions.push(new THREE.Vector3(x, y, z))
+    // Particles (N = 200)
+    const N = 200
+    const pPos = new Float32Array(N * 3)
+    const pVel = new Float32Array(N * 3)
+    for (let i = 0; i < N; i++) {
+      pPos[i * 3] = (Math.random() - 0.5) * 80
+      pPos[i * 3 + 1] = (Math.random() - 0.5) * 56
+      pPos[i * 3 + 2] = (Math.random() - 0.5) * 24
+      pVel[i * 3] = (Math.random() - 0.5) * 0.02
+      pVel[i * 3 + 1] = (Math.random() - 0.5) * 0.02
+      pVel[i * 3 + 2] = (Math.random() - 0.5) * 0.008
     }
 
-    const particleGeo = new THREE.BufferGeometry()
-    particleGeo.setAttribute(
-      "position",
-      new THREE.Float32BufferAttribute(positions, 3)
-    )
-
-    const particleMat = new THREE.PointsMaterial({
-      color: 0x9d77f5,
-      size: 0.35,
-      sizeAttenuation: true,
+    const pGeo = new THREE.BufferGeometry()
+    pGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3))
+    const pMat = new THREE.PointsMaterial({
+      color: 0x60a5fa,
+      size: 0.18,
       transparent: true,
-      opacity: 0.85,
+      opacity: 0.68,
+      sizeAttenuation: true,
     })
+    const points = new THREE.Points(pGeo, pMat)
+    scene.add(points)
 
-    const particles = new THREE.Points(particleGeo, particleMat)
-    scene.add(particles)
+    // Line segments (MAX_L = 250)
+    const MAX_L = 250
+    const lPos = new Float32Array(MAX_L * 6)
+    const lGeo = new THREE.BufferGeometry()
+    lGeo.setAttribute("position", new THREE.BufferAttribute(lPos, 3))
+    lGeo.setDrawRange(0, 0)
+    const lMat = new THREE.LineBasicMaterial({
+      color: 0x3b82f6,
+      transparent: true,
+      opacity: 0.11,
+    })
+    const lines = new THREE.LineSegments(lGeo, lMat)
+    scene.add(lines)
 
-    const linePositions: number[] = []
-    const lineColors: number[] = []
-    const MAX_DIST = 9.5
-    const MAX_CONNECTIONS = 3
+    // Icosahedrons
+    const mkS = (r: number, d: number, c: number, op: number, x: number, y: number, z: number) => {
+      const geo = new THREE.IcosahedronGeometry(r, d)
+      const mat = new THREE.MeshBasicMaterial({
+        color: c,
+        wireframe: true,
+        transparent: true,
+        opacity: op,
+      })
+      const m = new THREE.Mesh(geo, mat)
+      m.position.set(x, y, z)
+      scene.add(m)
+      return m
+    }
+    const s1 = mkS(9.5, 2, 0x1e40af, 0.14, 20, -2, -14)
+    const s2 = mkS(5.8, 1, 0x6d28d9, 0.13, -22, 6, -9)
+    const s3 = mkS(3.2, 1, 0x0e7490, 0.15, -4, -13, -5)
 
-    const connections: number[] = new Array(NODE_COUNT).fill(0)
+    // Toruses
+    const mkT = (r: number, tb: number, c: number, op: number, x: number, y: number, z: number, rx: number, ry: number) => {
+      const geo = new THREE.TorusGeometry(r, tb, 8, 90)
+      const mat = new THREE.MeshBasicMaterial({
+        color: c,
+        transparent: true,
+        opacity: op,
+      })
+      const m = new THREE.Mesh(geo, mat)
+      m.position.set(x, y, z)
+      m.rotation.x = rx
+      m.rotation.y = ry
+      scene.add(m)
+      return m
+    }
+    const t1 = mkT(11.5, 0.055, 0x06b6d4, 0.13, 20, -2, -14, 1.1, 0.2)
+    const t2 = mkT(7.8, 0.05, 0x7c3aed, 0.11, -22, 6, -9, 0.7, 1.0)
 
-    for (let i = 0; i < NODE_COUNT; i++) {
-      for (let j = i + 1; j < NODE_COUNT; j++) {
-        if (connections[i] >= MAX_CONNECTIONS) break
-        if (connections[j] >= MAX_CONNECTIONS) continue
+    // Floating dots
+    const aC = [0x3b82f6, 0x06b6d4, 0x7c3aed, 0x22c55e, 0x3b82f6, 0x06b6d4, 0x818cf8]
+    const dG = new THREE.SphereGeometry(0.38, 8, 6)
+    const aD: { mesh: THREE.Mesh; phase: number; baseOpacity: number }[] = []
+    for (let i = 0; i < 7; i++) {
+      const mat = new THREE.MeshBasicMaterial({
+        color: aC[i],
+        transparent: true,
+        opacity: 0.8,
+      })
+      const d = new THREE.Mesh(dG, mat)
+      d.position.set(
+        (Math.random() - 0.5) * 65,
+        (Math.random() - 0.5) * 44,
+        (Math.random() - 0.5) * 10
+      )
+      scene.add(d)
+      aD.push({ mesh: d, phase: Math.random() * Math.PI * 2, baseOpacity: 0.8 })
+    }
 
-        const dist = nodePositions[i].distanceTo(nodePositions[j])
-        if (dist < MAX_DIST) {
-          const r1 = 0.45
-          const g1 = 0.22
-          const b1 = 0.95
-          const r2 = 0.2
-          const g2 = 0.45
-          const b2 = 1.0
+    const t0 = Date.now()
+    let currentTheme: "light" | "dark" | null = null
 
-          linePositions.push(
-            nodePositions[i].x,
-            nodePositions[i].y,
-            nodePositions[i].z,
-            nodePositions[j].x,
-            nodePositions[j].y,
-            nodePositions[j].z
-          )
-          lineColors.push(r1, g1, b1, r2, g2, b2)
+    const applySceneTheme = (theme: "light" | "dark") => {
+      if (currentTheme === theme) return
+      currentTheme = theme
 
-          connections[i]++
-          connections[j]++
-        }
+      if (theme === "light") {
+        pMat.color.setHex(0x2563eb); pMat.opacity = 0.5
+        lMat.color.setHex(0x1e40af); lMat.opacity = 0.08
+        ;(s1.material as THREE.MeshBasicMaterial).color.setHex(0x1e3a8a)
+        ;(s1.material as THREE.MeshBasicMaterial).opacity = 0.2
+        ;(s2.material as THREE.MeshBasicMaterial).color.setHex(0x4c1d95)
+        ;(s2.material as THREE.MeshBasicMaterial).opacity = 0.17
+        ;(s3.material as THREE.MeshBasicMaterial).color.setHex(0x0e7490)
+        ;(s3.material as THREE.MeshBasicMaterial).opacity = 0.2
+        ;(t1.material as THREE.MeshBasicMaterial).color.setHex(0x0369a1)
+        ;(t1.material as THREE.MeshBasicMaterial).opacity = 0.16
+        ;(t2.material as THREE.MeshBasicMaterial).color.setHex(0x5b21b6)
+        ;(t2.material as THREE.MeshBasicMaterial).opacity = 0.14
+      } else {
+        pMat.color.setHex(0x60a5fa); pMat.opacity = 0.68
+        lMat.color.setHex(0x3b82f6); lMat.opacity = 0.11
+        ;(s1.material as THREE.MeshBasicMaterial).color.setHex(0x1e40af)
+        ;(s1.material as THREE.MeshBasicMaterial).opacity = 0.14
+        ;(s2.material as THREE.MeshBasicMaterial).color.setHex(0x6d28d9)
+        ;(s2.material as THREE.MeshBasicMaterial).opacity = 0.13
+        ;(s3.material as THREE.MeshBasicMaterial).color.setHex(0x0e7490)
+        ;(s3.material as THREE.MeshBasicMaterial).opacity = 0.15
+        ;(t1.material as THREE.MeshBasicMaterial).color.setHex(0x06b6d4)
+        ;(t1.material as THREE.MeshBasicMaterial).opacity = 0.13
+        ;(t2.material as THREE.MeshBasicMaterial).color.setHex(0x7c3aed)
+        ;(t2.material as THREE.MeshBasicMaterial).opacity = 0.11
       }
     }
 
-    const lineGeo = new THREE.BufferGeometry()
-    lineGeo.setAttribute(
-      "position",
-      new THREE.Float32BufferAttribute(linePositions, 3)
-    )
-    lineGeo.setAttribute(
-      "color",
-      new THREE.Float32BufferAttribute(lineColors, 3)
-    )
-
-    const lineMat = new THREE.LineBasicMaterial({
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.25,
-    })
-
-    const lines = new THREE.LineSegments(lineGeo, lineMat)
-    scene.add(lines)
-
-    const accentCount = 200
-    const accentPos: number[] = []
-    for (let i = 0; i < accentCount; i++) {
-      accentPos.push(
-        (Math.random() - 0.5) * 60,
-        (Math.random() - 0.5) * 60,
-        (Math.random() - 0.5) * 40
-      )
-    }
-    const accentGeo = new THREE.BufferGeometry()
-    accentGeo.setAttribute(
-      "position",
-      new THREE.Float32BufferAttribute(accentPos, 3)
-    )
-    const accentMat = new THREE.PointsMaterial({
-      color: 0x6d5ccc,
-      size: 0.12,
-      sizeAttenuation: true,
-      transparent: true,
-      opacity: 0.45,
-    })
-    const accentParticles = new THREE.Points(accentGeo, accentMat)
-    scene.add(accentParticles)
-
-    const ring1Geo = new THREE.TorusGeometry(16, 0.04, 8, 100)
-    const ring1Mat = new THREE.MeshBasicMaterial({
-      color: 0x7c3aed,
-      transparent: true,
-      opacity: 0.15,
-    })
-    const ring1 = new THREE.Mesh(ring1Geo, ring1Mat)
-    ring1.rotation.x = Math.PI / 2
-    scene.add(ring1)
-
-    const ring2Geo = new THREE.TorusGeometry(16, 0.03, 8, 100)
-    const ring2Mat = new THREE.MeshBasicMaterial({
-      color: 0x3b82f6,
-      transparent: true,
-      opacity: 0.1,
-    })
-    const ring2 = new THREE.Mesh(ring2Geo, ring2Mat)
-    ring2.rotation.x = Math.PI / 3
-    ring2.rotation.y = Math.PI / 6
-    scene.add(ring2)
-
-    sceneRef.current = {
-      scene,
-      camera,
-      renderer,
-      particles,
-      lines,
-      accentParticles,
-      ring1,
-      ring2,
-      clock,
-    }
-
+    // Mouse Tracking
     let mouseX = 0
     let mouseY = 0
     let targetX = 0
     let targetY = 0
-
     const handleMouseMove = (e: MouseEvent) => {
       mouseX = (e.clientX / window.innerWidth - 0.5) * 2
       mouseY = (e.clientY / window.innerHeight - 0.5) * 2
     }
     window.addEventListener("mousemove", handleMouseMove)
 
+    // Resize
     const handleResize = () => {
-      if (!mount || !sceneRef.current) return
-      const { camera: cam, renderer: ren } = sceneRef.current
-      cam.aspect = mount.clientWidth / mount.clientHeight
-      cam.updateProjectionMatrix()
-      ren.setSize(mount.clientWidth, mount.clientHeight)
+      if (!mount) return
+      camera.aspect = mount.clientWidth / mount.clientHeight
+      camera.updateProjectionMatrix()
+      renderer.setSize(mount.clientWidth, mount.clientHeight)
     }
     window.addEventListener("resize", handleResize)
 
-    const animate = () => {
-      if (document.hidden) return
-
-      animationRef.current = requestAnimationFrame(animate)
-      if (!sceneRef.current) return
-
-      const {
-        particles: pts,
-        lines: ln,
-        accentParticles: accents,
-        ring1: r1,
-        ring2: r2,
-        camera: cam,
-        renderer: ren,
-        scene: sc,
-        clock: clk,
-      } = sceneRef.current
-      const elapsed = clk.getElapsedTime()
-
-      pts.rotation.y = elapsed * 0.06
-      pts.rotation.x = elapsed * 0.025
-      ln.rotation.y = elapsed * 0.06
-      ln.rotation.x = elapsed * 0.025
-      accents.rotation.y = elapsed * 0.02
-      accents.rotation.z = elapsed * 0.01
-      r1.rotation.z = elapsed * 0.08
-      r2.rotation.z = -elapsed * 0.05
-
-      targetX += (mouseX * 1.5 - targetX) * 0.04
-      targetY += (mouseY * 1.0 - targetY) * 0.04
-      cam.position.x = targetX
-      cam.position.y = -targetY
-
-      const lineMaterial = ln.material as THREE.LineBasicMaterial
-      lineMaterial.opacity = 0.18 + 0.1 * Math.sin(elapsed * 0.8)
-
-      const particleMaterial = pts.material as THREE.PointsMaterial
-      particleMaterial.opacity = 0.75 + 0.15 * Math.sin(elapsed * 1.2)
-
-      cam.lookAt(0, 0, 0)
-      ren.render(sc, cam)
-    }
-
+    // Visibility
     const handleVisibility = () => {
       if (document.hidden) {
         if (animationRef.current !== undefined) {
@@ -271,10 +198,84 @@ export default function ThreeBackground() {
     }
     document.addEventListener("visibilitychange", handleVisibility)
 
-    if (!document.hidden) {
-      animate()
+    // Animation Loop
+    const animate = () => {
+      if (document.hidden) return
+      animationRef.current = requestAnimationFrame(animate)
+
+      // Sync theme colors
+      const isDark = document.documentElement.classList.contains("dark")
+      applySceneTheme(isDark ? "dark" : "light")
+
+      const elapsed = (Date.now() - t0) * 0.001
+
+      // 1. Move particles
+      for (let i = 0; i < N; i++) {
+        pPos[i * 3] += pVel[i * 3]
+        pPos[i * 3 + 1] += pVel[i * 3 + 1]
+        pPos[i * 3 + 2] += pVel[i * 3 + 2]
+
+        if (Math.abs(pPos[i * 3]) > 40) pVel[i * 3] *= -1
+        if (Math.abs(pPos[i * 3 + 1]) > 28) pVel[i * 3 + 1] *= -1
+        if (Math.abs(pPos[i * 3 + 2]) > 12) pVel[i * 3 + 2] *= -1
+      }
+      pGeo.attributes.position.needsUpdate = true
+
+      // 2. Compute connection lines
+      let lc = 0
+      const T2 = 11 * 11
+      for (let i = 0; i < N && lc < MAX_L; i++) {
+        for (let j = i + 1; j < N && lc < MAX_L; j++) {
+          const dx = pPos[i * 3] - pPos[j * 3]
+          const dy = pPos[i * 3 + 1] - pPos[j * 3 + 1]
+          const dz = pPos[i * 3 + 2] - pPos[j * 3 + 2]
+          if (dx * dx + dy * dy + dz * dz < T2) {
+            const b = lc * 6
+            lPos[b] = pPos[i * 3]
+            lPos[b + 1] = pPos[i * 3 + 1]
+            lPos[b + 2] = pPos[i * 3 + 2]
+            lPos[b + 3] = pPos[j * 3]
+            lPos[b + 4] = pPos[j * 3 + 1]
+            lPos[b + 5] = pPos[j * 3 + 2]
+            lc++
+          }
+        }
+      }
+      lGeo.setDrawRange(0, lc * 2)
+      lGeo.attributes.position.needsUpdate = true
+
+      // 3. Rotate meshes
+      s1.rotation.y = elapsed * 0.11
+      s1.rotation.x = elapsed * 0.068
+      s2.rotation.y = -elapsed * 0.14
+      s2.rotation.z = elapsed * 0.09
+      s3.rotation.x = elapsed * 0.17
+      s3.rotation.y = elapsed * 0.11
+
+      t1.rotation.z = elapsed * 0.075
+      t2.rotation.x = 0.7 + elapsed * 0.09
+
+      // 4. Pulsate floating dots
+      for (let i = 0; i < aD.length; i++) {
+        const item = aD[i]
+        ;(item.mesh.material as THREE.MeshBasicMaterial).opacity =
+          0.45 + 0.4 * Math.sin(elapsed * 1.1 + item.phase)
+      }
+
+      // 5. Track mouse & camera
+      targetX += (mouseX * 1.8 - targetX) * 0.04
+      targetY += (mouseY * 0.9 - targetY) * 0.04
+      camera.position.x = Math.sin(elapsed * 0.09) * 1.8 + targetX
+      camera.position.y = Math.cos(elapsed * 0.072) * 0.9 - targetY
+      camera.lookAt(0, 0, 0)
+
+      renderer.render(scene, camera)
     }
 
+    // Run first animation frame
+    animate()
+
+    // Cleanup
     return () => {
       if (animationRef.current !== undefined) {
         cancelAnimationFrame(animationRef.current)
@@ -284,22 +285,28 @@ export default function ThreeBackground() {
       document.removeEventListener("visibilitychange", handleVisibility)
 
       renderer.dispose()
-      particleGeo.dispose()
-      particleMat.dispose()
-      lineGeo.dispose()
-      lineMat.dispose()
-      accentGeo.dispose()
-      accentMat.dispose()
-      ring1Geo.dispose()
-      ring2Geo.dispose()
-      ring1Mat.dispose()
-      ring2Mat.dispose()
+      pGeo.dispose()
+      pMat.dispose()
+      lGeo.dispose()
+      lMat.dispose()
+      s1.geometry.dispose()
+      ;(s1.material as THREE.Material).dispose()
+      s2.geometry.dispose()
+      ;(s2.material as THREE.Material).dispose()
+      s3.geometry.dispose()
+      ;(s3.material as THREE.Material).dispose()
+      t1.geometry.dispose()
+      ;(t1.material as THREE.Material).dispose()
+      t2.geometry.dispose()
+      ;(t2.material as THREE.Material).dispose()
+      dG.dispose()
+      for (let i = 0; i < aD.length; i++) {
+        ;(aD[i].mesh.material as THREE.Material).dispose()
+      }
 
       if (mount.contains(renderer.domElement)) {
         mount.removeChild(renderer.domElement)
       }
-
-      sceneRef.current = null
     }
   }, [])
 

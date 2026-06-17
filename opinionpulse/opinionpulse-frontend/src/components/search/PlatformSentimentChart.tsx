@@ -48,9 +48,9 @@ export function PlatformSentimentChart({ data }: PlatformSentimentChartProps) {
       <div className="h-[220px] w-full flex-1">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-            <XAxis dataKey="name" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} vertical={false} />
+            <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
             <Tooltip
               cursor={{ fill: "transparent" }}
               content={({ active, payload, label }) => {
@@ -68,9 +68,9 @@ export function PlatformSentimentChart({ data }: PlatformSentimentChartProps) {
               }}
             />
             <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-            <Bar dataKey="positive" name="Positive" stackId="a" fill="#16A34A" radius={[0, 0, 0, 0]} />
-            <Bar dataKey="neutral" name="Neutral" stackId="a" fill="#9CA3AF" radius={[0, 0, 0, 0]} />
-            <Bar dataKey="negative" name="Negative" stackId="a" fill="#DC2626" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="positive" name="Positive" stackId="a" fill="var(--success)" radius={[0, 0, 0, 0]} />
+            <Bar dataKey="neutral" name="Neutral" stackId="a" fill="var(--muted-foreground)" radius={[0, 0, 0, 0]} />
+            <Bar dataKey="negative" name="Negative" stackId="a" fill="var(--destructive)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
