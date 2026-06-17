@@ -47,6 +47,7 @@ def _debate_from_row(row: dict[str, Any]) -> dict[str, Any]:
     neg = 100 - pos if sentiment != "neutral" else 25
     if sentiment == "negative":
         pos, neg = 35, 65
+    neutral = max(0, 100 - pos - neg)
     return {
         "id": row.get("id", ""),
         "title": title,
@@ -54,11 +55,12 @@ def _debate_from_row(row: dict[str, Any]) -> dict[str, Any]:
         "summary": summary,
         "positive_pct": pos,
         "negative_pct": neg,
+        "neutral_pct": neutral,
         "time_ago": _time_ago(row.get("posted_at", "")),
         "query": title.split(".")[0][:50] or "trending",
-        "source_url": row.get("url", ""),
+        "source_url": row.get("source_url") or row.get("url", ""),
         "source_label": row.get("source_label", ""),
-        "thumbnail": row.get("thumbnail"),
+        "thumbnail": row.get("thumbnail") or row.get("image_url"),
     }
 
 

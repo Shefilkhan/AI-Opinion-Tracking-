@@ -89,6 +89,7 @@ def _trim_result(row: dict[str, Any]) -> dict[str, Any]:
         "posted_at": row.get("posted_at", ""),
         "sentiment": row.get("sentiment", "neutral"),
         "engagement": row.get("engagement") or {},
+        "thumbnail": row.get("thumbnail") or row.get("image_url"),
     }
 
 
@@ -129,6 +130,7 @@ async def _build_live_debates() -> list[dict[str, Any]]:
                 "summary": (top_result.get("content") or "")[:200],
                 "source_url": top_result.get("source_url", ""),
                 "source_label": top_result.get("source_label", ""),
+                "thumbnail": top_result.get("thumbnail") or top_result.get("image_url"),
                 "platforms": platforms[:4],
                 "total_mentions": total,
                 "total_engagement": total_engagement,

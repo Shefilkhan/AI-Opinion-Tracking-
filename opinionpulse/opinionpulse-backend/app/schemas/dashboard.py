@@ -60,6 +60,7 @@ class LiveDebateItem(BaseModel):
     summary: str
     source_url: str = ""
     source_label: str = ""
+    thumbnail: Optional[str] = None
     platforms: list[str] = []
     total_mentions: int = 0
     total_engagement: int = 0
