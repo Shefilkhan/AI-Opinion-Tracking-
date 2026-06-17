@@ -3,7 +3,6 @@ import { Loader2 } from "lucide-react"
 import { getAuthProviders, getGoogleAuthUrl } from "@/api/auth"
 import { GoogleIcon } from "@/lib/auth/authUi"
 import { useToast } from "@/components/ui/toast"
-import { cn } from "@/lib/utils"
 
 type GoogleSignInButtonProps = {
   redirect?: string
@@ -43,11 +42,7 @@ export function GoogleSignInButton({ redirect = "/dashboard" }: GoogleSignInButt
       type="button"
       onClick={handleClick}
       disabled={configured === null}
-      className={cn(
-        "flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-card px-6 py-3 text-sm font-medium text-foreground transition-colors duration-200",
-        "hover:bg-accent hover:text-accent-foreground disabled:cursor-wait disabled:opacity-70",
-        "dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
-      )}
+      className="le-auth-google-btn"
     >
       {configured === null ? (
         <>

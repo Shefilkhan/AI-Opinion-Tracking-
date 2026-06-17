@@ -14,7 +14,6 @@ import { OtpInput } from "@/components/auth/OtpInput"
 import { useToast } from "@/components/ui/toast"
 import { useAuth } from "@/contexts/AuthContext"
 import { maskEmail } from "@/lib/auth/maskEmail"
-import { btnPrimary } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 const OTP_SECONDS = 120
@@ -167,10 +166,10 @@ export function VerifyOtpPage() {
     <AuthSplitLayout variant="otp">
       <form onSubmit={handleVerify} className="space-y-5">
         <div className="mb-6">
-          <h2 className="font-serif-display mb-1 text-2xl font-medium text-foreground">
+          <h2 className="le-auth-form-title mb-1">
             {isPasswordReset ? "Verify reset code" : "Enter verification code"}
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="le-auth-form-subtitle">
             {isPasswordReset
               ? `Code sent to ${maskEmail(email)} to reset your password.`
               : `We sent a 6-digit code to ${maskEmail(email)}`}
@@ -180,10 +179,10 @@ export function VerifyOtpPage() {
         {devOtpCode && (
           <div
             role="status"
-            className="rounded-[var(--radius-md)] border border-primary/25 bg-primary/5 px-4 py-3 text-sm text-foreground"
+            className="rounded-xl border border-[var(--le-border)] bg-[var(--le-sage-soft)] px-4 py-3 text-sm text-[var(--le-text)]"
           >
-            <p className="font-medium text-primary">Development mode</p>
-            <p className="mt-1 text-muted-foreground">
+            <p className="font-medium text-[var(--le-forest)]">Development mode</p>
+            <p className="mt-1 text-[var(--le-muted)]">
               Email is not configured. Your verification code is{" "}
               <span className="font-mono text-base font-semibold tracking-widest text-foreground">
                 {devOtpCode}
@@ -230,7 +229,7 @@ export function VerifyOtpPage() {
           ) : (
             <button
               type="button"
-              className="font-medium text-primary hover:underline"
+              className="font-medium le-auth-link"
               onClick={handleResend}
             >
               Didn&apos;t receive the code? Resend
@@ -250,11 +249,7 @@ export function VerifyOtpPage() {
         <button
           type="submit"
           disabled={loading || code.length !== 6 || expired}
-          className={cn(
-            "flex w-full min-h-11 items-center justify-center gap-2 px-6 py-3 text-sm font-medium",
-            btnPrimary,
-            "disabled:cursor-not-allowed disabled:opacity-50"
-          )}
+          className="le-btn-solid-full"
         >
           {loading ? (
             <>
@@ -268,9 +263,9 @@ export function VerifyOtpPage() {
           )}
         </button>
 
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-sm text-[var(--le-muted)]">
           Wrong account?{" "}
-          <Link to={footerLink} className="font-medium text-primary hover:underline">
+          <Link to={footerLink} className="le-auth-link">
             {footerLabel}
           </Link>
         </p>

@@ -6,15 +6,14 @@ import { ApiError } from "@/api/client"
 import { resetPassword } from "@/api/auth"
 import { AuthLayout } from "@/components/auth/AuthLayout"
 import { PasswordInput } from "@/components/auth/PasswordInput"
-import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
+import { authLabelClass } from "@/lib/auth/authUi"
 import {
   getPasswordRequirements,
   getPasswordStrength,
   STRENGTH_COLORS,
 } from "@/lib/auth/passwordStrength"
 import { resetPasswordSchema, type ResetPasswordFormValues } from "@/lib/validations/auth"
-import { btnPrimary } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 import { Check } from "lucide-react"
 type LocationState = {
@@ -96,9 +95,7 @@ export function ResetPasswordPage() {
         )}
 
         <div>
-          <label className="mb-1.5 block text-sm text-muted-foreground">
-            New password
-          </label>
+          <label className={authLabelClass}>New password</label>
           <Controller
             name="new_password"
             control={control}
@@ -145,9 +142,7 @@ export function ResetPasswordPage() {
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm text-muted-foreground">
-            Confirm password
-          </label>
+          <label className={authLabelClass}>Confirm password</label>
           <Controller
             name="confirmPassword"
             control={control}
@@ -168,16 +163,12 @@ export function ResetPasswordPage() {
           )}
         </div>
 
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className={cn("w-full min-h-11", btnPrimary)}
-        >
+        <button type="submit" disabled={isSubmitting} className="le-btn-solid-full">
           {isSubmitting ? "Please wait…" : "Update password"}
-        </Button>
+        </button>
 
         <p className="text-center text-sm">
-          <Link to="/auth/forgot-password" className="text-primary hover:underline">
+          <Link to="/auth/forgot-password" className="le-auth-link">
             Request a new code
           </Link>
         </p>
