@@ -3,7 +3,7 @@ import { EditorialNavbar } from "@/components/landing/editorial/EditorialNavbar"
 import { EditorialHero } from "@/components/landing/editorial/EditorialHero"
 import { EditorialFeatures } from "@/components/landing/editorial/EditorialFeatures"
 import { EditorialBigPicture } from "@/components/landing/editorial/EditorialBigPicture"
-import { EditorialComparison } from "@/components/landing/editorial/EditorialComparison"
+import { EditorialPricingSection } from "@/components/landing/editorial/EditorialPricingSection"
 import { EditorialQuote } from "@/components/landing/editorial/EditorialQuote"
 import { EditorialSteps } from "@/components/landing/editorial/EditorialSteps"
 import { EditorialFooter } from "@/components/landing/editorial/EditorialFooter"
@@ -16,7 +16,7 @@ export function LandingPage() {
         <EditorialHero />
         <EditorialFeatures />
         <EditorialBigPicture />
-        <EditorialComparison />
+        <EditorialPricingSection showViewAllLink={false} />
         <EditorialQuote />
         <EditorialSteps />
       </main>
