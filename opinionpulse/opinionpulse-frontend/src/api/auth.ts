@@ -121,6 +121,17 @@ export async function resendLoginOtp(email: string) {
   return resendOtp(email, "login")
 }
 
+export type AuthProvidersResponse = {
+  google: {
+    configured: boolean
+    redirect_uri: string
+  }
+}
+
+export async function getAuthProviders(): Promise<AuthProvidersResponse> {
+  return apiRequest<AuthProvidersResponse>("/api/auth/providers")
+}
+
 export function getGoogleAuthUrl(redirect = "/dashboard"): string {
   const base = getApiBaseUrl()
   const params = new URLSearchParams({ redirect })

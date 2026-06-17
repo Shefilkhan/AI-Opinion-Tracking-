@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Link, useNavigate, useSearchParams } from "react-router-dom"
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { Clock, Loader2 } from "lucide-react"
 import { ApiError } from "@/api/client"
 import {
@@ -28,6 +28,7 @@ function parseOtpType(raw: string | null): OtpType {
 
 export function VerifyOtpPage() {
   const [searchParams] = useSearchParams()
+  const location = useLocation()
   const navigate = useNavigate()
   const { showToast } = useToast()
   const { setUser, refreshUser } = useAuth()
@@ -36,6 +37,9 @@ export function VerifyOtpPage() {
   const type = parseOtpType(searchParams.get("type"))
   const redirect = searchParams.get("redirect") ?? "/dashboard"
   const [code, setCode] = useState("")
+  const [devOtpCode, setDevOtpCode] = useState<string | null>(
+    (location.state as { devOtpCode?: string | null } | null)?.devOtpCode ?? null
+  )
   const [secondsLeft, setSecondsLeft] = useState(OTP_SECONDS)
   const [resendCooldown, setResendCooldown] = useState(OTP_SECONDS)
   const [resendCount, setResendCount] = useState(0)
@@ -72,7 +76,8 @@ export function VerifyOtpPage() {
     if (resendCooldown > 0 || resendCount >= MAX_RESENDS) return
     setError(null)
     try {
-      await resendOtp(email, type)
+      const res = await resendOtp(email, type)
+      if (res.dev_otp_code) setDevOtpCode(res.dev_otp_code)
       setResendCount((c) => c + 1)
       setSecondsLeft(OTP_SECONDS)
       setResendCooldown(OTP_SECONDS)
@@ -171,6 +176,21 @@ export function VerifyOtpPage() {
               : `We sent a 6-digit code to ${maskEmail(email)}`}
           </p>
         </div>
+
+        {devOtpCode && (
+          <div
+            role="status"
+            className="rounded-[var(--radius-md)] border border-primary/25 bg-primary/5 px-4 py-3 text-sm text-foreground"
+          >
+            <p className="font-medium text-primary">Development mode</p>
+            <p className="mt-1 text-muted-foreground">
+              Email is not configured. Your verification code is{" "}
+              <span className="font-mono text-base font-semibold tracking-widest text-foreground">
+                {devOtpCode}
+              </span>
+            </p>
+          </div>
+        )}
 
         <OtpInput
           value={code}

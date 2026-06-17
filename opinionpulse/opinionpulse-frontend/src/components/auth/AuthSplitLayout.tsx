@@ -8,6 +8,7 @@ import {
   Star,
   TrendingUp,
 } from "lucide-react"
+import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { pageShell } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
@@ -194,11 +195,14 @@ export function AuthSplitLayout({
 
       <div className="flex min-h-screen w-full flex-col overflow-y-auto bg-background md:w-1/2 lg:w-[45%]">
         <div className="auth-slide-in mx-auto flex w-full max-w-md flex-col justify-center px-6 py-8 md:min-h-screen md:px-10 md:py-12 lg:px-12">
-          <div className="mb-8 flex items-center gap-2 md:hidden">
-            <div className="flex size-8 items-center justify-center rounded-[var(--radius-md)] bg-primary text-primary-foreground">
-              <Activity size={16} />
+          <div className="mb-8 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 md:hidden">
+              <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-blue-600 text-white">
+                <Activity size={16} />
+              </div>
+              <span className="font-serif-display font-medium text-foreground">OpinionPulse</span>
             </div>
-            <span className="font-serif-display font-medium text-foreground">OpinionPulse</span>
+            <ThemeToggle className="ml-auto" />
           </div>
 
           {topLink && (

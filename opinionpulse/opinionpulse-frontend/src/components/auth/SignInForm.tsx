@@ -7,7 +7,6 @@ import { getApiErrorMessage } from "@/lib/apiErrorMessage"
 import { PasswordInput } from "@/components/auth/PasswordInput"
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton"
 import { authInputClass, authLabelClass } from "@/lib/auth/authUi"
-import { btnPrimary } from "@/lib/ui-classes"
 import { signInSchema, type SignInFormValues } from "@/lib/validations/auth"
 import { cn } from "@/lib/utils"
 
@@ -39,7 +38,8 @@ export function SignInForm() {
       const res = await signInUser(values)
       const type = res.requires_email_verification ? "signup" : "login"
       navigate(
-        `/auth/verify-otp?email=${encodeURIComponent(res.email)}&type=${type}&redirect=${encodeURIComponent(redirect)}`
+        `/auth/verify-otp?email=${encodeURIComponent(res.email)}&type=${type}&redirect=${encodeURIComponent(redirect)}`,
+        { state: { devOtpCode: res.dev_otp_code ?? null } }
       )
     } catch (err) {
       setError("root", { message: getApiErrorMessage(err) })
@@ -130,8 +130,7 @@ export function SignInForm() {
         type="submit"
         disabled={isSubmitting}
         className={cn(
-          "flex w-full min-h-11 items-center justify-center gap-2 px-6 py-3 text-sm font-medium",
-          btnPrimary,
+          "flex w-full min-h-11 items-center justify-center gap-2 px-6 py-3 text-sm font-medium btn-gradient",
           "disabled:cursor-not-allowed disabled:opacity-50"
         )}
       >
