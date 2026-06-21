@@ -237,11 +237,19 @@ export function SignUpForm() {
             </span>
             <span className="text-sm leading-relaxed text-[var(--le-muted)]">
               I agree to the{" "}
-              <Link to="/" className="le-auth-link">
+              <Link
+                to="/legal/terms-of-service"
+                className="le-auth-link"
+                onClick={(e) => e.stopPropagation()}
+              >
                 Terms of Service
               </Link>{" "}
               and{" "}
-              <Link to="/" className="le-auth-link">
+              <Link
+                to="/legal/privacy-policy"
+                className="le-auth-link"
+                onClick={(e) => e.stopPropagation()}
+              >
                 Privacy Policy
               </Link>
             </span>

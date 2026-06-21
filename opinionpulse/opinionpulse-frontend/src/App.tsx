@@ -5,7 +5,10 @@ import { ChatBubble } from "@/components/chat/ChatBubble"
 import { AppearanceFab } from "@/components/ui/AppearanceFab"
 import { useUpgradeModal } from "@/contexts/UpgradeModalContext"
 import { LandingPage } from "@/pages/LandingPage"
+import { ExplorePage } from "@/pages/ExplorePage"
 import { PricingPage } from "@/pages/PricingPage"
+import { TermsOfServicePage } from "@/pages/legal/TermsOfServicePage"
+import { PrivacyPolicyPage } from "@/pages/legal/PrivacyPolicyPage"
 import { SignInPage } from "@/pages/auth/SignInPage"
 import { SignUpPage } from "@/pages/auth/SignUpPage"
 import { VerifyOtpPage } from "@/pages/auth/VerifyOtpPage"
@@ -40,7 +43,10 @@ function AppRoutes() {
     <>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/explore" element={<ExplorePage />} />
         <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/legal/terms-of-service" element={<TermsOfServicePage />} />
+        <Route path="/legal/privacy-policy" element={<PrivacyPolicyPage />} />
 
         <Route path="/auth/signup" element={<SignUpPage />} />
         <Route path="/auth/signin" element={<SignInPage />} />

@@ -4,7 +4,7 @@ import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ApiError } from "@/api/client"
 import { resetPassword } from "@/api/auth"
-import { AuthLayout } from "@/components/auth/AuthLayout"
+import { AuthSplitLayout } from "@/components/auth/AuthSplitLayout"
 import { PasswordInput } from "@/components/auth/PasswordInput"
 import { useToast } from "@/components/ui/toast"
 import { authLabelClass } from "@/lib/auth/authUi"
@@ -77,14 +77,22 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <AuthLayout
-      title="Set a new password"
-      subtitle="Choose a strong password for your account."
-      footerText="Remember your password?"
-      footerLink="/auth/signin"
-      footerLinkLabel="Sign in"
+    <AuthSplitLayout
+      variant="signin"
+      topLink={{
+        text: "Remember your password?",
+        href: "/auth/signin",
+        label: "Sign in",
+      }}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <div className="mb-8">
+          <h2 className="le-auth-form-title mb-1">Set a new password</h2>
+          <p className="le-auth-form-subtitle">
+            Choose a strong password for your account.
+          </p>
+        </div>
+
         {rootError && (
           <p
             role="alert"
@@ -173,6 +181,6 @@ export function ResetPasswordPage() {
           </Link>
         </p>
       </form>
-    </AuthLayout>
+    </AuthSplitLayout>
   )
 }

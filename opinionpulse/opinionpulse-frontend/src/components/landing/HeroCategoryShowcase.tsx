@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   Code2,
   LayoutGrid,
@@ -7,6 +7,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 type Category = "all" | "social" | "news" | "tech" | "video"
 
@@ -78,6 +79,13 @@ const CATEGORIES: CategoryConfig[] = [
   },
 ]
 
+const FLIP_MIDPOINT_MS = 300
+const FLIP_DURATION_MS = 600
+
+function getCategoryConfig(id: Category): CategoryConfig {
+  return CATEGORIES.find((c) => c.id === id) ?? CATEGORIES[0]
+}
+
 const VIDEO_ID = "h_yQswsXwhY"
 
 function VideoEmbed() {
@@ -124,16 +132,42 @@ function SentimentPulseOverlay({
 
 export function HeroCategoryShowcase() {
   const [active, setActive] = useState<Category>("all")
-  const [direction, setDirection] = useState<"left" | "right">("right")
+  const [flipDirection, setFlipDirection] = useState<"forward" | "backward">("forward")
+  const [isFlipping, setIsFlipping] = useState(false)
+  const [displayedCategory, setDisplayedCategory] = useState<Category>("all")
+  const [displayedDescConfig, setDisplayedDescConfig] = useState<CategoryConfig>(CATEGORIES[0])
+  const flipTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
   const activeIndex = CATEGORIES.findIndex((c) => c.id === active)
   const config = CATEGORIES[activeIndex]
+  const displayedConfig = getCategoryConfig(displayedCategory)
+
+  useEffect(() => {
+    return () => {
+      flipTimersRef.current.forEach(clearTimeout)
+    }
+  }, [])
 
   function handleTabClick(id: Category) {
-    if (id === active) return
+    if (id === active || isFlipping) return
+
     const newIndex = CATEGORIES.findIndex((c) => c.id === id)
-    setDirection(newIndex > activeIndex ? "right" : "left")
+    const oldIndex = CATEGORIES.findIndex((c) => c.id === active)
+
+    setFlipDirection(newIndex > oldIndex ? "forward" : "backward")
+    setIsFlipping(true)
     setActive(id)
+
+    flipTimersRef.current.forEach(clearTimeout)
+    flipTimersRef.current = [
+      setTimeout(() => {
+        setDisplayedCategory(id)
+        setDisplayedDescConfig(getCategoryConfig(id))
+      }, FLIP_MIDPOINT_MS),
+      setTimeout(() => {
+        setIsFlipping(false)
+      }, FLIP_DURATION_MS),
+    ]
   }
 
   return (
@@ -142,24 +176,32 @@ export function HeroCategoryShowcase() {
         className="hero-showcase-frame"
         style={{ background: config.accentBg }}
       >
-        <div className="hero-showcase-screen">
-          <div key={active} className={`hero-slide-${direction}`}>
-            {active === "video" ? (
-              <VideoEmbed />
-            ) : (
-              <img
-                src={config.image}
-                alt={`${config.label} sentiment tracking`}
-                className="hero-showcase-image"
-              />
+        <div className="hero-showcase-perspective">
+          <div
+            className={cn(
+              "flip-card",
+              isFlipping &&
+                (flipDirection === "forward" ? "flipping-forward" : "flipping-backward")
             )}
+          >
+            <div className="flip-card-face">
+              {displayedCategory === "video" ? (
+                <VideoEmbed />
+              ) : (
+                <img
+                  src={displayedConfig.image}
+                  alt={`${displayedConfig.label} sentiment tracking`}
+                  className="hero-showcase-image"
+                />
+              )}
 
-            {active !== "video" && (
-              <SentimentPulseOverlay
-                sourceLabel={config.sourceLabel}
-                pulseHeights={config.pulseHeights}
-              />
-            )}
+              {displayedCategory !== "video" && (
+                <SentimentPulseOverlay
+                  sourceLabel={displayedConfig.sourceLabel}
+                  pulseHeights={displayedConfig.pulseHeights}
+                />
+              )}
+            </div>
           </div>
         </div>
 
@@ -176,8 +218,16 @@ export function HeroCategoryShowcase() {
               type="button"
               role="tab"
               aria-selected={isActive}
+              disabled={isFlipping}
               onClick={() => handleTabClick(cat.id)}
-              className={isActive ? "hero-category-tab hero-category-tab-active" : "hero-category-tab"}
+              className={
+                isActive ? "hero-category-tab hero-category-tab-active" : "hero-category-tab"
+              }
+              style={{
+                opacity: isFlipping && !isActive ? 0.5 : 1,
+                cursor: isFlipping ? "default" : "pointer",
+                pointerEvents: isFlipping ? "none" : "auto",
+              }}
             >
               <Icon size={15} strokeWidth={2} />
               {cat.label}
@@ -186,8 +236,11 @@ export function HeroCategoryShowcase() {
         })}
       </div>
 
-      <p key={`desc-${active}`} className="hero-desc-fade hero-category-description">
-        {config.description}
+      <p
+        key={`desc-${displayedDescConfig.id}`}
+        className="hero-desc-fade hero-category-description"
+      >
+        {displayedDescConfig.description}
       </p>
     </div>
   )

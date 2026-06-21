@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react"
 import { Link } from "react-router-dom"
 import { Activity } from "lucide-react"
-import { footerLinks } from "@/data/landingData"
+import { footerConnectLinks } from "@/data/landingEditorialData"
 
 export function EditorialFooter() {
   const [email, setEmail] = useState("")
@@ -46,7 +46,7 @@ export function EditorialFooter() {
           </Link>
 
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-            {footerLinks.connect.map((link) => (
+            {footerConnectLinks.map((link) => (
               <a
                 key={link.label}
                 href={link.href}

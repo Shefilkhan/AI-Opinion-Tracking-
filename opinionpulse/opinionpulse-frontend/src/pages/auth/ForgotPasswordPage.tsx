@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ApiError } from "@/api/client"
 import { forgotPassword } from "@/api/auth"
-import { AuthLayout } from "@/components/auth/AuthLayout"
+import { AuthSplitLayout } from "@/components/auth/AuthSplitLayout"
 import { useToast } from "@/components/ui/toast"
 import { authInputClass, authLabelClass } from "@/lib/auth/authUi"
 import { forgotPasswordSchema } from "@/lib/validations/auth"
@@ -41,14 +41,23 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <AuthLayout
-      title="Forgot password?"
-      subtitle="We'll email you a 6-digit code to reset your password (expires in 2 minutes)."
-      footerText="Back to"
-      footerLink="/auth/signin"
-      footerLinkLabel="Sign in"
+    <AuthSplitLayout
+      variant="signin"
+      topLink={{
+        text: "Remember your password?",
+        href: "/auth/signin",
+        label: "Sign in",
+      }}
     >
       <form onSubmit={handleSubmit(onRequestEmail)} className="space-y-4" noValidate>
+        <div className="mb-8">
+          <h2 className="le-auth-form-title mb-1">Forgot password?</h2>
+          <p className="le-auth-form-subtitle">
+            We&apos;ll email you a 6-digit code to reset your password (expires in 2
+            minutes).
+          </p>
+        </div>
+
         {errors.root && (
           <p className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
             {errors.root.message}
@@ -80,6 +89,6 @@ export function ForgotPasswordPage() {
           </Link>
         </p>
       </form>
-    </AuthLayout>
+    </AuthSplitLayout>
   )
 }

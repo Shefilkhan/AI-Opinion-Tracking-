@@ -1,14 +1,5 @@
 import type { LucideIcon } from "lucide-react"
-import {
-  Brain,
-  LayoutGrid,
-  Newspaper,
-  Play,
-  Scale,
-  Search,
-  TrendingUp,
-  Users,
-} from "lucide-react"
+import { Brain, Scale, Search, TrendingUp } from "lucide-react"
 import { comparisonRows } from "@/data/pricingData"
 
 /** Photography matched to the editorial landing reference (landscapes + minimal 3D). */
@@ -31,19 +22,14 @@ export const editorialNavLinks = [
   { label: "Pricing", href: "#pricing" },
 ] as const
 
-export type SourceFilterId = "all" | "social" | "news" | "tech" | "video"
-
-export const sourceFilters: {
-  id: SourceFilterId
-  label: string
-  icon: LucideIcon
-}[] = [
-  { id: "all", label: "All", icon: LayoutGrid },
-  { id: "social", label: "Social", icon: Users },
-  { id: "news", label: "News", icon: Newspaper },
-  { id: "tech", label: "Tech", icon: Search },
-  { id: "video", label: "Video", icon: Play },
-]
+export const footerConnectLinks = [
+  {
+    label: "GitHub",
+    href: "https://github.com/Shefilkhan/AI-Opinion-Tracking-",
+  },
+  { label: "LinkedIn", href: "https://linkedin.com/in/shefilkhan" },
+  { label: "Email", href: "mailto:shefilpathan@gmail.com" },
+] as const
 
 export const editorialFeatures: {
   title: string

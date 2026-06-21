@@ -65,7 +65,7 @@ export function EditorialNavbar() {
           <Link to="/auth/signin" className="le-btn-outline">
             Login
           </Link>
-          <Link to="/search" className="le-btn-outline">
+          <Link to="/explore" className="le-btn-outline">
             Explore
           </Link>
           <Link to="/auth/signup" className="le-btn-solid">
@@ -102,9 +102,16 @@ export function EditorialNavbar() {
                   </a>
                 ))}
                 <div className="mt-4 flex flex-col gap-2 border-t pt-4">
-                  <Link to="/auth/signin" onClick={() => setOpen(false)} className="le-btn-outline justify-center">
-                    Login
-                  </Link>
+                <Link
+                  to="/explore"
+                  onClick={() => setOpen(false)}
+                  className="le-btn-outline justify-center"
+                >
+                  Explore
+                </Link>
+                <Link to="/auth/signin" onClick={() => setOpen(false)} className="le-btn-outline justify-center">
+                  Login
+                </Link>
                   <Link to="/auth/signup" onClick={() => setOpen(false)} className="le-btn-solid justify-center">
                     Get started
                   </Link>

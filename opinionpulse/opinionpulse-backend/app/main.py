@@ -18,6 +18,7 @@ from app.api.routes import (
     dashboard,
     health,
     personal_alerts,
+    public_demo,
     search,
     settings as settings_routes,
     users,
@@ -114,6 +115,7 @@ app.include_router(auth.router)
 app.include_router(account.router)
 app.include_router(dashboard.router)
 app.include_router(search.router)
+app.include_router(public_demo.router)
 app.include_router(ai.router)
 app.include_router(chat.router)
 app.include_router(users.router)
