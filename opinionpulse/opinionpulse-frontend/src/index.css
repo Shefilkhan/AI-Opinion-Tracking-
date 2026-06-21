@@ -1151,3 +1151,9 @@ div[role="button"]:hover .video-play-btn {
   100% { background-position: -200% center; } 
 }
 
+/* Safeguard to hide any legacy Three.js canvas in the dashboard */
+.dashboard-shell canvas {
+  display: none !important;
+}
+
+
