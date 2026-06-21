@@ -350,6 +350,11 @@ body {
   font-family: var(--font-sans);
 }
 
+/* Block legacy Three.js / canvas particle backgrounds on product pages */
+.dashboard-shell canvas {
+  display: none !important;
+}
+
 .dashboard-shell h1,
 .dashboard-shell h2,
 .dashboard-shell h3,
