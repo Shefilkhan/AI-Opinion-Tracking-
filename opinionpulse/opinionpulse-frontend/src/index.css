@@ -42,11 +42,28 @@
   --gradient-hero-via: #8a9a7a;
   --gradient-hero-to: #2f3a2f;
 
-  --bg-primary: #fafaf8;
-  --bg-secondary: #f4f3ef;
-  --bg-tertiary: #ebe8e1;
-  --bg-card: #ffffff;
-  --bg-sidebar: #ffffff;
+  /* Landing 3D Canvas support */
+  --bg-landing: #fafaf8;
+  --nav-landing: rgba(255, 255, 255, 0.9);
+  --bdr-landing: rgba(26, 31, 26, 0.08);
+  --t1-landing: #1a1f1a;
+  --t2-landing: rgba(26, 31, 26, 0.62);
+  --t3-landing: rgba(26, 31, 26, 0.42);
+  --sf-landing: rgba(26, 31, 26, 0.04);
+  --sfb-landing: rgba(26, 31, 26, 0.1);
+  --cd-landing: rgba(255, 255, 255, 0.88);
+  --cdb-landing: rgba(26, 31, 26, 0.12);
+  --bar-landing: rgba(26, 31, 26, 0.08);
+  --url-landing: rgba(26, 31, 26, 0.06);
+  --urlt-landing: rgba(26, 31, 26, 0.38);
+  --live-landing: rgba(255, 255, 255, 0.96);
+  --ov-landing: radial-gradient(ellipse 65% 85% at 18% 55%, rgba(47, 58, 47, 0.05) 0%, transparent 65%), radial-gradient(ellipse 45% 65% at 82% 22%, rgba(138, 154, 122, 0.03) 0%, transparent 65%);
+
+  --bg-primary: #fafaf8; /* Translucent base background */
+  --bg-secondary: rgba(255, 255, 255, 0.25);
+  --bg-tertiary: rgba(26, 31, 26, 0.06);
+  --bg-card: rgba(255, 255, 255, 0.45);
+  --bg-sidebar: rgba(255, 255, 255, 0.35);
 
   --text-primary: #1a1f1a;
   --text-secondary: #5f665c;
@@ -66,7 +83,7 @@
   --foreground: var(--text-primary);
   --card: var(--bg-card);
   --card-foreground: var(--text-primary);
-  --popover: var(--bg-card);
+  --popover: rgba(255, 255, 255, 0.95);
   --popover-foreground: var(--text-primary);
   --primary: #2f3a2f;
   --primary-foreground: #ffffff;
@@ -83,9 +100,10 @@
   --ring: var(--accent-primary);
   --shadow-subtle: var(--shadow-sm);
 
-  --dash-bg: #fafaf8;
-  --dash-surface: #ffffff;
-  --dash-surface-alt: #f4f3ef;
+  /* Dashboard Custom Theme variables */
+  --dash-bg: transparent; /* Make dashboard transparent so ThreeBackground shows through */
+  --dash-surface: rgba(255, 255, 255, 0.45); /* Glassmorphic card surface */
+  --dash-surface-alt: rgba(244, 243, 239, 0.35);
   --dash-border: rgba(26, 31, 26, 0.08);
   --dash-border-hover: rgba(26, 31, 26, 0.14);
   --dash-text: #1a1f1a;
@@ -98,7 +116,7 @@
   --dash-shadow-hover: 0 8px 28px rgba(47, 58, 47, 0.1);
   --dash-radius: 16px;
   --dash-radius-sm: 10px;
-  --dash-sidebar-bg: #ffffff;
+  --dash-sidebar-bg: rgba(255, 255, 255, 0.35); /* Glassmorphic sidebar */
   --dash-pos: #3d6b4f;
   --dash-pos-soft: rgba(61, 107, 79, 0.12);
   --dash-neg: #a85454;
@@ -132,6 +150,29 @@
   --gradient-hero-via: #5f665c;
   --gradient-hero-to: #c5cdb8;
 
+  /* Landing 3D Canvas support */
+  --bg-landing: #000000;
+  --nav-landing: rgba(20, 20, 20, 0.6);
+  --bdr-landing: rgba(255, 255, 255, 0.07);
+  --t1-landing: #ffffff;
+  --t2-landing: rgba(229, 229, 229, 0.58);
+  --t3-landing: rgba(229, 229, 229, 0.4);
+  --sf-landing: rgba(255, 255, 255, 0.045);
+  --sfb-landing: rgba(255, 255, 255, 0.09);
+  --cd-landing: rgba(255, 255, 255, 0.04);
+  --cdb-landing: rgba(255, 255, 255, 0.09);
+  --bar-landing: rgba(255, 255, 255, 0.07);
+  --url-landing: rgba(255, 255, 255, 0.06);
+  --urlt-landing: rgba(229, 229, 229, 0.35);
+  --live-landing: rgba(20, 20, 20, 0.92);
+  --ov-landing: radial-gradient(ellipse 65% 85% at 18% 55%, rgba(138, 154, 122, 0.1) 0%, transparent 65%), radial-gradient(ellipse 45% 65% at 82% 22%, rgba(138, 154, 122, 0.08) 0%, transparent 65%);
+
+  --bg-primary: #000000;
+  --bg-secondary: rgba(20, 20, 20, 0.25);
+  --bg-tertiary: rgba(255, 255, 255, 0.05);
+  --bg-card: rgba(20, 20, 20, 0.45);
+  --bg-sidebar: rgba(0, 0, 0, 0.35);
+
   --bg-primary: #000000;
   --bg-secondary: #141414;
   --bg-tertiary: #1a1a1a;
@@ -156,7 +197,7 @@
   --foreground: var(--text-primary);
   --card: var(--bg-card);
   --card-foreground: var(--text-primary);
-  --popover: #141414;
+  --popover: rgba(20, 20, 20, 0.95);
   --popover-foreground: var(--text-primary);
   --primary: #8a9a7a;
   --primary-foreground: #000000;
@@ -173,11 +214,12 @@
   --ring: var(--accent-primary);
   --shadow-subtle: var(--shadow-sm);
 
-  --dash-bg: #000000;
-  --dash-surface: #141414;
-  --dash-surface-alt: #1f1f1f;
-  --dash-border: rgba(255, 255, 255, 0.1);
-  --dash-border-hover: rgba(255, 255, 255, 0.16);
+  /* Dashboard Custom Theme variables */
+  --dash-bg: transparent; /* Make dashboard transparent so ThreeBackground shows through */
+  --dash-surface: rgba(255, 255, 255, 0.035); /* Glassmorphic card surface */
+  --dash-surface-alt: rgba(255, 255, 255, 0.02);
+  --dash-border: rgba(255, 255, 255, 0.08);
+  --dash-border-hover: rgba(255, 255, 255, 0.14);
   --dash-text: #ffffff;
   --dash-text-mid: #b3b3b3;
   --dash-text-faint: #808080;
@@ -188,7 +230,7 @@
   --dash-shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.65);
   --dash-radius: 16px;
   --dash-radius-sm: 10px;
-  --dash-sidebar-bg: #000000;
+  --dash-sidebar-bg: rgba(20, 20, 20, 0.45); /* Glassmorphic sidebar */
   --dash-pos: #6b9b7a;
   --dash-pos-soft: rgba(107, 155, 122, 0.18);
   --dash-neg: #e87c7c;
@@ -1140,3 +1182,54 @@ div[role="button"]:hover .video-play-btn {
     box-shadow: none !important;
   }
 }
+
+/* Redundant landing styles removed - integrated into root/dark config */
+
+.animate-trend-in {
+  animation: trendIn 3s ease-out forwards;
+}
+
+.animate-badge-pulse {
+  animation: badgePulse 2.2s infinite;
+}
+
+.animate-live-dot {
+  animation: liveDot 1.8s infinite;
+}
+
+.animate-float-card {
+  animation: floatCard 5.5s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 5s linear infinite;
+}
+
+@keyframes trendIn { 
+  0% { opacity: 0; transform: translateY(6px); } 
+  20% { opacity: 1; transform: translateY(0); } 
+  100% { opacity: 1; transform: translateY(0); } 
+}
+@keyframes badgePulse { 
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6); } 
+  60% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); } 
+}
+@keyframes liveDot { 
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 
+  60% { box-shadow: 0 0 0 5px rgba(34, 197, 94, 0); } 
+}
+@keyframes floatCard { 
+  0%, 100% { transform: translateY(0) rotate(-0.5deg); } 
+  50% { transform: translateY(-12px) rotate(-0.5deg); } 
+}
+@keyframes shimmer { 
+  0% { background-position: 200% center; } 
+  100% { background-position: -200% center; } 
+}
+
+/* Safeguard to hide any legacy Three.js canvas in the dashboard */
+.dashboard-shell canvas {
+  display: none !important;
+}
+
+

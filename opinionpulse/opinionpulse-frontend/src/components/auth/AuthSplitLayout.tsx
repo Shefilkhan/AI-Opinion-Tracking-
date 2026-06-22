@@ -180,7 +180,7 @@ export function AuthSplitLayout({
     <div className="landing-editorial flex min-h-screen">
       <div
         className={cn(
-          "le-auth-left relative hidden min-h-screen flex-col border-r border-[var(--le-border)]",
+          "le-auth-left relative hidden min-h-screen flex-col border-r border-[var(--le-border)]/40 bg-card/25 backdrop-blur-xl",
           "md:flex md:w-1/2 lg:w-[55%]"
         )}
       >
@@ -189,7 +189,7 @@ export function AuthSplitLayout({
         </div>
       </div>
 
-      <div className="le-auth-right flex min-h-screen w-full flex-col overflow-y-auto md:w-1/2 lg:w-[45%]">
+      <div className="le-auth-right flex min-h-screen w-full flex-col overflow-y-auto bg-card/45 backdrop-blur-xl border-l border-[var(--le-border)]/40 md:w-1/2 lg:w-[45%]">
         <div className="auth-slide-in mx-auto flex w-full max-w-md flex-col justify-center px-6 py-8 md:min-h-screen md:px-10 md:py-12 lg:px-12">
           <div className="mb-8 flex items-center justify-between gap-2 md:hidden">
             <Link to="/" className="flex items-center gap-2">

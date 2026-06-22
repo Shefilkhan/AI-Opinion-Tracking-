@@ -273,7 +273,7 @@ export function DashboardLayout({
           />
         )}
         {!hideHeader && !dashShell && (
-          <header className="sticky top-0 z-40 flex min-h-[64px] shrink-0 items-center gap-4 border-b border-[var(--dash-border)] bg-[var(--dash-surface)]/95 px-5 py-3 backdrop-blur-sm sm:px-6 lg:px-10">
+          <header className="sticky top-0 z-40 flex min-h-[64px] shrink-0 items-center gap-4 border-b border-[var(--dash-border)]/40 bg-[var(--dash-surface)]/60 px-5 py-3 backdrop-blur-md sm:px-6 lg:px-10">
             {mobileMenuTrigger}
             <div className="min-w-0 flex-1">
               <h1 className="truncate text-xl font-semibold text-[var(--dash-text)] md:text-2xl">
@@ -289,7 +289,7 @@ export function DashboardLayout({
           </header>
         )}
         {hideHeader && !dashShell && (
-          <div className="sticky top-0 z-40 flex min-h-14 shrink-0 items-center border-b border-[var(--dash-border)] bg-[var(--dash-surface)] px-5 py-2 md:hidden">
+          <div className="sticky top-0 z-40 flex min-h-14 shrink-0 items-center border-b border-[var(--dash-border)]/40 bg-[var(--dash-surface)]/60 px-5 py-2 backdrop-blur-md md:hidden">
             {mobileMenuTrigger}
           </div>
         )}
