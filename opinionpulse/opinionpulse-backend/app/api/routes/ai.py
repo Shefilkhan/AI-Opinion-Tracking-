@@ -16,9 +16,12 @@ from app.schemas.ai import (
     AiCrisisResponseRequest,
     AiCrisisResponseResponse,
 )
+from app.schemas.risk import RiskAnalysisRequest, RiskAnalysisResponse, PersonRiskRequest, PersonRiskResponse
 from app.services.ai_service import (
     ai_available,
     analyze_debate,
+    analyze_person_risk,
+    analyze_risk_profile,
     generate_insight_of_the_day,
     generate_opinion_summary,
     predict_opinion_trend,
@@ -116,6 +119,7 @@ async def insight_of_the_day(
     insight = await generate_insight_of_the_day()
     return AiInsightOfTheDayResponse(enabled=True, insight=insight)
 
+
 @router.post("/crisis-response", response_model=AiCrisisResponseResponse)
 async def ai_crisis_response(
     body: AiCrisisResponseRequest,
@@ -129,3 +133,42 @@ async def ai_crisis_response(
 
     response = await generate_crisis_response(body.topic.strip(), body.results)
     return AiCrisisResponseResponse(response=response, ai_enabled=ai_available())
+
+
+@router.post("/risk-analysis", response_model=RiskAnalysisResponse)
+async def risk_analysis(
+    body: RiskAnalysisRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Analyse a piece of social-media content and return structured risk signals
+    plus a deterministic risk level computed outside the LLM.
+    """
+    result = await analyze_risk_profile(
+        mention_context=body.content.strip(),
+        hours_on_social_media=body.social_media_usage_hours,
+    )
+    return RiskAnalysisResponse(**result, ai_enabled=ai_available())
+
+
+@router.post("/person-risk", response_model=PersonRiskResponse)
+async def person_risk(
+    body: PersonRiskRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Aggregate risk analysis across multiple content items for the same subject.
+    Returns a person-level verdict (aggregate_risk_level) plus per-item detail.
+    """
+    effective_hours = body.social_media_usage_hours if body.social_media_usage_hours is not None else 3.0
+    contents = [item.content for item in body.items]
+
+    result = await analyze_person_risk(
+        contents=contents,
+        hours_on_social_media=effective_hours,
+    )
+    return PersonRiskResponse(
+        subject_handle=body.subject_handle,
+        **result,
+        ai_enabled=ai_available(),
+    )

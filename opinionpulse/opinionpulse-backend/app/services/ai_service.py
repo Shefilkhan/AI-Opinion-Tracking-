@@ -1,4 +1,4 @@
-"""Anthropic Claude-powered opinion analysis."""
+"""Anthropic Claude-powered opinion analysis and structured risk signal extraction."""
 
 from __future__ import annotations
 
@@ -427,7 +427,397 @@ def _fallback_crisis_response(topic: str) -> dict[str, Any]:
         "core_issue": f"Users are expressing dissatisfaction regarding {topic}.",
         "pr_statement": f"We hear you. We understand there are concerns about {topic}, and we take this feedback seriously. Our team is actively investigating the issues raised by our community.\n\nWe are committed to transparency and will provide updates as we learn more. Thank you for holding us accountable.\n\nPlease reach out to our support team if you have further questions.",
         "suggested_tweet": f"We hear the community's concerns regarding {topic}. We're actively looking into it and are committed to making things right. Read our full statement here: [Link]",
-        "dos": ["Acknowledge the issue", "Be transparent", "Provide a timeline"],
         "donts": ["Get defensive", "Ignore the problem", "Delete comments"]
     }
 
+
+# ─── Structured Risk Signal Extraction ───────────────────────────────────────
+
+_RISK_SIGNAL_SYSTEM = """You are a social-media content classifier.
+Extract ONLY the signals listed below from the provided content.
+Return a STRICT JSON object — no extra keys, no prose outside the JSON.
+
+Required output schema:
+{
+  "content_type": "comment" | "post" | "reel" | "image",
+  "sentiment": "positive" | "neutral" | "negative",
+  "sentiment_intensity": "low" | "medium" | "high",
+  "age_group": "kids" | "teen" | "adult",
+  "risk_rationale": {
+    "primary_reason": "<one sentence, max 20 words>",
+    "contributing_factors": ["<factor 1>", "<factor 2>"]  // max 3 items, max 8 words each
+  }
+}
+
+Classification rules:
+- content_type: infer from phrasing (short reaction → comment, longer statement → post,
+  descriptive of video → reel, describes visual → image).
+- sentiment: overall emotional polarity of the content.
+- sentiment_intensity: how strongly the sentiment is expressed.
+- age_group: the most likely target/vulnerable audience of this content.
+- risk_rationale.primary_reason: the single most important risk driver in one sentence.
+- risk_rationale.contributing_factors: array of ≤3 very short phrases naming other factors.
+
+IMPORTANT: Return ONLY the JSON object. No markdown. No explanation."""
+
+
+async def analyze_risk_profile(
+    mention_context: str,
+    hours_on_social_media: float | None = None,
+) -> dict[str, Any]:
+    """
+    Extract structured risk signals via Claude, then compute the risk level
+    deterministically via the risk_scoring engine.
+
+    Args:
+        mention_context: The social-media content text to analyse.
+        hours_on_social_media: Caller-supplied daily SM usage hours.
+            When None the scoring engine defaults to 3.0.
+
+    Returns:
+        Dict matching RiskAnalysisResponse schema.
+    """
+    from app.schemas.risk import GrokSignals
+    from app.services.risk_scoring import RiskSignals, compute_risk
+
+    effective_hours = hours_on_social_media if hours_on_social_media is not None else 3.0
+
+    cache_key = _cache_key("ai_risk_v2", mention_context[:80], str(round(effective_hours, 1)))
+    cached = get_cached(cache_key)
+    if cached:
+        return cached
+
+    if not ai_available():
+        return _fallback_risk_profile(effective_hours)
+
+    prompt = (
+        f"{_RISK_SIGNAL_SYSTEM}\n\nContent to classify:\n\"{mention_context[:1500]}\""
+    )
+
+    try:
+        raw = await _claude_json(prompt)
+
+        # Validate with Pydantic — catches wrong enum values, missing keys, etc.
+        try:
+            signals_model = GrokSignals(**raw)
+        except Exception as validation_err:
+            logger.warning(
+                "Risk signal validation failed (%s) — using defaults for missing fields",
+                validation_err,
+            )
+            # Attempt partial recovery: fill any missing/invalid field with a safe default
+            raw.setdefault("content_type", "post")
+            raw.setdefault("sentiment", "neutral")
+            raw.setdefault("sentiment_intensity", "medium")
+            raw.setdefault("age_group", "adult")
+            raw.setdefault("risk_rationale", {})
+            raw["risk_rationale"].setdefault("primary_reason", "Unable to determine primary reason.")
+            raw["risk_rationale"].setdefault("contributing_factors", [])
+            signals_model = GrokSignals(**raw)
+
+        # Compute risk level deterministically — outside the LLM
+        scoring_input = RiskSignals(
+            content_type=signals_model.content_type,
+            sentiment=signals_model.sentiment,
+            sentiment_intensity=signals_model.sentiment_intensity,
+            age_group=signals_model.age_group,
+        )
+        result = compute_risk(scoring_input, effective_hours)
+
+        response = {
+            "content_type": signals_model.content_type,
+            "sentiment": signals_model.sentiment,
+            "sentiment_intensity": signals_model.sentiment_intensity,
+            "age_group": signals_model.age_group,
+            "social_media_usage_hours": effective_hours,
+            "risk_level": result.risk_level,
+            "risk_rationale": {
+                "primary_reason": signals_model.risk_rationale.primary_reason,
+                "contributing_factors": signals_model.risk_rationale.contributing_factors,
+            },
+            "composite_score": result.composite_score,
+    discussed = get_most_discussed()
+    if not discussed:
+        return None
+
+    top = discussed[0]
+    query = top.get("query") or top.get("topic", "")
+    topic_label = top.get("topic", query)
+
+    results = await search_all_platforms(query, "7d")
+    if len(results) < 3:
+        return {
+            "topic": topic_label,
+            "query": query,
+            "headline": f"{topic_label} is widely discussed this week.",
+            "overview": top.get("top_result", {}).get("title", "")[:200]
+            if top.get("top_result")
+            else f"Conversation about {topic_label} spans multiple platforms.",
+            "one_liner": f"Watch {topic_label} as engagement continues to build.",
+            "verdict": "deeply_divided",
+        }
+
+    sentiment = top.get("sentiment") or {"positive": 50, "negative": 30, "neutral": 20}
+    summary = await generate_opinion_summary(query, results, sentiment)
+    return {
+        "topic": topic_label,
+        "query": query,
+        "headline": summary.get("headline", ""),
+        "overview": summary.get("overview", ""),
+        "one_liner": summary.get("one_liner", ""),
+        "verdict": summary.get("verdict", "deeply_divided"),
+    }
+
+
+async def generate_crisis_response(
+    topic: str,
+    results: list[dict[str, Any]],
+) -> dict[str, Any]:
+    cache_key = _cache_key("ai_crisis", topic)
+    cached = get_cached(cache_key)
+    if cached:
+        return cached
+
+    if not ai_available():
+        return _fallback_crisis_response(topic)
+
+    negative_results = [r for r in results if r.get("sentiment") == "negative"][:10]
+    con_context = "\n".join(
+        f"- {r.get('title', '')}: {(r.get('content') or '')[:150]}"
+        for r in negative_results
+    )
+
+    prompt = f"""You are an elite Public Relations and Crisis Management expert.
+
+Your client is facing negative public sentiment regarding "{topic}".
+Here are the recent negative posts and complaints from social media:
+
+{con_context if con_context else "No specific negative posts found."}
+
+Generate a comprehensive crisis response strategy in this EXACT JSON format:
+{{
+    "severity_assessment": "low OR medium OR high OR critical",
+    "core_issue": "One sentence summarizing the root cause of the outrage",
+    "pr_statement": "A professionally written 3-paragraph PR statement addressing the concerns directly, taking accountability if necessary, and offering a path forward",
+    "suggested_tweet": "A short, empathetic 280-character tweet linking to the statement",
+    "dos": ["Do 1", "Do 2", "Do 3"],
+    "donts": ["Don't 1", "Don't 2"]
+}}
+
+Return ONLY the JSON object. Be empathetic, professional, and strategic."""
+
+    try:
+        response = await _claude_json(prompt)
+        set_cached(cache_key, response, AI_CACHE_TTL)
+        return response
+    except Exception as exc:
+        logger.error("AI Crisis Response failed: %s", exc)
+        return _fallback_crisis_response(topic)
+
+
+def _fallback_crisis_response(topic: str) -> dict[str, Any]:
+    return {
+        "severity_assessment": "medium",
+        "core_issue": f"Users are expressing dissatisfaction regarding {topic}.",
+        "pr_statement": f"We hear you. We understand there are concerns about {topic}, and we take this feedback seriously. Our team is actively investigating the issues raised by our community.\n\nWe are committed to transparency and will provide updates as we learn more. Thank you for holding us accountable.\n\nPlease reach out to our support team if you have further questions.",
+        "suggested_tweet": f"We hear the community's concerns regarding {topic}. We're actively looking into it and are committed to making things right. Read our full statement here: [Link]",
+        "donts": ["Get defensive", "Ignore the problem", "Delete comments"]
+    }
+
+
+# ─── Structured Risk Signal Extraction ───────────────────────────────────────
+
+_RISK_SIGNAL_SYSTEM = """You are a social-media content classifier.
+Extract ONLY the signals listed below from the provided content.
+Return a STRICT JSON object — no extra keys, no prose outside the JSON.
+
+Required output schema:
+{
+  "content_type": "comment" | "post" | "reel" | "image",
+  "sentiment": "positive" | "neutral" | "negative",
+  "sentiment_intensity": "low" | "medium" | "high",
+  "age_group": "kids" | "teen" | "adult",
+  "risk_rationale": {
+    "primary_reason": "<one sentence, max 20 words>",
+    "contributing_factors": ["<factor 1>", "<factor 2>"]  // max 3 items, max 8 words each
+  }
+}
+
+Classification rules:
+- content_type: infer from phrasing (short reaction → comment, longer statement → post,
+  descriptive of video → reel, describes visual → image).
+- sentiment: overall emotional polarity of the content.
+- sentiment_intensity: how strongly the sentiment is expressed.
+- age_group: the most likely target/vulnerable audience of this content.
+- risk_rationale.primary_reason: the single most important risk driver in one sentence.
+- risk_rationale.contributing_factors: array of ≤3 very short phrases naming other factors.
+
+IMPORTANT: Return ONLY the JSON object. No markdown. No explanation."""
+
+
+async def analyze_risk_profile(
+    mention_context: str,
+    hours_on_social_media: float | None = None,
+) -> dict[str, Any]:
+    """
+    Extract structured risk signals via Claude, then compute the risk level
+    deterministically via the risk_scoring engine.
+
+    Args:
+        mention_context: The social-media content text to analyse.
+        hours_on_social_media: Caller-supplied daily SM usage hours.
+            When None the scoring engine defaults to 3.0.
+
+    Returns:
+        Dict matching RiskAnalysisResponse schema.
+    """
+    from app.schemas.risk import GrokSignals
+    from app.services.risk_scoring import RiskSignals, compute_risk
+
+    effective_hours = hours_on_social_media if hours_on_social_media is not None else 3.0
+
+    cache_key = _cache_key("ai_risk_v2", mention_context[:80], str(round(effective_hours, 1)))
+    cached = get_cached(cache_key)
+    if cached:
+        return cached
+
+    if not ai_available():
+        return _fallback_risk_profile(effective_hours)
+
+    prompt = (
+        f"{_RISK_SIGNAL_SYSTEM}\n\nContent to classify:\n\"{mention_context[:1500]}\""
+    )
+
+    try:
+        raw = await _claude_json(prompt)
+
+        # Validate with Pydantic — catches wrong enum values, missing keys, etc.
+        try:
+            signals_model = GrokSignals(**raw)
+        except Exception as validation_err:
+            logger.warning(
+                "Risk signal validation failed (%s) — using defaults for missing fields",
+                validation_err,
+            )
+            # Attempt partial recovery: fill any missing/invalid field with a safe default
+            raw.setdefault("content_type", "post")
+            raw.setdefault("sentiment", "neutral")
+            raw.setdefault("sentiment_intensity", "medium")
+            raw.setdefault("age_group", "adult")
+            raw.setdefault("risk_rationale", {})
+            raw["risk_rationale"].setdefault("primary_reason", "Unable to determine primary reason.")
+            raw["risk_rationale"].setdefault("contributing_factors", [])
+            signals_model = GrokSignals(**raw)
+
+        # Compute risk level deterministically — outside the LLM
+        scoring_input = RiskSignals(
+            content_type=signals_model.content_type,
+            sentiment=signals_model.sentiment,
+            sentiment_intensity=signals_model.sentiment_intensity,
+            age_group=signals_model.age_group,
+        )
+        result = compute_risk(scoring_input, effective_hours)
+
+        response = {
+            "content_type": signals_model.content_type,
+            "sentiment": signals_model.sentiment,
+            "sentiment_intensity": signals_model.sentiment_intensity,
+            "age_group": signals_model.age_group,
+            "social_media_usage_hours": effective_hours,
+            "risk_level": result.risk_level,
+            "risk_rationale": {
+                "primary_reason": signals_model.risk_rationale.primary_reason,
+                "contributing_factors": signals_model.risk_rationale.contributing_factors,
+            },
+            "composite_score": result.composite_score,
+        }
+        set_cached(cache_key, response, AI_CACHE_TTL)
+        return response
+
+    except Exception as exc:
+        logger.error("AI Risk Profile failed: %s", exc)
+        return _fallback_risk_profile(effective_hours)
+
+
+def _fallback_risk_profile(hours_on_social_media: float = 3.0) -> dict[str, Any]:
+    """Deterministic fallback — scoring engine still runs, no LLM needed."""
+    from app.services.risk_scoring import RiskSignals, compute_risk
+
+    signals = RiskSignals(
+        content_type="post",
+        sentiment="neutral",
+        sentiment_intensity="medium",
+        age_group="adult",
+    )
+    result = compute_risk(signals, hours_on_social_media)
+    return {
+        "content_type": "post",
+        "sentiment": "neutral",
+        "sentiment_intensity": "medium",
+        "age_group": "adult",
+        "social_media_usage_hours": hours_on_social_media,
+        "risk_level": result.risk_level,
+        "risk_rationale": {
+            "primary_reason": "Baseline risk — standard adult demographic and neutral content.",
+            "contributing_factors": ["AI unavailable", "Using safe defaults"],
+        },
+        "composite_score": result.composite_score,
+    }
+
+
+async def analyze_person_risk(
+    contents: list[str],
+    hours_on_social_media: float = 3.0,
+) -> dict[str, Any]:
+    """
+    Analyse multiple content items concurrently, then aggregate into a
+    person-level risk verdict using the deterministic scoring engine.
+
+    Args:
+        contents: List of content texts (max 15) from the same person/subject.
+        hours_on_social_media: Person's daily SM usage hours.
+
+    Returns:
+        Dict matching PersonRiskResponse schema.
+    """
+    from app.services.risk_scoring import (
+        RiskResult,
+        RiskSignals,
+        aggregate_person_risk,
+    )
+
+    # Cap at 15 items to avoid runaway API costs
+    capped = [c for c in contents[:15] if c.strip()]
+
+    # Run all item analyses concurrently
+    item_dicts: list[dict[str, Any]] = list(
+        await asyncio.gather(*[analyze_risk_profile(c, hours_on_social_media) for c in capped])
+    )
+
+    # Rebuild (RiskSignals, RiskResult) pairs for the aggregation engine
+    pairs: list[tuple[RiskSignals, RiskResult]] = []
+    for item in item_dicts:
+        sig = RiskSignals(
+            content_type=item.get("content_type", "post"),
+            sentiment=item.get("sentiment", "neutral"),
+            sentiment_intensity=item.get("sentiment_intensity", "medium"),
+            age_group=item.get("age_group", "adult"),
+        )
+        res = RiskResult(
+            risk_level=item.get("risk_level", "mild"),
+            composite_score=float(item.get("composite_score", 1.0)),
+        )
+        pairs.append((sig, res))
+
+    agg = aggregate_person_risk(pairs, hours_on_social_media)
+
+    return {
+        "item_count": agg.item_count,
+        "social_media_usage_hours": hours_on_social_media,
+        "dominant_content_type": agg.dominant_content_type,
+        "avg_composite_score": agg.avg_composite_score,
+        "peak_risk_level": agg.peak_risk_level,
+        "aggregate_risk_level": agg.aggregate_risk_level,
+        "risk_distribution": agg.risk_distribution,
+        "item_analyses": item_dicts,
+    }

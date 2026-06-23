@@ -1,4 +1,5 @@
-import { ExternalLink, Heart, MessageCircle, Play, Repeat2 } from "lucide-react"
+import { useState } from "react"
+import { ExternalLink, Heart, Loader2, MessageCircle, Play, Repeat2, ShieldAlert } from "lucide-react"
 import type { SearchResultItem } from "@/lib/api/types"
 import {
   platformBadge,
@@ -7,6 +8,8 @@ import {
 } from "@/lib/api/sentiment"
 import { proCard } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
+import { useRiskAnalysis } from "@/hooks/useRiskAnalysis"
+import { RiskProfileCard, RiskProfileCardSkeleton } from "@/components/search/RiskProfileCard"
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -48,6 +51,173 @@ type ResultsFeedProps = {
 
 const showDevBadge = import.meta.env.DEV
 
+/** Single result row with its own risk analysis state. */
+function ResultItem({ r }: { r: SearchResultItem }) {
+  const { state: riskState, analyse, reset } = useRiskAnalysis()
+  const [riskOpen, setRiskOpen] = useState(false)
+
+  const plat = platformBadge(r.platform, r.source_label)
+  const views = r.engagement.views ?? 0
+  const link = r.source_url || r.url
+  const headline = r.title?.trim() || r.content.slice(0, 120)
+  let sourceLabel = r.source_label || r.publication || ""
+  if (!sourceLabel && link) {
+    try {
+      sourceLabel = new URL(link).hostname.replace("www.", "")
+    } catch {
+      sourceLabel = link
+    }
+  }
+
+  function handleAnalyseRisk() {
+    if (riskOpen) {
+      reset()
+      setRiskOpen(false)
+      return
+    }
+    setRiskOpen(true)
+    void analyse(r.content)
+  }
+
+  return (
+    <li className="px-5 py-4">
+      <div className="flex gap-3">
+        {(r.thumbnail || r.image_url) && (
+          <img
+            src={r.thumbnail || r.image_url || ""}
+            alt={headline}
+            className="h-16 w-24 shrink-0 rounded-lg object-cover"
+          />
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-semibold",
+                  plat.className
+                )}
+              >
+                <span aria-hidden>{plat.icon}</span>
+                {plat.label}
+              </span>
+              <span className="text-xs text-muted-foreground">{r.author}</span>
+              <span className="text-xs text-muted-foreground">·</span>
+              <span className="text-xs text-muted-foreground">
+                {timeAgo(r.posted_at)}
+              </span>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              {showDevBadge && (
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
+                    isResultLive(r)
+                      ? "bg-green-50 text-green-700"
+                      : "bg-gray-100 text-gray-500"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "size-1.5 rounded-full",
+                      isResultLive(r) ? "bg-green-500" : "bg-gray-400"
+                    )}
+                  />
+                  {isResultLive(r) ? "Live" : "Demo"}
+                </span>
+              )}
+              <span
+                className={cn(
+                  "rounded-full px-2 py-1 text-xs font-medium",
+                  sentimentBadgeClass(r.sentiment)
+                )}
+              >
+                {sentimentBadgeLabel(r.sentiment)}
+              </span>
+            </div>
+          </div>
+          {r.title && (
+            <p className="mt-2 text-sm font-semibold text-foreground line-clamp-2">
+              {r.title}
+            </p>
+          )}
+          <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">{r.content}</p>
+          <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
+            {r.platform === "youtube" && views > 0 && (
+              <span className="inline-flex items-center gap-1">
+                <Play className="size-3.5" /> {views.toLocaleString()} views
+              </span>
+            )}
+            <span className="inline-flex items-center gap-1">
+              <Heart className="size-3.5" /> {r.engagement.likes.toLocaleString()}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Repeat2 className="size-3.5" />{" "}
+              {r.engagement.shares.toLocaleString()}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <MessageCircle className="size-3.5" />{" "}
+              {r.engagement.comments.toLocaleString()}
+            </span>
+          </div>
+          <div className="mt-3 flex items-center justify-between border-t border-border pt-2.5">
+            <span className="flex max-w-[40%] items-center gap-1.5 truncate text-xs text-muted-foreground">
+              <ExternalLink size={11} />
+              {sourceLabel}
+            </span>
+            <div className="flex items-center gap-3">
+              {/* Analyse Risk button */}
+              <button
+                type="button"
+                id={`analyse-risk-${r.id}`}
+                onClick={handleAnalyseRisk}
+                className={cn(
+                  "flex shrink-0 items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
+                  riskOpen
+                    ? "border-primary/40 bg-primary/10 text-primary"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/30 hover:text-primary"
+                )}
+                aria-expanded={riskOpen}
+                aria-controls={`risk-panel-${r.id}`}
+              >
+                {riskState.loading ? (
+                  <Loader2 className="size-3 animate-spin" />
+                ) : (
+                  <ShieldAlert className="size-3" />
+                )}
+                {riskOpen ? (riskState.loading ? "Analysing…" : "Hide Risk") : "Analyse Risk"}
+              </button>
+              <a
+                href={r.source_url || r.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary transition-colors hover:underline"
+              >
+                Visit source <ExternalLink size={10} />
+              </a>
+            </div>
+          </div>
+
+          {/* Inline risk panel */}
+          {riskOpen && (
+            <div id={`risk-panel-${r.id}`} className="mt-3">
+              {riskState.loading && <RiskProfileCardSkeleton />}
+              {riskState.error && (
+                <p className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs text-destructive">
+                  {riskState.error}
+                </p>
+              )}
+              {riskState.data && !riskState.loading && (
+                <RiskProfileCard profile={riskState.data} />
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </li>
+  )
+}
+
 export function ResultsFeed({ results }: ResultsFeedProps) {
   if (results.length === 0) {
     return (
@@ -57,120 +227,9 @@ export function ResultsFeed({ results }: ResultsFeedProps) {
 
   return (
     <ul className={cn(proCard, "divide-y divide-border")}>
-      {results.map((r) => {
-        const plat = platformBadge(r.platform, r.source_label)
-        const views = r.engagement.views ?? 0
-        const link = r.source_url || r.url
-        const headline = r.title?.trim() || r.content.slice(0, 120)
-        let sourceLabel = r.source_label || r.publication || ""
-        if (!sourceLabel && link) {
-          try {
-            sourceLabel = new URL(link).hostname.replace("www.", "")
-          } catch {
-            sourceLabel = link
-          }
-        }
-
-        return (
-          <li key={r.id} className="px-5 py-4">
-            <div className="flex gap-3">
-              {(r.thumbnail || r.image_url) && (
-                <img
-                  src={r.thumbnail || r.image_url || ""}
-                  alt={headline}
-                  className="h-16 w-24 shrink-0 rounded-lg object-cover"
-                />
-              )}
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-semibold",
-                        plat.className
-                      )}
-                    >
-                      <span aria-hidden>{plat.icon}</span>
-                      {plat.label}
-                    </span>
-                    <span className="text-xs text-muted-foreground">{r.author}</span>
-                    <span className="text-xs text-muted-foreground">·</span>
-                    <span className="text-xs text-muted-foreground">
-                      {timeAgo(r.posted_at)}
-                    </span>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    {showDevBadge && (
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
-                          isResultLive(r)
-                            ? "bg-green-50 text-green-700"
-                            : "bg-gray-100 text-gray-500"
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "size-1.5 rounded-full",
-                            isResultLive(r) ? "bg-green-500" : "bg-gray-400"
-                          )}
-                        />
-                        {isResultLive(r) ? "Live" : "Demo"}
-                      </span>
-                    )}
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-1 text-xs font-medium",
-                        sentimentBadgeClass(r.sentiment)
-                      )}
-                    >
-                      {sentimentBadgeLabel(r.sentiment)}
-                    </span>
-                  </div>
-                </div>
-                {r.title && (
-                  <p className="mt-2 text-sm font-semibold text-foreground line-clamp-2">
-                    {r.title}
-                  </p>
-                )}
-                <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">{r.content}</p>
-                <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
-                  {r.platform === "youtube" && views > 0 && (
-                    <span className="inline-flex items-center gap-1">
-                      <Play className="size-3.5" /> {views.toLocaleString()} views
-                    </span>
-                  )}
-                  <span className="inline-flex items-center gap-1">
-                    <Heart className="size-3.5" /> {r.engagement.likes.toLocaleString()}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Repeat2 className="size-3.5" />{" "}
-                    {r.engagement.shares.toLocaleString()}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <MessageCircle className="size-3.5" />{" "}
-                    {r.engagement.comments.toLocaleString()}
-                  </span>
-                </div>
-                <div className="mt-3 flex items-center justify-between border-t border-border pt-2.5">
-                  <span className="flex max-w-[60%] items-center gap-1.5 truncate text-xs text-muted-foreground">
-                    <ExternalLink size={11} />
-                    {sourceLabel}
-                  </span>
-                  <a
-                    href={r.source_url || r.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary transition-colors hover:underline"
-                  >
-                    Visit source <ExternalLink size={10} />
-                  </a>
-                </div>
-              </div>
-            </div>
-          </li>
-        )
-      })}
+      {results.map((r) => (
+        <ResultItem key={r.id} r={r} />
+      ))}
     </ul>
   )
 }
