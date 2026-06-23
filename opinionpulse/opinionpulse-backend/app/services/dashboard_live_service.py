@@ -14,7 +14,7 @@ from app.db.database import SessionLocal
 from app.db.models import SearchHistory
 from app.services.keywords_utils import extract_trending_topics
 from app.services.platforms import (
-    get_trending_news,
+    get_all_trending_news_async,
     get_trending_reddit,
     get_trending_youtube,
 )
@@ -67,7 +67,7 @@ def _debate_from_row(row: dict[str, Any]) -> dict[str, Any]:
 async def _gather_trending() -> tuple[list[dict], list[dict], list[dict]]:
     reddit, news, youtube = await asyncio.gather(
         asyncio.to_thread(get_trending_reddit, 10),
-        asyncio.to_thread(get_trending_news),
+        get_all_trending_news_async(25),
         asyncio.to_thread(get_trending_youtube, "US"),
     )
     return reddit, news, youtube
@@ -197,7 +197,7 @@ def get_dashboard_overview(db: Session | None = None) -> dict[str, Any]:
             "topics_trending": {
                 "value": str(len(trending)),
                 "subtitle": "topics from live feeds",
-                "trend": "Reddit, Dev.to, HN, News, YouTube",
+                "trend": "Reddit, News APIs, YouTube",
                 "trend_positive": True,
             },
             "positive_sentiment": {

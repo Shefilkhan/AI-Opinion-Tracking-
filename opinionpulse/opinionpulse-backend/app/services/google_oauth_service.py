@@ -16,6 +16,36 @@ GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 
+_PLACEHOLDER_MARKERS = (
+    "your_google_client_id",
+    "your_google_client_secret",
+    "changeme",
+    "example",
+    "placeholder",
+    "xxx",
+)
+
+
+def _is_placeholder(value: str) -> bool:
+    lowered = value.strip().lower()
+    if not lowered:
+        return True
+    return any(marker in lowered for marker in _PLACEHOLDER_MARKERS)
+
+
+def _looks_like_google_client_id(client_id: str) -> bool:
+    cid = client_id.strip()
+    if _is_placeholder(cid):
+        return False
+    return cid.endswith(".apps.googleusercontent.com") and len(cid) > 30
+
+
+def _looks_like_google_client_secret(client_secret: str) -> bool:
+    secret = client_secret.strip()
+    if _is_placeholder(secret):
+        return False
+    return len(secret) >= 20
+
 
 @dataclass(frozen=True)
 class GoogleUserInfo:
@@ -29,7 +59,8 @@ class GoogleUserInfo:
 def is_google_oauth_configured() -> bool:
     settings = get_settings()
     return bool(
-        settings.google_client_id.strip() and settings.google_client_secret.strip()
+        _looks_like_google_client_id(settings.google_client_id)
+        and _looks_like_google_client_secret(settings.google_client_secret)
     )
 
 

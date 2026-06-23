@@ -73,39 +73,117 @@ def get_anthropic_client():
             _anthropic_client_key = None
     return _anthropic_client
 
-SYSTEM_PROMPT = """You are Pulse AI, an intelligent assistant for OpinionPulse
-— a social media public opinion tracking platform.
+SYSTEM_PROMPT = """You are Pulse AI for OpinionPulse — public opinion research from live social & news data.
 
-You have access to real-time data from Reddit, YouTube,
-NewsAPI, Guardian, HackerNews, Dev.to, and Wikipedia.
+STRICT RESPONSE RULES:
+1. Line 1 = direct answer to the user's exact question (max 18 words).
+2. Full reply max 100 words (150 only for compare A vs B questions).
+3. Use short bullets (- ) — max 5 bullets, max 10 words each.
+4. Lead with numbers from provided data (% sentiment, post counts, platforms).
+5. No greetings, intros, conclusions, or filler paragraphs.
+6. Do not repeat the question or explain what you are doing.
+7. Only include info the user asked for — skip unrelated context.
 
-When answering:
-- Be specific and data-driven
-- Cite real numbers and sources when available
-- Give sentiment percentages when relevant
-- Keep responses clear and well-structured
-- Use bullet points for lists
-- Use markdown formatting (bold, bullets)
+FORMAT BY QUESTION TYPE:
+- Sentiment: **Sentiment:** X% pos · Y% neg · Z% neutral → 2–3 bullets
+- Compare: **A:** … / **B:** … with 2 bullets each side
+- Trend/predict: **Direction:** … → 2 bullets max
+- "What is X": 1-line definition + 2 opinion bullets from data
 
-IMPORTANT: You MUST end every single response with
-exactly this format on its own line at the very end:
+Use **bold** labels only. No long prose blocks.
 
-SUGGESTIONS: ["first suggestion here", "second suggestion here", "third suggestion here"]
+End every response with exactly (own line, last line):
+SUGGESTIONS: ["follow-up 1", "follow-up 2", "follow-up 3"]
 
-Example:
-SUGGESTIONS: ["What do people think about Bitcoin?", "Show me AI sentiment trends", "Compare climate change opinions"]
+Never invent stats. Never mention Llama/Groq/model names. You are Pulse AI.
 
-This line is required in every response. Never skip it.
-Each suggestion should be a relevant follow-up search the user might explore next.
+IMPORTANT LIMITS:
+- You do NOT have live sports scores, weather, or stock prices.
+- For score/result questions: only state a score if a provided post explicitly mentions it.
+- If no score in the data, line 1 must say the score is not in the fetched posts.
+- Never infer a winner or score from sentiment percentages.
+- Use **A:** / **B:** ONLY when the user compares two topics for opinion (e.g. React vs Angular)."""
 
-Tone: Professional but friendly.
-Like a smart research assistant who has just
-read 100 social media posts for you.
 
-Never say you don't have access to real-time data.
-Never make up statistics — only use provided data.
-Never mention being Llama or any other model name.
-You are Pulse AI, powered by OpinionPulse technology."""
+FACTUAL_LOOKUP = re.compile(
+    r"\b("
+    r"score|scores|result|lineup|who won|final score|match result|"
+    r"live score|runs|wickets|goals|points|standings|"
+    r"weather|stock price|exchange rate|price of"
+    r")\b",
+    re.I,
+)
+
+SPORTS_CONTEXT = re.compile(
+    r"\b("
+    r"odi|t20|test match|ipl|cricket|football|soccer|nba|nfl|"
+    r"world cup|semifinal|quarterfinal|innings|super bowl|"
+    r"afg|ind vs|match\b|fixture|tournament"
+    r")\b",
+    re.I,
+)
+
+COMPARE_INTENT = re.compile(
+    r"\b("
+    r"compare|opinion|sentiment|think about|feel about|"
+    r"which is better|debate|prefer|public opinion|"
+    r"compare opinions|head to head|head-to-head"
+    r")\b",
+    re.I,
+)
+
+
+def classify_question(message: str) -> str:
+    """Return: factual | compare | sentiment | trend | general."""
+    lower = message.lower()
+    if FACTUAL_LOOKUP.search(message) or (
+        SPORTS_CONTEXT.search(message) and re.search(r"\bvs\.?\b", lower)
+    ):
+        return "factual"
+    if is_opinion_compare_query(message):
+        return "compare"
+    if any(x in lower for x in ("predict", "forecast", "trend", "heading")):
+        return "trend"
+    if any(
+        x in lower
+        for x in ("sentiment", "think", "feel", "opinion", "say", "reaction")
+    ):
+        return "sentiment"
+    return "general"
+
+
+def is_opinion_compare_query(message: str) -> bool:
+    """True only when user wants an A-vs-B opinion comparison, not sports scores."""
+    lower = message.lower()
+    has_vs = bool(re.search(r"\bvs\.?\b", lower)) or " versus " in lower
+    has_compare = "compare" in lower or "compared to" in lower
+    if not has_vs and not has_compare:
+        return False
+
+    if FACTUAL_LOOKUP.search(message):
+        return False
+    if SPORTS_CONTEXT.search(message):
+        return False
+
+    if has_compare or COMPARE_INTENT.search(message):
+        return True
+
+    # "React vs Angular" style — both sides short, no sports/factual markers
+    for sep in (" vs ", " versus ", " vs. "):
+        if sep in lower:
+            left, _, right = lower.partition(sep.strip())
+            right = right.strip()
+            if FACTUAL_LOOKUP.search(right) or SPORTS_CONTEXT.search(right):
+                return False
+            if re.search(r"\d", right):
+                return False
+            if len(right.split()) > 4:
+                return False
+            if len(left.split()) > 4:
+                return False
+            return True
+
+    return False
 
 
 def should_fetch_data(message: str) -> bool:
@@ -181,6 +259,9 @@ def extract_search_query(message: str) -> str:
 
 
 def extract_comparison_queries(message: str) -> list[str]:
+    if not is_opinion_compare_query(message):
+        return []
+
     lower = message.lower()
     for sep in (" vs ", " versus ", " vs. ", " compare ", " compared to "):
         if sep in lower:
@@ -219,13 +300,45 @@ def extract_suggestions(response_text: str) -> list[str]:
     return []
 
 
+def _response_format_hint(message: str) -> str:
+    kind = classify_question(message)
+    if kind == "factual":
+        return (
+            "Reply format: Line 1 = whether the score/result appears in the posts "
+            "(if not, say 'Score not found in fetched posts — I track opinion, not live scores'). "
+            "Then up to 3 bullets quoting what posts say about the match. "
+            "Do NOT use **A:**/**B:** labels. Do NOT invent scores or winners."
+        )
+    if kind == "compare":
+        return "Reply format: 1-line verdict, then **A:** and **B:** with 2 bullets each (max 150 words)."
+    if kind == "trend":
+        return "Reply format: **Direction:** one phrase, then 2 trend bullets with data."
+    if kind == "sentiment":
+        return "Reply format: **Sentiment:** X% pos · Y% neg · Z% neutral, then 2–3 short bullets."
+    return "Reply format: 1-line direct answer, then up to 4 short bullets. Max 100 words."
+
+
+def _trim_response_body(text: str, max_chars: int = 650) -> str:
+    """Safety net if the model still returns a wall of text."""
+    cleaned = re.sub(r"\n{3,}", "\n\n", text.strip())
+    if len(cleaned) <= max_chars:
+        return cleaned
+    cut = cleaned[:max_chars]
+    for sep in ("\n- ", "\n**", ". ", ".\n"):
+        idx = cut.rfind(sep)
+        if idx > max_chars * 0.45:
+            return cut[: idx + len(sep.rstrip())].strip()
+    return cut.strip() + "…"
+
+
 def clean_response_text(response: str) -> str:
-    return re.sub(
+    body = re.sub(
         r"\n?SUGGESTIONS:\s*\[[^\]]+\]",
         "",
         response,
         flags=re.IGNORECASE,
     ).strip()
+    return _trim_response_body(body)
 
 
 def _sentiment_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
@@ -243,6 +356,25 @@ def _sentiment_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _score_snippets_from_results(results: list[dict[str, Any]]) -> str:
+    """Pull lines that may contain an actual score/result from fetched posts."""
+    score_re = re.compile(
+        r"(\d{1,3}\s*[-/]\s*\d{1,3}|\d+\s*/\s*\d+|won by \d+|beat \w+ by \d+"
+        r"|\d+\s*runs|\d+\s*goals|final score)",
+        re.I,
+    )
+    lines: list[str] = []
+    for r in results[:25]:
+        text = f"{r.get('title', '')} {r.get('content', '')}".strip()
+        if score_re.search(text):
+            lines.append(f"- [{r.get('platform', '?')}] {text[:140]}")
+        if len(lines) >= 4:
+            break
+    if not lines:
+        return ""
+    return "Possible score/result mentions in posts:\n" + "\n".join(lines)
+
+
 def _build_context_data(
     search_query: str,
     fetched_results: list[dict[str, Any]],
@@ -252,42 +384,26 @@ def _build_context_data(
     if not fetched_results:
         return ""
 
-    top_results = fetched_results[:15]
+    top_results = fetched_results[:8]
     context_lines = []
     for r in top_results:
-        engagement = r.get("engagement") or {}
-        likes = engagement.get("likes", 0) if isinstance(engagement, dict) else 0
+        title = str(r.get("title", ""))[:80]
+        snippet = str(r.get("content", ""))[:80]
         context_lines.append(
-            f"[{r.get('platform', '').upper()}] "
-            f"{r.get('author', 'Unknown')} — "
-            f"{r.get('title', '')}: "
-            f"{str(r.get('content', ''))[:150]} "
-            f"(sentiment: {r.get('sentiment', 'neutral')}, likes: {likes})"
+            f"- [{r.get('platform', '?')}] {title} ({r.get('sentiment', 'neutral')})"
+            + (f" — {snippet}" if snippet and snippet != title else "")
         )
 
-    wiki_text = "Not available"
+    wiki_text = ""
     if wiki_summary and isinstance(wiki_summary, dict):
-        wiki_text = str(wiki_summary.get("summary", ""))[:300]
+        wiki_text = str(wiki_summary.get("summary", ""))[:120]
 
-    return f"""
-REAL-TIME DATA FETCHED FOR "{search_query}":
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Total results: {len(fetched_results)} posts/articles
-Time range: Last 7 days
-
-SENTIMENT BREAKDOWN:
-  Positive: {sentiment_summary.get('positive', 0)}%
-  Negative: {sentiment_summary.get('negative', 0)}%
-  Neutral:  {sentiment_summary.get('neutral', 0)}%
-
-TOP POSTS & ARTICLES:
-{chr(10).join(context_lines)}
-
-WIKIPEDIA CONTEXT:
-{wiki_text}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Use this real data to give a specific, accurate answer.
-"""
+    wiki_block = f"\nWiki: {wiki_text}" if wiki_text else ""
+    return f"""DATA for "{search_query}" (7d, {len(fetched_results)} posts):
+Sentiment: {sentiment_summary.get('positive', 0)}% pos · {sentiment_summary.get('negative', 0)}% neg · {sentiment_summary.get('neutral', 0)}% neutral
+Top signals:
+{chr(10).join(context_lines)}{wiki_block}
+Use only these numbers. Be brief."""
 
 
 def _call_groq(messages: list[dict[str, str]], system_prompt: str) -> str:
@@ -298,8 +414,8 @@ def _call_groq(messages: list[dict[str, str]], system_prompt: str) -> str:
     response = client.chat.completions.create(
         model=GROQ_MODEL,
         messages=formatted_messages,
-        max_tokens=1024,
-        temperature=0.7,
+        max_tokens=400,
+        temperature=0.35,
         stream=False,
     )
     return response.choices[0].message.content or ""
@@ -421,6 +537,10 @@ async def process_chat_message(
 
             sentiment_summary = _sentiment_summary(fetched_results)
             context_data = "\n".join(blocks)
+            if classify_question(message) == "factual":
+                snippets = _score_snippets_from_results(fetched_results)
+                if snippets:
+                    context_data += f"\n\n{snippets}"
 
     messages_for_ai: list[dict[str, str]] = []
     for msg in conversation_history[-8:]:
@@ -429,9 +549,10 @@ async def process_chat_message(
                 {"role": msg["role"], "content": str(msg["content"])[:800]}
             )
 
-    current_content = message
+    format_hint = _response_format_hint(message)
+    current_content = f"{format_hint}\n\nQuestion: {message}"
     if context_data:
-        current_content = f"{context_data}\n\nUser's question: {message}"
+        current_content = f"{context_data}\n\n{format_hint}\n\nQuestion: {message}"
 
     messages_for_ai.append({"role": "user", "content": current_content})
 

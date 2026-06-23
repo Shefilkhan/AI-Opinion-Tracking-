@@ -83,6 +83,7 @@ def run(name: str, fn) -> Result:
 
 def main() -> int:
     from app.core.config import get_settings
+    from app.services.google_oauth_service import is_google_oauth_configured
 
     s = get_settings()
     results: list[Result] = []
@@ -97,10 +98,12 @@ def main() -> int:
         ("GUARDIAN_API_KEY", bool(s.guardian_api_key.strip())),
         ("GNEWS_API_KEY", bool(s.gnews_api_key.strip())),
         ("CURRENTS_API_KEY", bool(s.currents_api_key.strip())),
+        ("MEDIASTACK_API_KEY", bool(s.mediastack_api_key.strip())),
         ("YOUTUBE_API_KEY", bool(s.youtube_api_key.strip())),
         ("GROQ_API_KEY", bool(s.groq_api_key.strip())),
+        ("MASTODON_ACCESS_TOKEN", bool(s.mastodon_access_token.strip())),
         ("AI_PROVIDER", s.ai_provider),
-        ("GOOGLE_OAUTH", bool(s.google_client_id.strip() and s.google_client_secret.strip())),
+        ("GOOGLE_OAUTH", is_google_oauth_configured()),
         ("EMAIL", s.email_configured),
     ]
     for label, value in config_checks:
@@ -111,6 +114,7 @@ def main() -> int:
     from app.services.platforms.news_api import search_news
     from app.services.platforms.guardian import search_guardian
     from app.services.platforms.gnews import search_gnews
+    from app.services.platforms.mediastack import search_mediastack
     from app.services.youtube_service import search_youtube_videos
 
     results.append(
@@ -123,6 +127,12 @@ def main() -> int:
         run("GNews", lambda: f"{len(search_gnews(QUERY))} articles")
     )
     results.append(run("Currents", lambda: _test_currents(s)))
+    if s.mediastack_api_key.strip():
+        results.append(
+            run("Mediastack", lambda: f"{len(search_mediastack(QUERY))} articles")
+        )
+    else:
+        results.append(Result("Mediastack", True, "skipped (no key)", 0))
     results.append(
         run(
             "YouTube",

@@ -34,8 +34,8 @@ Pydantic loads **both** `.env` and `.env.local` (use `.env.local` for Gmail secr
 | `SMTP_FROM_EMAIL` | Optional | Defaults to `EMAIL_USER` |
 | `SMTP_FROM_NAME` | Optional | `OpinionPulse` |
 | `FRONTEND_URL` | Optional | `http://localhost:5173` (CORS already allows this origin) |
-| `GOOGLE_CLIENT_ID` | For Google sign-in | [Google Cloud Console](https://console.cloud.google.com/) → Credentials → OAuth 2.0 Client ID (Web) |
-| `GOOGLE_CLIENT_SECRET` | For Google sign-in | Same OAuth client |
+| `GOOGLE_CLIENT_ID` | For Google sign-in | [Google Cloud Console](https://console.cloud.google.com/) → Credentials → OAuth 2.0 Client ID (Web). Must end with `.apps.googleusercontent.com` — not placeholder text from `.env.example`. |
+| `GOOGLE_CLIENT_SECRET` | For Google sign-in | Same OAuth client (typically starts with `GOCSPX-`) |
 | `GOOGLE_REDIRECT_URI` | Optional | `http://127.0.0.1:8000/api/auth/google/callback` (must match Google Console exactly) |
 | `AUTH_COOKIE_SECURE` | Production | `true` when using HTTPS |
 | `APP_ENV` | Optional | `development` enables dev OTP in API when SMTP is missing |
@@ -78,6 +78,23 @@ npm run dev
 ```
 
 On startup, the backend logs `ENV CHECK:` with which settings are configured. Ensure MySQL/XAMPP is running.
+
+## Google sign-in for teammates
+
+**Error `401: invalid_client` / "The OAuth client was not found"** means the backend sent an invalid `GOOGLE_CLIENT_ID` to Google. This is not a frontend bug.
+
+Common causes:
+
+1. **Missing or placeholder credentials** — copying `.env.example` leaves fake values like `your_google_client_id_here`. Google rejects those. Put real values in `opinionpulse-backend/.env.local` (gitignored).
+2. **Credentials not shared** — OAuth secrets are not in the repo. The project owner must share `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` securely (1Password, team chat DM, etc.).
+3. **OAuth app in Testing mode** — in [Google Cloud Console](https://console.cloud.google.com/) → OAuth consent screen, add each teammate's Gmail under **Test users**.
+4. **Redirect URI mismatch** — in Credentials → your OAuth client → Authorized redirect URIs, add:
+   - `http://127.0.0.1:8000/api/auth/google/callback`
+   - `http://localhost:8000/api/auth/google/callback`
+
+After updating `.env.local`, restart the backend (`uvicorn`). Check startup log: `GOOGLE_OAUTH: True`.
+
+If Google is not configured, the **Continue with Google** button shows a toast instead of redirecting to Google.
 
 On first dev start, SQLAlchemy creates tables; `schema_sync` adds new user columns. For manual SQL, run `scripts/migrate_auth_system.sql`.
 
