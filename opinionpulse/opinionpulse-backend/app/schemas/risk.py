@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -46,7 +46,7 @@ class GrokSignals(BaseModel):
 
 class RiskAnalysisRequest(BaseModel):
     content: str = Field(..., min_length=1, description="The social media content to analyse.")
-    social_media_usage_hours: float | None = Field(
+    social_media_usage_hours: Optional[float] = Field(
         default=None,
         ge=0.0,
         le=24.0,
@@ -94,7 +94,7 @@ class PersonRiskRequest(BaseModel):
         max_length=15,
         description="Up to 15 content items to aggregate (e.g. all posts by this person).",
     )
-    social_media_usage_hours: float | None = Field(
+    social_media_usage_hours: Optional[float] = Field(
         default=None,
         ge=0.0,
         le=24.0,
