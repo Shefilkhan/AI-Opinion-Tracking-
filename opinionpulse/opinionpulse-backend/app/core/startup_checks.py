@@ -1,6 +1,7 @@
 import logging
 
 from app.core.config import get_settings
+from app.services.google_oauth_service import is_google_oauth_configured
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +27,7 @@ def log_env_check() -> None:
             "AI_PROVIDER": s.ai_provider,
             "GROQ_API_KEY": bool(s.groq_api_key.strip()),
             "ANTHROPIC_API_KEY": bool(s.anthropic_api_key.strip()),
-            "GOOGLE_OAUTH": bool(s.google_client_id.strip())
-            and bool(s.google_client_secret.strip()),
+            "GOOGLE_OAUTH": is_google_oauth_configured(),
             "APP_ENV": s.app_env,
         },
     )

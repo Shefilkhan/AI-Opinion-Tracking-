@@ -13,6 +13,7 @@ from app.services.platforms.platform_common import (
     log_platform_error,
     log_platform_success,
 )
+from app.services.platforms.query_helpers import filter_headline_results, quoted_phrase_query, sort_results_by_posted_at
 
 TIMEOUT = 12
 
@@ -22,7 +23,7 @@ def search_hackernews(query: str, time_range: str = "24h") -> list[dict]:
 
     def fetch() -> list[dict]:
         try:
-            params = {"query": query, "tags": "story", "hitsPerPage": 15}
+            params = {"query": quoted_phrase_query(query), "tags": "story", "hitsPerPage": 15}
             resp = requests.get(
                 "https://hn.algolia.com/api/v1/search",
                 params=params,
@@ -73,6 +74,8 @@ def search_hackernews(query: str, time_range: str = "24h") -> list[dict]:
                 )
                 if row:
                     out.append(row)
+            out = filter_headline_results(out, query)
+            out = sort_results_by_posted_at(out)
             log_platform_success("HackerNews", query, len(out))
             return out
         except Exception as exc:

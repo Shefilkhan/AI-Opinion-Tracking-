@@ -15,8 +15,16 @@ from app.services.platforms.platform_common import (
     log_platform_error,
     log_platform_success,
 )
+from app.services.platforms.query_helpers import (
+    filter_by_time_range,
+    filter_headline_results,
+    iso_date_days_ago,
+    quoted_phrase_query,
+    sort_results_by_posted_at,
+)
 
 TIMEOUT = 12
+NEWS_CACHE_TTL = 180  # 3 minutes — keep trending/news results fresh
 
 
 def search_news(query: str, time_range: str = "24h", page_size: int = 20) -> list[dict]:
@@ -24,14 +32,14 @@ def search_news(query: str, time_range: str = "24h", page_size: int = 20) -> lis
     if not key:
         raise ValueError("NEWS_API_KEY not configured")
 
-    days = {"24h": 1, "7d": 7, "30d": 30}.get(time_range, 1)
-    from_date = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d")
+    from_date = iso_date_days_ago(time_range)
     cache_key = f"newsapi_{query}_{from_date}_{page_size}"
 
     def fetch() -> list[dict]:
         try:
             params = {
-                "q": query,
+                "q": quoted_phrase_query(query),
+                "searchIn": "title",
                 "from": from_date,
                 "sortBy": "publishedAt",
                 "pageSize": page_size,
@@ -45,8 +53,19 @@ def search_news(query: str, time_range: str = "24h", page_size: int = 20) -> lis
             data = resp.json()
             if data.get("status") != "ok":
                 raise RuntimeError(data.get("message", "NewsAPI error"))
+            articles = data.get("articles", [])
+            if not articles:
+                params["searchIn"] = "title,description"
+                resp = requests.get(
+                    "https://newsapi.org/v2/everything", params=params, timeout=TIMEOUT
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                if data.get("status") != "ok":
+                    raise RuntimeError(data.get("message", "NewsAPI error"))
+                articles = data.get("articles", [])
             out = []
-            for art in data.get("articles", []):
+            for art in articles:
                 title = (art.get("title") or "").strip()
                 if not title or title == "[Removed]":
                     continue
@@ -78,13 +97,16 @@ def search_news(query: str, time_range: str = "24h", page_size: int = 20) -> lis
                 )
                 if row:
                     out.append(row)
+            out = filter_headline_results(out, query, fallback_to_all=True)
+            out = filter_by_time_range(out, time_range, fallback_to_all=False)
+            out = sort_results_by_posted_at(out)
             log_platform_success("NewsAPI", query, len(out))
             return out
         except Exception as exc:
             log_platform_error("NewsAPI", query, exc)
             return []
 
-    return cached(cache_key, fetch)
+    return cached(cache_key, fetch, ttl_seconds=NEWS_CACHE_TTL)
 
 
 def get_trending_news() -> list[dict]:
@@ -124,9 +146,9 @@ def get_trending_news() -> list[dict]:
                 )
                 if row:
                     out.append(row)
-            return out
+            return sort_results_by_posted_at(out)
         except Exception as exc:
             log_platform_error("NewsAPI", "trending", exc)
             return []
 
-    return cached(cache_key, fetch, ttl_seconds=300)
+    return cached(cache_key, fetch, ttl_seconds=180)

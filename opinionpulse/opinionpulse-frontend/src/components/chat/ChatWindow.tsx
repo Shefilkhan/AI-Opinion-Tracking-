@@ -33,14 +33,12 @@ const STARTER_SUGGESTIONS = [
 const WELCOME_MESSAGE: ChatMessageItem = {
   id: "welcome",
   role: "assistant",
-  content: `Hi! I'm **Pulse AI**.
+  content: `**Pulse AI** — live opinion from Reddit, YouTube, news & more.
 
-I can analyze real-time public opinion from Reddit, YouTube, NewsAPI, and 7 more sources.
-
-Try asking me:
-- "What do people think about Bitcoin?"
-- "Predict AI opinion trends"
-- "Show me climate change sentiment"`,
+Ask a focused question:
+- "Bitcoin sentiment right now?"
+- "React vs Angular — who's winning?"
+- "Where is AI opinion heading?"`,
   timestamp: new Date(),
   suggestions: STARTER_SUGGESTIONS.slice(0, 3),
 }

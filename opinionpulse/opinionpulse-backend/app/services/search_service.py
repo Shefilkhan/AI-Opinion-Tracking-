@@ -29,6 +29,7 @@ from app.services.platforms import (
     search_bluesky,
 )
 from app.services.platforms.platform_common import deduplicate_results, normalize_result
+from app.services.platforms.query_helpers import sort_results_by_posted_at
 from app.services.search_constants import SENTIMENT_TREND_24H
 from app.services.sentiment_analysis import calculate_sentiment_summary, calculate_sentiment_forecast
 
@@ -253,7 +254,7 @@ async def run_search(
             reverse=True,
         )
     else:
-        combined.sort(key=lambda r: r.get("posted_at", ""), reverse=True)
+        combined = sort_results_by_posted_at(combined)
 
     summary = calculate_sentiment_summary(combined)
     forecast = calculate_sentiment_forecast(combined)

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import requests
@@ -14,9 +13,11 @@ from app.services.platforms.platform_common import (
     log_platform_error,
     log_platform_success,
 )
+from app.services.platforms.query_helpers import iso_datetime_days_ago, sort_results_by_posted_at
 
 TIMEOUT = 15
 API_BASE = "https://www.googleapis.com/youtube/v3"
+NEWS_CACHE_TTL = 180
 
 
 def _api_key() -> str:
@@ -34,10 +35,7 @@ def _get(endpoint: str, params: dict[str, Any]) -> dict:
 
 
 def search_youtube(query: str, time_range: str = "7d", max_results: int = 15) -> list[dict]:
-    days = {"24h": 1, "7d": 7, "30d": 30}.get(time_range, 7)
-    published_after = (
-        datetime.now(timezone.utc) - timedelta(days=days)
-    ).isoformat().replace("+00:00", "Z")
+    published_after = iso_datetime_days_ago(time_range)
     cache_key = f"youtube_{query}_{time_range}_{max_results}"
 
     def fetch() -> list[dict]:
@@ -48,7 +46,7 @@ def search_youtube(query: str, time_range: str = "7d", max_results: int = 15) ->
                     "part": "snippet",
                     "q": query,
                     "type": "video",
-                    "order": "relevance",
+                    "order": "date",
                     "maxResults": max_results,
                     "publishedAfter": published_after,
                     "relevanceLanguage": "en",
@@ -104,13 +102,14 @@ def search_youtube(query: str, time_range: str = "7d", max_results: int = 15) ->
                 )
                 if row:
                     out.append(row)
+            out = sort_results_by_posted_at(out)
             log_platform_success("YouTube", query, len(out))
             return out
         except Exception as exc:
             log_platform_error("YouTube", query, exc)
             return []
 
-    return cached(cache_key, fetch, ttl_seconds=600)
+    return cached(cache_key, fetch, ttl_seconds=NEWS_CACHE_TTL)
 
 
 def get_trending_youtube(region_code: str = "US") -> list[dict]:

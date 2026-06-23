@@ -10,6 +10,7 @@ from app.services.platforms.platform_common import (
     log_platform_error,
     log_platform_success,
 )
+from app.services.platforms.query_helpers import title_matches_query
 
 TIMEOUT = 12
 
@@ -51,12 +52,9 @@ def search_devto(query: str, time_range: str = "24h") -> list[dict]:
                 title = (article.get("title") or "").strip()
                 if not title:
                     continue
-                desc = (article.get("description") or "").strip()
-                haystack = f"{title} {desc}".lower()
-                if q_lower not in haystack and not any(
-                    w in haystack for w in q_lower.split() if len(w) > 2
-                ):
+                if not title_matches_query(title, query):
                     continue
+                desc = (article.get("description") or "").strip()
                 user = article.get("user") or {}
                 username = user.get("username") or "devto"
                 article_url = article.get("url")

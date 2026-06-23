@@ -29,7 +29,7 @@ export function GoogleSignInButton({ redirect = "/dashboard" }: GoogleSignInButt
   function handleClick() {
     if (configured === false) {
       showToast(
-        "Google sign-in is not configured yet. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to backend .env.local.",
+        "Google sign-in is not configured. Ask your team lead for GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, add them to opinionpulse-backend/.env.local, then restart the backend.",
         "error"
       )
       return
