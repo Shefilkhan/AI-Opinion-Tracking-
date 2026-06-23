@@ -1,5 +1,26 @@
 export type SentimentLabel = "positive" | "negative" | "neutral"
 
+export type RiskLevel = "low" | "mild" | "average" | "high"
+export type SentimentIntensity = "low" | "medium" | "high"
+export type ContentType = "comment" | "post" | "reel" | "image"
+export type AgeGroup = "kids" | "teen" | "adult"
+
+export type RiskRationale = {
+  primary_reason: string
+  contributing_factors: string[]
+}
+
+export type RiskProfile = {
+  content_type: ContentType
+  sentiment: SentimentLabel
+  sentiment_intensity: SentimentIntensity
+  age_group: AgeGroup
+  social_media_usage_hours: number
+  risk_level: RiskLevel
+  risk_rationale: RiskRationale
+  composite_score: number
+  ai_enabled: boolean
+}
 export type SearchFilters = {
   platform: string
   timeRange: string

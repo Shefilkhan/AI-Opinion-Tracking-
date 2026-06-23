@@ -1,5 +1,5 @@
 import { apiRequest, ApiError } from "@/api/client"
-import type { SearchResponse, SearchResultItem } from "@/lib/api/types"
+import type { SearchResponse, SearchResultItem, RiskProfile } from "@/lib/api/types"
 
 const AI_TIMEOUT_MS = 15_000
 
@@ -153,4 +153,29 @@ export async function generateCrisisResponse(data: { topic: string; results: any
     body: data,
     auth: true,
   })
+}
+
+/**
+ * Analyse a single social-media content item and get structured risk signals
+ * plus a deterministic risk level computed server-side.
+ *
+ * @param content                 The text of the post / comment / caption to analyse.
+ * @param socialMediaUsageHours   Estimated daily hours the subject spends on social media.
+ *                                Omit to let the server apply the default (3 h).
+ */
+export async function fetchRiskAnalysis(
+  content: string,
+  socialMediaUsageHours?: number
+): Promise<RiskProfile> {
+  return withTimeout(
+    apiRequest<RiskProfile>("/api/ai/risk-analysis", {
+      method: "POST",
+      body: {
+        content,
+        social_media_usage_hours: socialMediaUsageHours ?? null,
+      },
+      auth: true,
+    }),
+    AI_TIMEOUT_MS
+  )
 }

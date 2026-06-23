@@ -293,6 +293,45 @@ class Mention(Base):
     source_url: Mapped[str] = mapped_column(String(512), nullable=True)
     sentiment: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     sentiment_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    media_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    severity_level: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    demographics: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    social_media_usage_hours: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    risk_assessment: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    comparative_risk_reasoning: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     posted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
+
+class PersonRiskProfile(Base):
+    """
+    Aggregate risk profile for a subject (person/handle) computed from many
+    item-level analyses. Schema-ready for Phase 2 — no API route in Phase 1.
+    """
+
+    __tablename__ = "person_risk_profiles"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    # The analyst (logged-in user who ran the analysis)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    # The subject being analysed (Twitter handle, name, etc.)
+    subject_handle: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    # Aggregation stats
+    item_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    hours_on_social_media: Mapped[float] = mapped_column(
+        Float, default=3.0, nullable=False
+    )
+    dominant_content_type: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    avg_composite_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    peak_risk_level: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    aggregate_risk_level: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    # Full JSON array of ItemRiskAnalysis dicts for audit trail
+    items_json: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    assessed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
