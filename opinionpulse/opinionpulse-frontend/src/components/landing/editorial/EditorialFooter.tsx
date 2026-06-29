@@ -66,7 +66,7 @@ export function EditorialFooter() {
           </div>
 
           <p className="text-xs text-[var(--le-muted)]">
-            © {new Date().getFullYear()} OpinionPulse · GUNI-SSRIP 2026
+            © {new Date().getFullYear()} OpinionPulse · Real-time public opinion intelligence
           </p>
         </div>
       </div>

@@ -9,6 +9,7 @@ import {
   YAxis,
 } from "recharts"
 import type { PlatformPulse } from "@/api/dashboard"
+import { DashChartTooltip } from "@/components/dashboard/DashChartTooltip"
 import { dashCardStatic } from "@/lib/dash-classes"
 import { cn } from "@/lib/utils"
 
@@ -17,6 +18,11 @@ type WeeklyActivityChartProps = {
 }
 
 const DAY_LABELS = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"]
+
+const METRIC_DESCRIPTIONS: Record<string, string> = {
+  Positive: "Positive sentiment share for this day",
+  Negative: "Negative sentiment share for this day",
+}
 
 function buildWeekData(platformPulse: PlatformPulse[]) {
   if (platformPulse.length >= 7) {
@@ -67,14 +73,28 @@ export function WeeklyActivityChart({ platformPulse }: WeeklyActivityChartProps)
               axisLine={false}
               tickLine={false}
               tick={{ fill: "#718096", fontSize: 11 }}
-              width={32}
+              width={36}
+              domain={[0, 100]}
+              tickFormatter={(value) => `${value}%`}
             />
             <Tooltip
-              contentStyle={{
-                borderRadius: 12,
-                border: "1px solid rgba(52,60,106,0.08)",
-                fontSize: 12,
-              }}
+              cursor={{ fill: "var(--dash-surface-alt)", opacity: 0.45 }}
+              wrapperStyle={{ zIndex: 20, outline: "none" }}
+              allowEscapeViewBox={{ x: true, y: true }}
+              offset={12}
+              content={({ active, payload, label }) => (
+                <DashChartTooltip
+                  active={active}
+                  title={typeof label === "string" ? label : undefined}
+                  subtitle="Weekly sentiment activity by day"
+                  rows={payload?.map((entry) => ({
+                    name: String(entry.name ?? entry.dataKey ?? ""),
+                    value: Number(entry.value ?? 0),
+                    color: entry.color,
+                    description: METRIC_DESCRIPTIONS[String(entry.name ?? "")],
+                  }))}
+                />
+              )}
             />
             <Legend wrapperStyle={{ display: "none" }} />
             <Bar dataKey="positive" name="Positive" fill="var(--dash-chart-teal)" radius={[6, 6, 0, 0]} />

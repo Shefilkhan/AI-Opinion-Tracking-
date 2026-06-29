@@ -102,5 +102,6 @@ export const editorialComparisonRows = comparisonRows.filter(
 
 export const editorialQuote = {
   text: "OpinionPulse turns scattered conversations into a single, trustworthy pulse — so researchers, journalists, and teams can act on public sentiment with confidence.",
-  attribution: "Built for GUNI-SSRIP 2026 · Conestoga College",
+  attribution:
+    "Purpose-built to track public opinion across news, social media, and forums in real time.",
 }

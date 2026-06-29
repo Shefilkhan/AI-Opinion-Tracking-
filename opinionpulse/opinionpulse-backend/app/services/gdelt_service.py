@@ -92,7 +92,7 @@ def search_gdelt_articles(query: str, max_records: int = 10) -> List[Dict[str, A
             GDELT_DOC_URL,
             params=params,
             timeout=REQUEST_TIMEOUT,
-            headers={"User-Agent": "OpinionPulse/1.0 (academic project)"},
+            headers={"User-Agent": "OpinionPulse/1.0 (public opinion tracking)"},
         )
         response.raise_for_status()
         payload = response.json()
