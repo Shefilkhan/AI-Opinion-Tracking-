@@ -31,7 +31,14 @@ from app.services.platforms import (
 from app.services.platforms.platform_common import deduplicate_results, normalize_result
 from app.services.platforms.query_helpers import sort_results_by_posted_at
 from app.services.search_constants import SENTIMENT_TREND_24H
-from app.services.sentiment_analysis import calculate_sentiment_summary, calculate_sentiment_forecast
+from app.services.age_classifier import classify_age_groups, get_all_usage_context
+from app.services.content_classifier import classify_content_type
+from app.services.risk_assessor import assess_risk_level
+from app.services.sentiment_analysis import (
+    analyze_sentiment_intensity,
+    calculate_sentiment_forecast,
+    calculate_sentiment_summary,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -256,7 +263,18 @@ async def run_search(
     else:
         combined = sort_results_by_posted_at(combined)
 
+    for result in combined:
+        result["content_type"] = classify_content_type(result)
+        combined_text = f"{result.get('title', '')} {result.get('content', '')}"
+        result["sentiment_detail"] = analyze_sentiment_intensity(
+            combined_text, result.get("engagement", {})
+        )
+
     summary = calculate_sentiment_summary(combined)
+    age_analysis = classify_age_groups(combined)
+    intensity_scores = [r.get("sentiment_detail", {}) for r in combined]
+    risk_assessment = assess_risk_level(query, summary, age_analysis, intensity_scores)
+    usage_context = get_all_usage_context()
     forecast = calculate_sentiment_forecast(combined)
     keywords = extract_keywords_from_results(combined)
     related = [f"#{w.title()}" for w in query.split()[:4] if len(w) > 2]
@@ -320,6 +338,9 @@ async def run_search(
             default="reddit",
         ),
         "results": combined[:40],
+        "age_analysis": age_analysis,
+        "usage_context": usage_context,
+        "risk_assessment": risk_assessment,
         "trending_keywords": keywords,
         "related_topics": related[:8],
         "sentiment_trend": SENTIMENT_TREND_24H,
@@ -335,6 +356,7 @@ async def search_all_platforms(
     time_range: str = "24h",
     platform: str = "all",
     fetch_timeout: float = 6.0,
+    limit: int | None = None,
 ) -> list[dict[str, Any]]:
     """Search all enabled platforms for a topic; used by dashboard widgets."""
     configured = apis_configured()
@@ -358,7 +380,10 @@ async def search_all_platforms(
                 normalized = normalize_result(row, query)
                 if normalized:
                     combined.append(normalized)
-    return deduplicate_results(combined)
+    combined = deduplicate_results(combined)
+    if limit is not None:
+        return combined[:limit]
+    return combined
 
 
 def record_search_history(

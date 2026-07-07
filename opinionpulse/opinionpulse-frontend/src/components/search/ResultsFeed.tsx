@@ -8,8 +8,18 @@ import {
 } from "@/lib/api/sentiment"
 import { proCard } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
+import { INTENSITY_COLORS } from "@/components/analysis/RiskAnalysisPanel"
 import { useRiskAnalysis } from "@/hooks/useRiskAnalysis"
 import { RiskProfileCard, RiskProfileCardSkeleton } from "@/components/search/RiskProfileCard"
+
+const CONTENT_ICONS: Record<string, string> = {
+  comment: "💬",
+  post: "📝",
+  reel: "🎬",
+  video: "▶️",
+  article: "📰",
+  image: "🖼️",
+}
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -101,6 +111,11 @@ function ResultItem({ r }: { r: SearchResultItem }) {
                 <span aria-hidden>{plat.icon}</span>
                 {plat.label}
               </span>
+              {r.content_type && (
+                <span className="text-[11px] text-muted-foreground">
+                  {CONTENT_ICONS[r.content_type] ?? "📝"} {r.content_type}
+                </span>
+              )}
               <span className="text-xs text-muted-foreground">{r.author}</span>
               <span className="text-xs text-muted-foreground">·</span>
               <span className="text-xs text-muted-foreground">
@@ -127,12 +142,21 @@ function ResultItem({ r }: { r: SearchResultItem }) {
                 </span>
               )}
               <span
+                style={
+                  r.sentiment_detail?.label
+                    ? {
+                        backgroundColor:
+                          INTENSITY_COLORS[r.sentiment_detail.label]?.bg ?? undefined,
+                        color: INTENSITY_COLORS[r.sentiment_detail.label]?.color ?? undefined,
+                      }
+                    : undefined
+                }
                 className={cn(
                   "rounded-full px-2 py-1 text-xs font-medium",
-                  sentimentBadgeClass(r.sentiment)
+                  !r.sentiment_detail && sentimentBadgeClass(r.sentiment)
                 )}
               >
-                {sentimentBadgeLabel(r.sentiment)}
+                {r.sentiment_detail?.label ?? sentimentBadgeLabel(r.sentiment)}
               </span>
             </div>
           </div>

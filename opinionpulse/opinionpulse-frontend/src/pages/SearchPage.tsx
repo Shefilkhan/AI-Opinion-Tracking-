@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { KeywordsSidebar } from "@/components/search/KeywordsSidebar"
 import { AiInsightsSection } from "@/components/search/AiInsightsSection"
+import { RiskAnalysisPanel } from "@/components/analysis/RiskAnalysisPanel"
 import { OpinionSummaryCard } from "@/components/search/OpinionSummaryCard"
 import { ResultsFeed } from "@/components/search/ResultsFeed"
 import { SearchFiltersBar } from "@/components/search/SearchFiltersBar"
@@ -316,6 +317,15 @@ export function SearchPage() {
                     data={data}
                     timeLabel={TIME_LABELS[filters.timeRange] ?? "Last 24 hours"}
                   />
+                  {data.risk_assessment && data.age_analysis && data.usage_context && (
+                    <RiskAnalysisPanel
+                      riskData={data.risk_assessment}
+                      ageData={data.age_analysis}
+                      usageContext={data.usage_context}
+                      results={data.results}
+                      query={data.query}
+                    />
+                  )}
                   <AiInsightsSection data={data} timeRange={filters.timeRange} />
                   <SearchSentimentChart data={data} />
                   <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

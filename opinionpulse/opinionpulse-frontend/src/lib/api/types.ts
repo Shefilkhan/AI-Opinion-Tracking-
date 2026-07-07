@@ -28,6 +28,37 @@ export type SearchFilters = {
   sortBy: string
 }
 
+export type SentimentDetail = {
+  direction: SentimentLabel
+  intensity: SentimentIntensity
+  label: string
+  score: number
+}
+
+export type AgeAnalysis = {
+  distribution: Record<string, number>
+  dominant_group: string
+  label: string
+}
+
+export type UsageContextItem = {
+  age_group: string
+  avg_daily_hours: number
+  typical_range: string
+  usage_risk: string
+}
+
+export type TopicRiskAssessment = {
+  level: "mild" | "average" | "high"
+  label: string
+  score: number
+  max_score: number
+  score_pct: number
+  description: string
+  color: string
+  risk_factors: string[]
+}
+
 export type SearchResultItem = {
   id: string
   platform: string
@@ -38,6 +69,8 @@ export type SearchResultItem = {
   thumbnail?: string | null
   sentiment: SentimentLabel
   sentiment_score: number
+  sentiment_detail?: SentimentDetail
+  content_type?: string
   engagement: { likes: number; shares: number; comments: number; views?: number }
   url: string
   source_url?: string
@@ -87,6 +120,9 @@ export type SearchResponse = {
   }[]
   sentiment_forecast: SentimentForecastPoint[]
   last_updated: string
+  age_analysis?: AgeAnalysis | null
+  usage_context?: UsageContextItem[] | null
+  risk_assessment?: TopicRiskAssessment | null
   wiki_summary: {
     title: string
     extract: string

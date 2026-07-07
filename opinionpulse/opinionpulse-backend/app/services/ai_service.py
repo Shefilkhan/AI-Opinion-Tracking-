@@ -18,6 +18,21 @@ MAX_TOKENS = 1024
 AI_TIMEOUT_SECONDS = 15.0
 AI_CACHE_TTL = 600
 
+OPINIONPULSE_SYSTEM_PROMPT = """You are OpinionPulse AI — a data analysis assistant.
+Rules you MUST follow in every response:
+
+1. NEVER write paragraphs. Use structured data only.
+2. Return JSON when the function expects JSON.
+3. Use bullet points maximum 8 words each.
+4. Numbers and percentages over words wherever possible.
+5. If asked for a summary, max 2 sentences.
+6. Always be direct. No filler phrases like
+   "Based on the data..." or "It appears that..."
+7. Format every insight as: Label → Value
+   Example: Positive sentiment → 58%
+            Most active platform → Reddit
+            Trend direction → Rising ↑"""
+
 _client: Any = None
 
 
@@ -60,6 +75,7 @@ def _call_claude(prompt: str) -> str:
     message = client.messages.create(
         model=MODEL,
         max_tokens=MAX_TOKENS,
+        system=OPINIONPULSE_SYSTEM_PROMPT,
         messages=[{"role": "user", "content": prompt}],
     )
     return message.content[0].text.strip()
@@ -94,54 +110,57 @@ async def generate_opinion_summary(
         return cached
 
     if not ai_available():
-        return _fallback_summary(query)
+        return _fallback_summary(query, sentiment_summary)
 
-    context = _result_context(results, 10)
-    prompt = f"""You are an expert public opinion analyst.
-
-Analyze public opinion about "{query}" based on these
-real social media posts and news articles:
-
-{context}
-
-Sentiment data:
-- {sentiment_summary.get('positive', 0)}% Positive
-- {sentiment_summary.get('negative', 0)}% Negative
-- {sentiment_summary.get('neutral', 0)}% Neutral
-
-Provide a structured analysis in this EXACT JSON format:
+    titles = [r.get("title") or (r.get("content") or "")[:80] for r in results[:15]]
+    prompt = f"""Analyze these {len(results)} posts about "{query}".
+Return ONLY this JSON structure, nothing else:
 {{
-    "headline": "One punchy sentence summarizing overall public opinion (max 20 words)",
-    "overview": "2-3 sentence balanced overview of what people think about this topic",
-    "why_positive": "One sentence explaining the main reason people feel positive",
-    "why_negative": "One sentence explaining the main reason people feel negative",
-    "key_insight": "One surprising or interesting insight from the data",
-    "verdict": "overall_positive OR overall_negative OR deeply_divided OR mostly_neutral",
-    "confidence": "high OR medium OR low",
-    "one_liner": "A single memorable sentence that captures the public mood"
+    "verdict": "one sentence max",
+    "sentiment_score": 0-100,
+    "top_positive_driver": "max 6 words",
+    "top_negative_driver": "max 6 words",
+    "most_discussed_angle": "max 8 words",
+    "trend": "rising|falling|stable",
+    "confidence": "low|medium|high"
 }}
-
-Return ONLY the JSON object. No markdown, no explanation."""
+Posts: {json.dumps(titles)}"""
 
     try:
         summary = await _claude_json(prompt)
+        if isinstance(summary.get("sentiment_score"), str):
+            try:
+                summary["sentiment_score"] = int(summary["sentiment_score"])
+            except ValueError:
+                summary["sentiment_score"] = sentiment_summary.get("positive", 50)
         set_cached(cache_key, summary, AI_CACHE_TTL)
         return summary
     except Exception as exc:
         logger.error("AI Summary failed: %s", exc)
-        return _fallback_summary(query)
+        return _fallback_summary(query, sentiment_summary)
 
 
-def _fallback_summary(query: str) -> dict[str, Any]:
+def _fallback_summary(query: str, sentiment_summary: dict[str, Any] | None = None) -> dict[str, Any]:
+    s = sentiment_summary or {}
+    pos = int(s.get("positive", 40))
+    neg = int(s.get("negative", 30))
+    if pos > neg + 15:
+        trend = "rising"
+        verdict = f"Public optimism outweighs concern on {query}"
+    elif neg > pos + 15:
+        trend = "falling"
+        verdict = f"Public concern dominates discussion of {query}"
+    else:
+        trend = "stable"
+        verdict = f"Mixed public opinion on {query}"
     return {
-        "headline": f"Mixed opinions found about {query}",
-        "overview": f"Public opinion on {query} is divided across platforms.",
-        "why_positive": "Some users express support and optimism.",
-        "why_negative": "Others raise concerns and criticisms.",
-        "key_insight": "Discussion is active across multiple platforms.",
-        "verdict": "deeply_divided",
+        "verdict": verdict,
+        "sentiment_score": pos,
+        "top_positive_driver": "Growing interest",
+        "top_negative_driver": "Skepticism remains",
+        "most_discussed_angle": "Mixed platform reactions",
+        "trend": trend,
         "confidence": "low",
-        "one_liner": f"The world has strong feelings about {query}.",
     }
 
 
@@ -169,39 +188,30 @@ async def analyze_debate(
         for r in negative_results
     )
 
-    prompt = f"""You are an expert debate analyst and political scientist.
-
-Analyze the public debate about "{topic}" using these real sources:
-
-SUPPORTING ARGUMENTS (from positive sentiment posts):
-{pro_context if pro_context else "Limited positive coverage found"}
-
-OPPOSING ARGUMENTS (from negative sentiment posts):
-{con_context if con_context else "Limited negative coverage found"}
-
-Provide a structured debate analysis in this EXACT JSON format:
+    prompt = f"""Analyze the public debate about "{topic}".
+Return ONLY this JSON structure, nothing else:
 {{
-    "debate_title": "Engaging debate question format (e.g. 'Is X good for Y?')",
-    "pro_side": {{
-        "label": "Short label for pro side (e.g. 'Supporters', 'Optimists')",
-        "strongest_argument": "The best argument in favor (1-2 sentences)",
-        "supporting_points": ["point 1", "point 2", "point 3"],
-        "who_believes_this": "Description of who typically holds this view"
+    "topic": "{topic}",
+    "debate_intensity": "low|medium|heated|explosive",
+    "side_a": {{
+        "label": "max 4 words",
+        "strength": "max 8 words",
+        "top_argument": "max 10 words"
     }},
-    "con_side": {{
-        "label": "Short label for con side (e.g. 'Critics', 'Skeptics')",
-        "strongest_argument": "The best argument against (1-2 sentences)",
-        "opposing_points": ["point 1", "point 2", "point 3"],
-        "who_believes_this": "Description of who typically holds this view"
+    "side_b": {{
+        "label": "max 4 words",
+        "strength": "max 8 words",
+        "top_argument": "max 10 words"
     }},
-    "middle_ground": "A balanced compromise position both sides might accept",
-    "verdict": "who_winning OR too_close OR no_winner",
-    "winning_side": "pro OR con OR neither",
-    "debate_intensity": "low OR medium OR high OR explosive",
-    "expert_take": "What experts and analysts generally conclude about this topic"
+    "who_is_winning": "side_a|side_b|tied",
+    "winning_reason": "max 8 words"
 }}
 
-Return ONLY the JSON object. Be objective and balanced."""
+Supporting posts:
+{pro_context if pro_context else "Limited positive coverage"}
+
+Opposing posts:
+{con_context if con_context else "Limited negative coverage"}"""
 
     try:
         analysis = await _claude_json(prompt)
@@ -214,32 +224,20 @@ Return ONLY the JSON object. Be objective and balanced."""
 
 def _fallback_debate(topic: str) -> dict[str, Any]:
     return {
-        "debate_title": f"What do people think about {topic}?",
-        "pro_side": {
-            "label": "Supporters",
-            "strongest_argument": "Many people see positive aspects.",
-            "supporting_points": [
-                "Broad support exists",
-                "Growing interest",
-                "Positive outcomes reported",
-            ],
-            "who_believes_this": "Optimists and supporters",
-        },
-        "con_side": {
-            "label": "Critics",
-            "strongest_argument": "Significant concerns have been raised.",
-            "opposing_points": [
-                "Valid criticisms exist",
-                "Risks identified",
-                "Problems reported",
-            ],
-            "who_believes_this": "Skeptics and critics",
-        },
-        "middle_ground": "A balanced approach considering both perspectives.",
-        "verdict": "too_close",
-        "winning_side": "neither",
+        "topic": topic,
         "debate_intensity": "medium",
-        "expert_take": "Experts recommend careful consideration of all factors.",
+        "side_a": {
+            "label": "Supporters",
+            "strength": "Moderate support",
+            "top_argument": "Positive outcomes reported",
+        },
+        "side_b": {
+            "label": "Critics",
+            "strength": "Notable pushback",
+            "top_argument": "Valid concerns raised",
+        },
+        "who_is_winning": "tied",
+        "winning_reason": "No clear leader",
     }
 
 
@@ -277,43 +275,28 @@ async def predict_opinion_trend(
 
     top_platform = max(platforms, key=platforms.get) if platforms else "unknown"
 
-    prompt = f"""You are an expert in public opinion trends and social media analytics.
-
-Analyze the trend for public opinion about "{query}":
-
-Current sentiment: {sentiment_summary.get('positive', 0)}% positive,
-{sentiment_summary.get('negative', 0)}% negative
-Time period analyzed: {time_range}
-Total data points: {len(results)}
-Platform distribution: {platforms}
+    prompt = f"""Predict opinion trend for "{query}".
+Current sentiment: {sentiment_summary.get('positive', 0)}% positive, {sentiment_summary.get('negative', 0)}% negative
+Time period: {time_range} · Data points: {len(results)} · Top platform: {top_platform}
 Sentiment shift (recent vs older): {sentiment_shift:+d}%
-(positive = sentiment improving, negative = sentiment worsening)
-Most active platform: {top_platform}
 
-Predict the trend in this EXACT JSON format:
+Return ONLY this JSON structure, nothing else:
 {{
-    "direction": "rising OR falling OR stable OR volatile",
-    "prediction": "One clear sentence predicting where opinion is heading in next 7 days",
-    "confidence_level": 1-10 integer,
-    "reasoning": "2-3 sentences explaining why this trend is happening",
-    "turning_point": "What event or factor could reverse this trend",
-    "watch_for": "One specific thing to monitor that will confirm or deny this prediction",
-    "sentiment_momentum": "accelerating_positive OR slowing_positive OR accelerating_negative OR slowing_negative OR flat",
-    "key_drivers": ["driver 1", "driver 2", "driver 3"],
-    "risk_factors": ["risk 1", "risk 2"],
-    "short_forecast": "7-day outlook in one sentence",
-    "platform_insight": "Which platform is driving the narrative and why"
-}}
-
-Be specific and data-driven. Return ONLY the JSON object."""
+    "direction": "rising|falling|stable|volatile",
+    "momentum": "accelerating|decelerating|steady",
+    "7_day_forecast": "max 8 words",
+    "key_driver": "max 8 words",
+    "leading_platform": "platform name",
+    "confidence_pct": 0-100
+}}"""
 
     try:
         prediction = await _claude_json(prompt)
-        if isinstance(prediction.get("confidence_level"), str):
+        if isinstance(prediction.get("confidence_pct"), str):
             try:
-                prediction["confidence_level"] = int(prediction["confidence_level"])
+                prediction["confidence_pct"] = int(prediction["confidence_pct"])
             except ValueError:
-                prediction["confidence_level"] = 5
+                prediction["confidence_pct"] = 50
         set_cached(cache_key, prediction, AI_CACHE_TTL)
         return prediction
     except Exception as exc:
@@ -324,16 +307,11 @@ Be specific and data-driven. Return ONLY the JSON object."""
 def _fallback_prediction(query: str) -> dict[str, Any]:
     return {
         "direction": "stable",
-        "prediction": f"Public opinion on {query} is expected to remain mixed.",
-        "confidence_level": 5,
-        "reasoning": "Current data shows balanced discussion without clear momentum.",
-        "turning_point": "A major news event could shift opinion significantly.",
-        "watch_for": "Changes in mainstream media coverage.",
-        "sentiment_momentum": "flat",
-        "key_drivers": ["Media coverage", "Social discussions", "Recent events"],
-        "risk_factors": ["Unexpected news", "Viral content"],
-        "short_forecast": "Expect continued mixed sentiment over the next 7 days.",
-        "platform_insight": "Discussion spread evenly across platforms.",
+        "momentum": "steady",
+        "7_day_forecast": "Mixed sentiment continues",
+        "key_driver": "Balanced discussion",
+        "leading_platform": "reddit",
+        "confidence_pct": 45,
     }
 
 
@@ -368,10 +346,10 @@ async def generate_insight_of_the_day() -> dict[str, Any] | None:
     return {
         "topic": topic_label,
         "query": query,
-        "headline": summary.get("headline", ""),
-        "overview": summary.get("overview", ""),
-        "one_liner": summary.get("one_liner", ""),
-        "verdict": summary.get("verdict", "deeply_divided"),
+        "headline": summary.get("verdict", ""),
+        "overview": summary.get("most_discussed_angle", ""),
+        "one_liner": summary.get("top_positive_driver", ""),
+        "verdict": summary.get("trend", "stable"),
     }
 
 

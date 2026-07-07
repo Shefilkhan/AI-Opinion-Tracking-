@@ -16,47 +16,37 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 }
 
 export type AiOpinionSummary = {
-  headline: string
-  overview: string
-  why_positive: string
-  why_negative: string
-  key_insight: string
-  verdict: "overall_positive" | "overall_negative" | "deeply_divided" | "mostly_neutral"
+  verdict: string
+  sentiment_score: number
+  top_positive_driver: string
+  top_negative_driver: string
+  most_discussed_angle: string
+  trend: "rising" | "falling" | "stable"
   confidence: "high" | "medium" | "low"
-  one_liner: string
 }
 
 export type AiDebateSide = {
   label: string
-  strongest_argument: string
-  supporting_points?: string[]
-  opposing_points?: string[]
-  who_believes_this: string
+  strength: string
+  top_argument: string
 }
 
 export type AiDebateAnalysis = {
-  debate_title: string
-  pro_side: AiDebateSide
-  con_side: AiDebateSide
-  middle_ground: string
-  verdict: string
-  winning_side: "pro" | "con" | "neither"
-  debate_intensity: "low" | "medium" | "high" | "explosive"
-  expert_take: string
+  topic: string
+  debate_intensity: "low" | "medium" | "heated" | "explosive"
+  side_a: AiDebateSide
+  side_b: AiDebateSide
+  who_is_winning: "side_a" | "side_b" | "tied"
+  winning_reason: string
 }
 
 export type AiTrendPrediction = {
-  direction: string
-  prediction: string
-  confidence_level: number
-  reasoning: string
-  turning_point: string
-  watch_for: string
-  sentiment_momentum: string
-  key_drivers: string[]
-  risk_factors: string[]
-  short_forecast: string
-  platform_insight: string
+  direction: "rising" | "falling" | "stable" | "volatile"
+  momentum: "accelerating" | "decelerating" | "steady"
+  "7_day_forecast": string
+  key_driver: string
+  leading_platform: string
+  confidence_pct: number
 }
 
 export type AiInsightOfTheDay = {
@@ -178,4 +168,24 @@ export async function fetchRiskAnalysis(
     }),
     AI_TIMEOUT_MS
   )
+}
+
+export type RiskCompareItem = {
+  topic: string
+  risk_level: string
+  risk_label: string
+  risk_score: number
+  risk_score_pct: number
+  risk_factors: string[]
+  sentiment: Record<string, number>
+  dominant_age: string
+  description: string
+}
+
+export async function compareTopicRisks(topics: string[]): Promise<{
+  comparison: RiskCompareItem[]
+  highest_risk: string
+  lowest_risk: string
+}> {
+  return aiPost("/api/risk/compare", { topics })
 }

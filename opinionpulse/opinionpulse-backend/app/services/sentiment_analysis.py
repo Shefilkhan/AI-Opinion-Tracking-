@@ -94,6 +94,77 @@ def analyze_sentiment(text: str) -> dict:
     return {"sentiment": "neutral", "score": round(float(score), 2)}
 
 
+HIGH_INTENSITY_POS = [
+    "incredible", "amazing", "revolutionary", "game-changer",
+    "absolutely love", "best ever", "must have", "blown away",
+    "life-changing", "insane", "unbelievable", "outstanding",
+    "surge", "skyrocket", "milestone", "breakthrough",
+]
+HIGH_INTENSITY_NEG = [
+    "terrible", "awful", "hate", "worst", "disaster", "catastrophic",
+    "completely broken", "never again", "total failure", "outraged",
+    "furious", "disgusting", "crisis", "dangerous", "fraud", "scam",
+    "crash", "collapse", "ban", "attack", "destroy",
+]
+LOW_INTENSITY_POS = [
+    "okay", "decent", "fine", "alright", "acceptable", "not bad",
+    "somewhat good", "fairly", "kind of", "slightly better",
+]
+LOW_INTENSITY_NEG = [
+    "disappointing", "could be better", "not great", "meh",
+    "mediocre", "lacking", "needs improvement", "minor issue",
+]
+
+
+def analyze_sentiment_intensity(text: str, engagement: dict | None = None) -> dict:
+    """Returns both direction AND intensity of sentiment."""
+    text_lower = (text or "").lower()
+
+    high_pos = sum(1 for w in HIGH_INTENSITY_POS if w in text_lower)
+    high_neg = sum(1 for w in HIGH_INTENSITY_NEG if w in text_lower)
+    low_pos = sum(1 for w in LOW_INTENSITY_POS if w in text_lower)
+    low_neg = sum(1 for w in LOW_INTENSITY_NEG if w in text_lower)
+
+    exclamation_count = (text or "").count("!")
+    caps_ratio = sum(1 for c in text if c.isupper()) / max(len(text or ""), 1)
+
+    base_sentiment = analyze_sentiment(text or "")
+    direction = base_sentiment["sentiment"]
+
+    intensity_score = 0
+    intensity_score += high_pos * 3 + high_neg * 3
+    intensity_score += low_pos * -1 + low_neg * -1
+    intensity_score += min(exclamation_count, 3)
+    intensity_score += 3 if caps_ratio > 0.15 else 0
+
+    if engagement:
+        total_engagement = (
+            engagement.get("likes", 0)
+            + engagement.get("comments", 0) * 2
+            + engagement.get("shares", engagement.get("reposts", 0)) * 1.5
+        )
+        if total_engagement > 10000:
+            intensity_score += 3
+        elif total_engagement > 1000:
+            intensity_score += 2
+        elif total_engagement > 100:
+            intensity_score += 1
+
+    if intensity_score >= 4:
+        intensity = "high"
+    elif intensity_score >= 1:
+        intensity = "medium"
+    else:
+        intensity = "low"
+
+    return {
+        "direction": direction,
+        "intensity": intensity,
+        "label": f"{intensity.title()} {direction.title()}",
+        "score": intensity_score,
+    }
+
+
 def calculate_sentiment_summary(results: list[dict]) -> dict:
     total = len(results)
     if total == 0:

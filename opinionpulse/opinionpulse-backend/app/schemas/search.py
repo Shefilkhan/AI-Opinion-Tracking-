@@ -19,6 +19,13 @@ class EngagementStats(BaseModel):
     views: int = 0
 
 
+class SentimentDetail(BaseModel):
+    direction: Literal["positive", "negative", "neutral"]
+    intensity: Literal["low", "medium", "high"]
+    label: str
+    score: int = 0
+
+
 class SearchResultItem(BaseModel):
     id: str
     platform: str
@@ -36,6 +43,8 @@ class SearchResultItem(BaseModel):
     image_url: Optional[str] = None
     thumbnail: Optional[str] = None
     is_demo: bool = False
+    content_type: Optional[str] = None
+    sentiment_detail: Optional[SentimentDetail] = None
 
     @model_validator(mode="after")
     def sync_url_fields(self):
@@ -76,6 +85,30 @@ class WikiSummary(BaseModel):
     thumbnail: Optional[str] = None
 
 
+class AgeAnalysis(BaseModel):
+    distribution: dict[str, int]
+    dominant_group: str
+    label: str
+
+
+class UsageContextItem(BaseModel):
+    age_group: str
+    avg_daily_hours: float
+    typical_range: str
+    usage_risk: str
+
+
+class RiskAssessment(BaseModel):
+    level: Literal["mild", "average", "high"]
+    label: str
+    score: int
+    max_score: int = 12
+    score_pct: int
+    description: str
+    color: str
+    risk_factors: list[str] = Field(default_factory=list)
+
+
 class SearchResponse(BaseModel):
     query: str
     total_results: int
@@ -94,7 +127,11 @@ class SearchResponse(BaseModel):
     trending_keywords: list[TrendingKeyword]
     related_topics: list[str]
     sentiment_trend: list[SentimentTrendPoint] = []
+    sentiment_forecast: list[dict] = Field(default_factory=list)
     last_updated: Optional[str] = None
+    age_analysis: Optional[AgeAnalysis] = None
+    usage_context: Optional[list[UsageContextItem]] = None
+    risk_assessment: Optional[RiskAssessment] = None
 
 
 class SearchHistoryItem(BaseModel):

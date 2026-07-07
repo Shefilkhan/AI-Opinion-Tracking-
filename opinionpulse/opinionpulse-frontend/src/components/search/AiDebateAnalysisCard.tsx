@@ -15,9 +15,43 @@ function intensityStyle(level: string) {
   if (l === "explosive") {
     return "border-destructive/30 bg-destructive/10 text-destructive"
   }
-  if (l === "high") return "border-primary/20 bg-accent/50 text-foreground"
+  if (l === "heated") return "border-primary/20 bg-accent/50 text-foreground"
   if (l === "medium") return "border-border bg-muted/40 text-muted-foreground"
   return "border-border bg-muted/40 text-muted-foreground"
+}
+
+function SideBlock({
+  side,
+  sideKey,
+  winning,
+}: {
+  side: AiDebateAnalysis["side_a"]
+  sideKey: "side_a" | "side_b"
+  winning: boolean
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-lg border p-4",
+        winning ? "border-success/40 bg-success/5" : "border-border"
+      )}
+    >
+      <p className="text-xs font-semibold uppercase text-muted-foreground">
+        {sideKey === "side_a" ? "Side A" : "Side B"}
+      </p>
+      <p className="mt-1 text-sm font-semibold text-foreground">{side.label}</p>
+      <div className="mt-3 space-y-2 text-xs">
+        <p>
+          <span className="font-medium text-muted-foreground">Strength →</span>{" "}
+          {side.strength}
+        </p>
+        <p>
+          <span className="font-medium text-muted-foreground">Top Argument →</span>{" "}
+          {side.top_argument}
+        </p>
+      </div>
+    </div>
+  )
 }
 
 export function AiDebateAnalysisCard({
@@ -33,8 +67,8 @@ export function AiDebateAnalysisCard({
           AI is analyzing both sides of the debate…
         </p>
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="h-40 animate-pulse rounded-lg bg-muted" />
-          <div className="h-40 animate-pulse rounded-lg bg-muted" />
+          <div className="h-32 animate-pulse rounded-lg bg-muted" />
+          <div className="h-32 animate-pulse rounded-lg bg-muted" />
         </div>
       </div>
     )
@@ -59,89 +93,49 @@ export function AiDebateAnalysisCard({
 
   if (!debate) return null
 
-  const proWin = debate.winning_side === "pro"
-  const conWin = debate.winning_side === "con"
   const intensity = debate.debate_intensity ?? "medium"
+  const winnerLabel =
+    debate.who_is_winning === "side_a"
+      ? debate.side_a.label
+      : debate.who_is_winning === "side_b"
+        ? debate.side_b.label
+        : "Tied"
 
   return (
     <div className={cn(proCard, "overflow-hidden")}>
       <div className="border-b border-border bg-muted/40 px-5 py-4">
-        <h3 className={sectionTitle}>
-          AI Debate Analysis
-        </h3>
-        <p className="mt-1 text-base font-medium text-foreground">
-          {debate.debate_title}
-        </p>
+        <h3 className={sectionTitle}>AI Debate Analysis</h3>
+        <p className="mt-1 text-base font-medium text-foreground">{debate.topic}</p>
         <span
           className={cn(
             "mt-2 inline-block rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize",
-            intensityStyle(debate.debate_intensity)
+            intensityStyle(intensity)
           )}
         >
           Intensity: {intensity}
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2">
-        <div
-          className={cn(
-            "border-b border-border p-5 md:border-b-0 md:border-r",
-            proWin && "border-l-4 border-l-success bg-success/5"
-          )}
-        >
-          <p className="text-xs font-medium text-success">
-            {debate.pro_side.label}
-          </p>
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            {debate.pro_side.who_believes_this}
-          </p>
-          <p className="mt-3 text-sm leading-relaxed text-foreground">
-            &ldquo;{debate.pro_side.strongest_argument}&rdquo;
-          </p>
-          <ul className="mt-3 list-inside list-disc text-xs text-muted-foreground">
-            {(debate.pro_side.supporting_points ?? []).map((p) => (
-              <li key={p}>{p}</li>
-            ))}
-          </ul>
-        </div>
-        <div
-          className={cn(
-            "p-5",
-            conWin && "border-l-4 border-l-destructive bg-destructive/5"
-          )}
-        >
-          <p className="text-xs font-medium text-destructive">
-            {debate.con_side.label}
-          </p>
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            {debate.con_side.who_believes_this}
-          </p>
-          <p className="mt-3 text-sm leading-relaxed text-foreground">
-            &ldquo;{debate.con_side.strongest_argument}&rdquo;
-          </p>
-          <ul className="mt-3 list-inside list-disc text-xs text-muted-foreground">
-            {(debate.con_side.opposing_points ?? []).map((p) => (
-              <li key={p}>{p}</li>
-            ))}
-          </ul>
-        </div>
+      <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2">
+        <SideBlock
+          side={debate.side_a}
+          sideKey="side_a"
+          winning={debate.who_is_winning === "side_a"}
+        />
+        <SideBlock
+          side={debate.side_b}
+          sideKey="side_b"
+          winning={debate.who_is_winning === "side_b"}
+        />
       </div>
 
-      <div className="border-t border-border bg-accent/30 px-5 py-3 text-sm">
-        <span className="font-medium">Middle ground:</span> {debate.middle_ground}
-      </div>
-
-      <div className="border-t border-border px-5 py-3 text-sm text-muted-foreground">
+      <div className="border-t border-border px-5 py-3 text-sm">
         <p>
-          <span className="font-medium text-foreground">Currently winning:</span>{" "}
-          {debate.winning_side === "pro"
-            ? debate.pro_side.label
-            : debate.winning_side === "con"
-              ? debate.con_side.label
-              : "Neither side clearly ahead"}
+          <span className="font-medium text-foreground">Winning →</span> {winnerLabel}
         </p>
-        <p className="mt-2">
-          <span className="font-medium text-foreground">Expert take:</span> {debate.expert_take}
+        <p className="mt-1 text-muted-foreground">
+          <span className="font-medium text-foreground">Reason →</span>{" "}
+          {debate.winning_reason}
         </p>
       </div>
     </div>

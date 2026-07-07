@@ -44,27 +44,13 @@ function directionMeta(direction: string) {
   }
 }
 
-function ConfidenceMeter({ level }: { level: number }) {
-  const clamped = Math.min(10, Math.max(1, Math.round(level)))
-  const color =
-    clamped >= 7 ? "bg-success" : clamped >= 4 ? "bg-primary/60" : "bg-muted-foreground/30"
-
+function LabeledRow({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex gap-0.5">
-        {Array.from({ length: 10 }).map((_, i) => (
-          <span
-            key={i}
-            className={cn(
-              "size-2 rounded-full",
-              i < clamped ? color : "bg-muted"
-            )}
-          />
-        ))}
-      </div>
-      <span className="text-xs font-medium text-muted-foreground">
-        {clamped}/10
+    <div className="flex items-center justify-between gap-4 border-b border-border py-2.5 last:border-0">
+      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
       </span>
+      <span className="text-sm font-medium capitalize text-foreground">{value}</span>
     </div>
   )
 }
@@ -107,22 +93,14 @@ export function AiTrendPredictionCard({
 
   const meta = directionMeta(prediction.direction)
   const DirIcon = meta.icon
+  const forecast = prediction["7_day_forecast"]
+  const confidence = Math.min(100, Math.max(0, prediction.confidence_pct ?? 0))
 
   return (
-    <div
-      className={cn(
-        proCard,
-        "border-l-4 p-6",
-        meta.border
-      )}
-    >
+    <div className={cn(proCard, "border-l-4 p-6", meta.border)}>
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <h3 className={sectionTitle}>
-          AI Trend Prediction
-        </h3>
-        <span className="text-xs font-medium text-muted-foreground">
-          7-day outlook
-        </span>
+        <h3 className={sectionTitle}>AI Trend Prediction</h3>
+        <span className="text-xs font-medium text-muted-foreground">7-day outlook</span>
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -135,49 +113,29 @@ export function AiTrendPredictionCard({
           <DirIcon className="size-3.5" />
           {meta.label}
         </span>
-        <ConfidenceMeter level={prediction.confidence_level} />
       </div>
-
-      <p className="mt-4 text-sm font-medium leading-relaxed text-foreground">
-        {prediction.prediction}
-      </p>
 
       <div className="mt-4">
-        <p className="text-xs font-medium text-muted-foreground">
-          Why this is happening
-        </p>
-        <p className="mt-1 text-sm text-muted-foreground">{prediction.reasoning}</p>
-      </div>
-
-      <div className="mt-4 border-t border-border pt-4">
-        <p className="text-xs font-medium text-muted-foreground">Key drivers</p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {prediction.key_drivers.map((d) => (
-            <span
-              key={d}
-              className="rounded-full border border-border bg-muted/40 px-2.5 py-0.5 text-xs"
-            >
-              {d}
-            </span>
-          ))}
+        <LabeledRow label="Direction" value={prediction.direction} />
+        <LabeledRow label="Momentum" value={prediction.momentum} />
+        <LabeledRow label="7-Day Forecast" value={forecast} />
+        <LabeledRow label="Key Driver" value={prediction.key_driver} />
+        <LabeledRow label="Leading Platform" value={prediction.leading_platform} />
+        <div className="flex items-center justify-between gap-4 py-2.5">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Confidence
+          </span>
+          <div className="flex min-w-[120px] flex-col items-end gap-1">
+            <span className="text-sm font-medium">{confidence}%</span>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary"
+                style={{ width: `${confidence}%` }}
+              />
+            </div>
+          </div>
         </div>
       </div>
-
-      <ul className="mt-4 space-y-1 text-sm text-muted-foreground">
-        <li>
-          <span className="font-medium text-foreground">Watch for:</span> {prediction.watch_for}
-        </li>
-        <li>
-          <span className="font-medium text-foreground">Could reverse if:</span>{" "}
-          {prediction.turning_point}
-        </li>
-        <li>
-          <span className="font-medium text-foreground">Platform driving narrative:</span>{" "}
-          {prediction.platform_insight}
-        </li>
-      </ul>
-
-      <p className="mt-3 text-xs italic text-muted-foreground">{prediction.short_forecast}</p>
     </div>
   )
 }
