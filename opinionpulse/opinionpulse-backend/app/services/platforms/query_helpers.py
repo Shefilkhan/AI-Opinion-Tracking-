@@ -64,9 +64,37 @@ def filter_headline_results(
     return results if fallback_to_all else []
 
 
-def parse_posted_at(value: str | None) -> datetime | None:
-    if not value:
+def coerce_posted_at_iso(value: Any) -> str:
+    """Normalize posted_at to an ISO-8601 string for API responses."""
+    if value is None:
+        return datetime.now(timezone.utc).isoformat()
+    if isinstance(value, datetime):
+        dt = value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+        return dt.isoformat()
+    if isinstance(value, (int, float)):
+        try:
+            return datetime.fromtimestamp(float(value), tz=timezone.utc).isoformat()
+        except (ValueError, OSError, OverflowError):
+            return datetime.now(timezone.utc).isoformat()
+    text = str(value).strip()
+    if not text:
+        return datetime.now(timezone.utc).isoformat()
+    if text.isdigit():
+        try:
+            return datetime.fromtimestamp(int(text), tz=timezone.utc).isoformat()
+        except (ValueError, OSError, OverflowError):
+            pass
+    return text
+
+
+def parse_posted_at(value: str | int | float | None) -> datetime | None:
+    if value is None:
         return None
+    if isinstance(value, (int, float)):
+        try:
+            return datetime.fromtimestamp(float(value), tz=timezone.utc)
+        except (ValueError, OSError, OverflowError):
+            return None
     try:
         dt = parse_date(str(value))
         if dt.tzinfo is None:

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { AlertTriangle, Bot, Download, FileText, Loader2, Search, Sparkles } from "lucide-react"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
@@ -26,6 +26,7 @@ import { WordCloudChart } from "@/components/search/WordCloudChart"
 import { SentimentForecastChart } from "@/components/search/SentimentForecastChart"
 import { AiCrisisResponseModal } from "@/components/search/AiCrisisResponseModal"
 import { searchOpinions } from "@/lib/api/search"
+import { applyClientFilters, needsServerRefetch } from "@/lib/api/searchFilters"
 import type { SearchFilters, SearchResponse } from "@/lib/api/types"
 import { addRecentSearch } from "@/lib/recentSearchStorage"
 import { useUsage } from "@/hooks/useUsage"
@@ -61,48 +62,76 @@ export function SearchPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<SearchResponse | null>(null)
+  const [baseData, setBaseData] = useState<SearchResponse | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
+  const requestIdRef = useRef(0)
+  const prevFiltersRef = useRef<SearchFilters>(DEFAULT_FILTERS)
 
   const runSearch = useCallback(
-    async (q: string, f: SearchFilters = filters) => {
+    async (q: string, f: SearchFilters) => {
       const trimmed = q.trim()
       if (trimmed.length < 2) return
+
+      const requestId = ++requestIdRef.current
       setLoading(true)
       setError(null)
       setSearchParams({ q: trimmed })
       try {
-        const res = await searchOpinions(trimmed, f)
-        setData(res)
+        const res = await searchOpinions(trimmed, {
+          ...f,
+          sentiment: "all",
+          sortBy: "recent",
+        })
+        if (requestId !== requestIdRef.current) return
+        setBaseData(res)
+        setData(applyClientFilters(res, f))
         addRecentSearch(trimmed)
         setHasSearched(true)
         void refreshUsage()
       } catch {
+        if (requestId !== requestIdRef.current) return
         setError("Couldn't load results")
         setData(null)
+        setBaseData(null)
       } finally {
-        setLoading(false)
+        if (requestId === requestIdRef.current) {
+          setLoading(false)
+        }
       }
     },
-    [filters, setSearchParams, refreshUsage]
+    [setSearchParams, refreshUsage]
   )
 
   useEffect(() => {
     if (initialQ.trim().length >= 2) {
-      runSearch(initialQ, DEFAULT_FILTERS)
+      void runSearch(initialQ, DEFAULT_FILTERS)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     if (!hasSearched || query.trim().length < 2) return
-    runSearch(query, filters)
+
+    const prev = prevFiltersRef.current
+    if (needsServerRefetch(prev, filters)) {
+      prevFiltersRef.current = filters
+      void runSearch(query, filters)
+      return
+    }
+
+    prevFiltersRef.current = filters
+    if (baseData) {
+      setData(applyClientFilters(baseData, filters))
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.platform, filters.timeRange, filters.sentiment, filters.sortBy])
 
   function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault()
     setHasSearched(true)
-    runSearch(query)
+    prevFiltersRef.current = DEFAULT_FILTERS
+    setFilters(DEFAULT_FILTERS)
+    void runSearch(query, DEFAULT_FILTERS)
   }
 
   function handleExportCSV() {

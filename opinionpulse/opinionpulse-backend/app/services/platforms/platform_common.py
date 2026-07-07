@@ -8,6 +8,7 @@ from typing import Any
 
 import requests
 
+from app.services.platforms.query_helpers import coerce_posted_at_iso
 from app.services.sentiment_analysis import analyze_sentiment
 
 logger = logging.getLogger(__name__)
@@ -85,7 +86,7 @@ def build_result(
         "publication": pub,
         "image_url": image_url,
         "thumbnail": image_url,
-        "posted_at": posted_at or datetime.now(timezone.utc).isoformat(),
+        "posted_at": coerce_posted_at_iso(posted_at),
         "sentiment": analysis["sentiment"],
         "sentiment_score": float(analysis["score"]),
         "engagement": {
@@ -122,6 +123,7 @@ def normalize_result(row: dict[str, Any], query: str = "") -> dict[str, Any] | N
             "comments": int(eng.get("comments") or 0),
             "views": int(eng.get("views") or 0),
         }
+        out["posted_at"] = coerce_posted_at_iso(out.get("posted_at"))
         return out
 
     return build_result(

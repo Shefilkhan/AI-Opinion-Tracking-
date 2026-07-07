@@ -97,6 +97,8 @@ def _resolve_sources(platform_filter: str, configured: dict[str, bool]) -> list[
         return ["mastodon"]
     if pf == "github":
         return ["github"]
+    if pf == "stackoverflow":
+        return ["stackoverflow"]
     if pf == "news":
         return [s for s in NEWS_SOURCES if _source_enabled(s, configured)]
     if pf == "tech":
