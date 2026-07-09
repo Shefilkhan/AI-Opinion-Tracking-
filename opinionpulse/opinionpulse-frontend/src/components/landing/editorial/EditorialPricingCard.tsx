@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom"
 import { Check } from "lucide-react"
 import type { PlanId, PricingPlan } from "@/data/pricingData"
-import { ENTERPRISE_EMAIL, planPrices } from "@/data/pricingData"
+import { planPrices } from "@/data/pricingData"
 import { saveSelectedPlan } from "@/lib/planStorage"
 import { cn } from "@/lib/utils"
 
@@ -9,11 +9,19 @@ type EditorialPricingCardProps = {
   plan: PricingPlan
   isAnnual: boolean
   compact?: boolean
+  selected?: boolean
+  mode?: "browse" | "checkout"
 }
 
 const PREVIEW_FEATURE_COUNT = 6
 
-export function EditorialPricingCard({ plan, isAnnual, compact = true }: EditorialPricingCardProps) {
+export function EditorialPricingCard({
+  plan,
+  isAnnual,
+  compact = true,
+  selected = false,
+  mode = "browse",
+}: EditorialPricingCardProps) {
   const prices = planPrices[plan.id]
   const amount = isAnnual ? prices.annual : prices.monthly
   const featured = plan.highlighted
@@ -26,25 +34,33 @@ export function EditorialPricingCard({ plan, isAnnual, compact = true }: Editori
     ? "bg-white/95 text-[var(--le-forest)] hover:bg-white"
     : "bg-[var(--le-sage-soft)] text-[var(--le-forest)] hover:bg-[var(--le-sage-muted)]"
 
-  const ctaContent = plan.ctaMailto ? (
-    <a href={ENTERPRISE_EMAIL} className={cn("le-pricing-cta", ctaClass)}>
-      {plan.cta}
-    </a>
-  ) : (
+  const billingQuery = isAnnual ? "annual" : "monthly"
+  const ctaHref =
+    mode === "checkout"
+      ? `/auth/signup?plan=${plan.id}&billing=${billingQuery}`
+      : `/pricing/${plan.id}?billing=${billingQuery}`
+  const ctaLabel =
+    mode === "checkout" && selected ? `Continue with ${plan.name} →` : plan.cta
+
+  const ctaContent = (
     <Link
-      to={`/auth/signup?plan=${plan.id}`}
-      onClick={() => saveSelectedPlan(plan.id)}
+      to={ctaHref}
+      onClick={(event) => {
+        event.stopPropagation()
+        saveSelectedPlan(plan.id)
+      }}
       className={cn("le-pricing-cta", ctaClass)}
     >
-      {plan.cta}
+      {ctaLabel}
     </Link>
   )
 
   return (
     <div
       className={cn(
-        "le-pricing-card flex h-full flex-col",
-        featured && "le-pricing-card-featured"
+        "le-pricing-card flex h-full flex-col transition-shadow",
+        featured && "le-pricing-card-featured",
+        selected && "ring-2 ring-[var(--le-forest)] ring-offset-2 ring-offset-[var(--le-bg)]"
       )}
     >
       {plan.badge && plan.badgePosition === "top" && (

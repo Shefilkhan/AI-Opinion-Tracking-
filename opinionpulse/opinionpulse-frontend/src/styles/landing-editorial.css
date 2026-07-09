@@ -806,6 +806,62 @@
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
 }
 
+/* Platform logo marquee */
+
+.le-platform-marquee {
+  overflow: hidden;
+}
+
+.le-platform-marquee-title {
+  margin-bottom: 2rem;
+  text-align: center;
+  font-family: var(--font-serif-display, Georgia, serif);
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.le-platform-marquee-viewport {
+  position: relative;
+  overflow: hidden;
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 8%,
+    black 92%,
+    transparent
+  );
+}
+
+.le-platform-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: le-platform-marquee-scroll 70s linear infinite;
+}
+
+.le-platform-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes le-platform-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .le-platform-marquee-track {
+    animation: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    gap: 1rem 0;
+  }
+}
+
 .legal-prose section {
   margin-bottom: 2rem;
 }

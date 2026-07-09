@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes, useSearchParams } from "react-router-dom"
+import { ScrollToTop } from "@/components/routing/ScrollToTop"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { UpgradeModal } from "@/components/billing/UpgradeModal"
 import { ChatBubble } from "@/components/chat/ChatBubble"
@@ -7,6 +8,7 @@ import { useUpgradeModal } from "@/contexts/UpgradeModalContext"
 import { LandingPage } from "@/pages/LandingPage"
 import { ExplorePage } from "@/pages/ExplorePage"
 import { PricingPage } from "@/pages/PricingPage"
+import { PlanCheckoutPage } from "@/pages/PlanCheckoutPage"
 import { TermsOfServicePage } from "@/pages/legal/TermsOfServicePage"
 import { PrivacyPolicyPage } from "@/pages/legal/PrivacyPolicyPage"
 import { SignInPage } from "@/pages/auth/SignInPage"
@@ -41,10 +43,12 @@ function AppRoutes() {
 
   return (
     <>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/explore" element={<ExplorePage />} />
         <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/pricing/:planId" element={<PlanCheckoutPage />} />
         <Route path="/legal/terms-of-service" element={<TermsOfServicePage />} />
         <Route path="/legal/privacy-policy" element={<PrivacyPolicyPage />} />
 

@@ -6,6 +6,7 @@ import {
   EditorialPricingCard,
   editorialPlanOrder,
 } from "@/components/landing/editorial/EditorialPricingCard"
+import { PlatformLogoMarquee } from "@/components/pricing/PlatformLogoMarquee"
 import { cn } from "@/lib/utils"
 
 type EditorialPricingSectionProps = {
@@ -73,6 +74,10 @@ export function EditorialPricingSection({
               )}
             </div>
           </div>
+        </div>
+
+        <div className="mt-16 border-t border-[var(--le-border)] pt-12">
+          <PlatformLogoMarquee />
         </div>
       </div>
     </section>

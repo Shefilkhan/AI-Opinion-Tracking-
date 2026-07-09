@@ -5,6 +5,7 @@ import { EditorialPricingSection } from "@/components/landing/editorial/Editoria
 import { FAQAccordion } from "@/components/pricing/FAQAccordion"
 import { TrustBadges } from "@/components/pricing/TrustBadges"
 import { ComparisonTable } from "@/components/pricing/ComparisonTable"
+import { PlatformLogoMarquee } from "@/components/pricing/PlatformLogoMarquee"
 
 export function PricingPage() {
   return (
@@ -12,11 +13,19 @@ export function PricingPage() {
       <EditorialNavbar />
 
       <main className="pt-8">
-        <EditorialPricingSection showViewAllLink={false} compactFeatures={false} className="pb-12" />
+        <EditorialPricingSection
+          showViewAllLink={false}
+          compactFeatures={false}
+          className="pb-12 [&_.le-platform-marquee]:hidden"
+        />
 
         <div className="le-container pb-16">
           <div className="le-pricing-panel">
             <ComparisonTable />
+          </div>
+
+          <div className="mt-12 border-t border-[var(--le-border)] pt-12">
+            <PlatformLogoMarquee />
           </div>
 
           <div className="mt-12 border-t border-[var(--le-border)] pt-12">
