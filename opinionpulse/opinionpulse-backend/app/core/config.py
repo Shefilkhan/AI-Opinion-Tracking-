@@ -73,6 +73,7 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_from_name: str = "OpinionPulse"
     smtp_from_email: str = ""
+    newsletter_notify_email: str = ""
 
     @model_validator(mode="after")
     def apply_email_env_aliases(self):
@@ -90,6 +91,14 @@ class Settings(BaseSettings):
         if user and not (self.smtp_from_email or "").strip():
             object.__setattr__(self, "smtp_from_email", user)
         return self
+
+    @property
+    def newsletter_admin_email(self) -> str:
+        """Email address that receives new newsletter signup alerts."""
+        notify = (self.newsletter_notify_email or "").strip()
+        if notify:
+            return notify
+        return (self.smtp_from_email or self.smtp_user or "").strip()
 
     otp_expire_minutes: int = 2
     otp_max_attempts: int = 3

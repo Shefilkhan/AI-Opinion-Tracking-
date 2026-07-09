@@ -17,6 +17,7 @@ from app.api.routes import (
     chat,
     dashboard,
     health,
+    newsletter,
     personal_alerts,
     public_demo,
     risk,
@@ -112,6 +113,7 @@ app.add_middleware(
 )
 
 app.include_router(health.router)
+app.include_router(newsletter.router)
 app.include_router(auth.router)
 app.include_router(account.router)
 app.include_router(dashboard.router)
