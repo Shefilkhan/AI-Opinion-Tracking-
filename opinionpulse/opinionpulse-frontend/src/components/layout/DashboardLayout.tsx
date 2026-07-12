@@ -9,6 +9,7 @@ import {
   LogOut,
   Menu,
   MessageCircle,
+  Radar,
   Search,
   Settings,
   User,
@@ -37,6 +38,7 @@ type NavItem = {
 const mainNav: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Search", href: "/search", icon: Search },
+  { label: "Crisis Radar", href: "/crisis", icon: Radar, badge: "New" },
   { label: "Compare", href: "/compare", icon: Activity },
   { label: "Ask Pulse AI", href: "/chat", icon: MessageCircle, badge: "AI" },
   { label: "Reports", href: "/reports", icon: FileText },

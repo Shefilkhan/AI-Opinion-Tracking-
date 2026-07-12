@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
-import { Bell, Loader2, Plus, RefreshCw, Trash2 } from "lucide-react"
+import { Link } from "react-router-dom"
+import { Bell, Loader2, Plus, Radar, RefreshCw, Trash2 } from "lucide-react"
 import {
   createPersonalAlert,
   deletePersonalAlert,
@@ -135,6 +136,24 @@ export function AlertsPage() {
       title="Alerts"
       subtitle="Get notified when sentiment spikes on keywords you care about"
     >
+      <Link
+        to="/crisis"
+        className={cn(
+          proCard,
+          "mb-6 flex items-center gap-3 border-red-500/20 bg-red-500/5 p-4 transition-colors hover:bg-red-500/10"
+        )}
+      >
+        <Radar className="size-5 shrink-0 text-red-500" />
+        <div>
+          <p className="text-sm font-semibold text-[var(--dash-text)]">
+            Enabled alerts appear on Crisis Radar
+          </p>
+          <p className="text-xs text-[var(--dash-text-mid)]">
+            Track volume vs velocity and get early warnings before stories hit mainstream news.
+          </p>
+        </div>
+        <span className="ml-auto text-xs font-medium text-[var(--dash-accent)]">Open →</span>
+      </Link>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_1fr] lg:items-start lg:gap-8">
         <PageSection title="New alert" className="mb-0">
           <div className={cn(proCard, "p-5")}>

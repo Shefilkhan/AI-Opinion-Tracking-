@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, useSearchParams } from "react-router-dom"
+import { Navigate, Route, Routes, useLocation, useSearchParams } from "react-router-dom"
 import { ScrollToTop } from "@/components/routing/ScrollToTop"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { UpgradeModal } from "@/components/billing/UpgradeModal"
@@ -22,6 +22,7 @@ import { SearchPage } from "@/pages/SearchPage"
 import { ComparePage } from "@/pages/ComparePage"
 import { ReportsPage } from "@/pages/ReportsPage"
 import { AlertsPage } from "@/pages/AlertsPage"
+import { CrisisRadarPage } from "@/pages/CrisisRadarPage"
 import { SettingsPage, SettingsLegacyRedirect } from "@/pages/SettingsPage"
 import { MyAccountPage } from "@/pages/MyAccountPage"
 import { ChatPage } from "@/pages/ChatPage"
@@ -38,8 +39,20 @@ function LegacyVerifyRedirect({ type }: { type: "signup" | "login" }) {
   return <Navigate to={`/auth/verify-otp?${qs.toString()}`} replace />
 }
 
+function isMarketingRoute(pathname: string) {
+  if (pathname === "/") return true
+  return (
+    pathname.startsWith("/explore") ||
+    pathname.startsWith("/pricing") ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/legal")
+  )
+}
+
 function AppRoutes() {
+  const location = useLocation()
   const { isOpen, message, upgradeTo, close } = useUpgradeModal()
+  const hideMobileAppearanceFab = isMarketingRoute(location.pathname)
 
   return (
     <>
@@ -119,6 +132,14 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/crisis"
+          element={
+            <ProtectedRoute>
+              <CrisisRadarPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/settings"
           element={
             <ProtectedRoute>
@@ -148,7 +169,7 @@ function AppRoutes() {
         <Route path="/projects/*" element={<Navigate to="/search" replace />} />
       </Routes>
       <ChatBubble />
-      <AppearanceFab />
+      <AppearanceFab className={hideMobileAppearanceFab ? "max-md:hidden" : undefined} />
       <UpgradeModal
         isOpen={isOpen}
         message={message}
