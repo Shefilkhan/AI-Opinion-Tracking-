@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none" role="img" aria-label="OpinionPulse app icon">
+  <defs>
+    <linearGradient id="bg" x1="72" y1="48" x2="440" y2="464" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2F3A2F"/>
+      <stop offset="1" stop-color="#465646"/>
+    </linearGradient>
+    <linearGradient id="pulse" x1="128" y1="256" x2="384" y2="256" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C5CDB8"/>
+      <stop offset="1" stop-color="#FFFFFF"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <path
+    d="M128 272c24-72 48-96 72-96s48 24 72 96 48 96 72 96 48-24 72-96"
+    stroke="url(#pulse)"
+    stroke-width="28"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <circle cx="368" cy="176" r="18" fill="#E4EBE0"/>
+</svg>
