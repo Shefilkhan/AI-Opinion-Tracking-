@@ -345,3 +345,58 @@ class NewsletterSubscriber(Base):
     subscribed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+
+class PulseBucket(Base):
+    """30-minute mention buckets for velocity / volume tracking per brand watch."""
+
+    __tablename__ = "pulse_buckets"
+    __table_args__ = (
+        UniqueConstraint("saved_search_id", "bucket_start", name="uq_pulse_bucket_watch_time"),
+        Index("idx_pulse_user_query", "user_id", "query"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    saved_search_id: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("saved_searches.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    query: Mapped[str] = mapped_column(String(100), nullable=False)
+    bucket_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    mention_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    positive_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    negative_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    neutral_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    volume_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    velocity_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    quadrant: Mapped[str] = mapped_column(String(20), default="quiet", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class CrisisEvent(Base):
+    """Recorded crisis-level spikes with AI narratives and spread timeline."""
+
+    __tablename__ = "crisis_events"
+    __table_args__ = (Index("idx_crisis_user_created", "user_id", "created_at"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    saved_search_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True, index=True)
+    query: Mapped[str] = mapped_column(String(100), nullable=False)
+    quadrant: Mapped[str] = mapped_column(String(20), nullable=False)
+    volume_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    velocity_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    status_label: Mapped[str] = mapped_column(String(80), nullable=False)
+    summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    narratives_json: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    timeline_json: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+    alert_sent: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )

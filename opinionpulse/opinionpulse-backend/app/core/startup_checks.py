@@ -27,6 +27,7 @@ def log_env_check() -> None:
             "AI_PROVIDER": s.ai_provider,
             "GROQ_API_KEY": bool(s.groq_api_key.strip()),
             "ANTHROPIC_API_KEY": bool(s.anthropic_api_key.strip()),
+            "QUIVER_API_KEY": bool(s.quiver_api_key.strip()),
             "GOOGLE_OAUTH": is_google_oauth_configured(),
             "APP_ENV": s.app_env,
         },

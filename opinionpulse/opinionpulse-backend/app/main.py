@@ -15,8 +15,10 @@ from app.api.routes import (
     ai,
     auth,
     chat,
+    crisis,
     dashboard,
     health,
+    market,
     newsletter,
     personal_alerts,
     public_demo,
@@ -35,6 +37,7 @@ from app.db.schema_sync import (
     ensure_users_schema,
 )
 from app.services.plan_service import load_plans, seed_default_plans
+from app.services.pulse_scheduler import start_pulse_scheduler, stop_pulse_scheduler
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -72,7 +75,9 @@ async def lifespan(app: FastAPI):
         seed_default_plans(db)
         load_plans(db)
     logger.info("Plans loaded; chat_messages table ready")
+    start_pulse_scheduler()
     yield
+    stop_pulse_scheduler()
 
 
 app = FastAPI(
@@ -125,6 +130,8 @@ app.include_router(chat.router)
 app.include_router(users.router)
 app.include_router(settings_routes.router)
 app.include_router(personal_alerts.router)
+app.include_router(crisis.router)
+app.include_router(market.router)
 app.include_router(admin.router)
 
 _uploads = Path(__file__).resolve().parent.parent / "uploads"

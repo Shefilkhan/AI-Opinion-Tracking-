@@ -212,3 +212,60 @@ def send_newsletter_admin_notification(subscriber_email: str, admin_email: str) 
 
     send_email(admin_email, subject, html_body, plain_body)
     return True
+
+
+def send_crisis_alert_email(
+    *,
+    to_email: str,
+    keyword: str,
+    volume_score: float,
+    velocity_score: float,
+    summary: str,
+    narratives: list[dict],
+) -> bool:
+    """Notify user when a brand watch enters the crisis quadrant."""
+    settings = get_settings()
+    if not settings.email_configured:
+        logger.warning("[OpinionPulse] Crisis alert NOT sent — SMTP not configured")
+        return False
+
+    frontend = settings.frontend_url.rstrip("/")
+    crisis_url = f"{frontend}/crisis?watch={keyword}"
+    narrative_lines = "\n".join(
+        f"• {n.get('label', 'Narrative')}: {n.get('summary', '')[:120]}"
+        for n in narratives[:3]
+    ) or "• Negative mentions are accelerating across multiple platforms."
+
+    subject = f"🚨 Crisis alert: \"{keyword}\" — OpinionPulse Early-Warning Pulse"
+    plain_body = (
+        f"Crisis detected for your watchlist keyword \"{keyword}\".\n\n"
+        f"Volume score: {volume_score}/100\n"
+        f"Velocity score: {velocity_score}/100\n\n"
+        f"{summary}\n\n"
+        f"Top narratives:\n{narrative_lines}\n\n"
+        f"Open Crisis Radar: {crisis_url}\n"
+    )
+    html_body = f"""
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px;">
+      <div style="background:#7f1d1d;color:#fff;padding:12px 16px;border-radius:8px;font-weight:700;margin-bottom:20px;">
+        Crisis Alert — Early-Warning Pulse
+      </div>
+      <h1 style="font-size:22px;color:#111;">Keyword: {keyword}</h1>
+      <p style="color:#444;line-height:1.6;">{summary}</p>
+      <table style="width:100%;margin:16px 0;border-collapse:collapse;">
+        <tr><td style="padding:8px;border:1px solid #eee;">Volume (30 min)</td><td style="padding:8px;border:1px solid #eee;font-weight:600;">{volume_score}/100</td></tr>
+        <tr><td style="padding:8px;border:1px solid #eee;">Velocity (acceleration)</td><td style="padding:8px;border:1px solid #eee;font-weight:600;">{velocity_score}/100</td></tr>
+      </table>
+      <p style="color:#444;"><strong>Top narratives:</strong><br/>{narrative_lines.replace(chr(10), '<br/>')}</p>
+      <p style="margin:24px 0;">
+        <a href="{crisis_url}" style="display:inline-block;background:#dc2626;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;">
+          Open Crisis Radar
+        </a>
+      </p>
+    </div>
+    """
+    try:
+        send_email(to_email, subject, html_body, plain_body)
+        return True
+    except EmailSendError:
+        return False
