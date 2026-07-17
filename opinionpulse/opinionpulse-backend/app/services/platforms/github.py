@@ -13,6 +13,11 @@ from app.services.platforms.platform_common import (
     log_platform_error,
     log_platform_success,
 )
+from app.services.platforms.query_helpers import (
+    filter_by_time_range,
+    make_search_cache_key,
+    sort_results_by_posted_at,
+)
 
 logger = logging.getLogger(__name__)
 TIMEOUT = 12
@@ -33,7 +38,7 @@ def _headers() -> dict[str, str]:
 
 
 def search_github(query: str, time_range: str = "24h", limit: int = 15) -> list[dict]:
-    cache_key = f"github_{query}_{time_range}_{limit}"
+    cache_key = make_search_cache_key("github", query, time_range, str(limit))
 
     def fetch() -> list[dict]:
         try:
@@ -113,6 +118,8 @@ def search_github(query: str, time_range: str = "24h", limit: int = 15) -> list[
                     }
                     out.append(row)
 
+            out = filter_by_time_range(out, time_range, fallback_to_all=False)
+            out = sort_results_by_posted_at(out)
             log_platform_success("GitHub", query, len(out))
             return out
         except Exception as exc:

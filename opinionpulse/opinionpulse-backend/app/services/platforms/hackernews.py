@@ -13,17 +13,29 @@ from app.services.platforms.platform_common import (
     log_platform_error,
     log_platform_success,
 )
-from app.services.platforms.query_helpers import filter_headline_results, quoted_phrase_query, sort_results_by_posted_at
+from app.services.platforms.query_helpers import (
+    filter_by_time_range,
+    make_search_cache_key,
+    quoted_phrase_query,
+    sort_results_by_posted_at,
+    time_range_cutoff,
+)
 
 TIMEOUT = 12
 
 
 def search_hackernews(query: str, time_range: str = "24h") -> list[dict]:
-    cache_key = f"hackernews_{query}"
+    cache_key = make_search_cache_key("hackernews", query, time_range)
+    cutoff_ts = int(time_range_cutoff(time_range).timestamp())
 
     def fetch() -> list[dict]:
         try:
-            params = {"query": quoted_phrase_query(query), "tags": "story", "hitsPerPage": 15}
+            params = {
+                "query": quoted_phrase_query(query),
+                "tags": "story",
+                "hitsPerPage": 20,
+                "numericFilters": f"created_at_i>{cutoff_ts}",
+            }
             resp = requests.get(
                 "https://hn.algolia.com/api/v1/search",
                 params=params,
@@ -51,7 +63,7 @@ def search_hackernews(query: str, time_range: str = "24h") -> list[dict]:
                 posted = (
                     datetime.fromisoformat(created.replace("Z", "+00:00")).isoformat()
                     if created
-                    else datetime.now(timezone.utc).isoformat()
+                    else None
                 )
                 row = build_result(
                     id=f"hn_{oid}",
@@ -70,11 +82,12 @@ def search_hackernews(query: str, time_range: str = "24h") -> list[dict]:
                         "comments": int(item.get("num_comments") or 0),
                         "views": 0,
                     },
+                    engagement_available=True,
                     sentiment_text=f"{title} {story_text}",
                 )
                 if row:
                     out.append(row)
-            out = filter_headline_results(out, query)
+            out = filter_by_time_range(out, time_range, fallback_to_all=False)
             out = sort_results_by_posted_at(out)
             log_platform_success("HackerNews", query, len(out))
             return out
@@ -82,4 +95,4 @@ def search_hackernews(query: str, time_range: str = "24h") -> list[dict]:
             log_platform_error("HackerNews", query, exc)
             return []
 
-    return cached(cache_key, fetch, ttl_seconds=300)
+    return cached(cache_key, fetch, ttl_seconds=120)

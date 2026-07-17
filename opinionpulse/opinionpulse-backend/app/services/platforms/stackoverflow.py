@@ -12,6 +12,11 @@ import requests
 from app.core.config import get_settings
 from app.services.cache_utils import cached
 from app.services.platforms.platform_common import build_result, log_platform_error, log_platform_success
+from app.services.platforms.query_helpers import (
+    filter_by_time_range,
+    make_search_cache_key,
+    sort_results_by_posted_at,
+)
 
 logger = logging.getLogger(__name__)
 TIMEOUT = 12
@@ -27,7 +32,7 @@ def _clean_html(html_str: str) -> str:
 
 
 def search_stackoverflow(query: str, time_range: str = "24h", limit: int = 20) -> list[dict]:
-    cache_key = f"stackoverflow_{query}_{time_range}_{limit}"
+    cache_key = make_search_cache_key("stackoverflow", query, time_range, str(limit))
 
     def fetch() -> list[dict]:
         try:
@@ -78,6 +83,9 @@ def search_stackoverflow(query: str, time_range: str = "24h", limit: int = 20) -
                     sentiment_text=f"{title} {content} {tag_str}",
                 ))
                 
+            results = [r for r in results if r]
+            results = filter_by_time_range(results, time_range, fallback_to_all=False)
+            results = sort_results_by_posted_at(results)
             log_platform_success("StackOverflow", query, len(results))
             return results
         except Exception as exc:

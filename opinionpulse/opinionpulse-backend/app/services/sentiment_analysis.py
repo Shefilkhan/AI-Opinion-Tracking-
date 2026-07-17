@@ -197,16 +197,21 @@ def calculate_sentiment_forecast(results: list[dict]) -> list[dict]:
     # A simple forecasting algorithm based on the velocity of recent sentiment
     from datetime import datetime, timedelta, timezone
     from dateutil.parser import parse
-    
+
+    def _to_utc(dt: datetime) -> datetime:
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
+
     if not results:
         return []
-    
+
     # Sort results by time
     valid_results = []
     for r in results:
         if r.get("posted_at"):
             try:
-                dt = parse(r["posted_at"])
+                dt = _to_utc(parse(r["posted_at"]))
                 valid_results.append((dt, r.get("sentiment_score", 0.0)))
             except Exception:
                 pass
@@ -257,3 +262,61 @@ def calculate_sentiment_forecast(results: list[dict]) -> list[dict]:
         })
         
     return forecast
+
+
+def calculate_sentiment_trend_from_results(results: list[dict]) -> list[dict]:
+    """Build hourly sentiment buckets from real search results (last 24h)."""
+    from collections import defaultdict
+    from datetime import datetime, timedelta, timezone
+    from dateutil.parser import parse
+
+    if not results:
+        return []
+
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(hours=24)
+    buckets: dict[str, list[dict]] = defaultdict(list)
+
+    for row in results:
+        posted = row.get("posted_at")
+        if not posted:
+            continue
+        try:
+            dt = parse(str(posted))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            else:
+                dt = dt.astimezone(timezone.utc)
+            if dt < cutoff:
+                continue
+            label = dt.strftime("%H:00")
+            buckets[label].append(row)
+        except Exception:
+            continue
+
+    if not buckets:
+        return []
+
+    trend = []
+    for hour_offset in range(23, -1, -1):
+        slot = (now - timedelta(hours=hour_offset)).strftime("%H:00")
+        rows = buckets.get(slot, [])
+        if not rows:
+            trend.append(
+                {"time": slot, "positive": 0, "negative": 0, "neutral": 0, "volume": 0}
+            )
+            continue
+        pos = sum(1 for r in rows if r.get("sentiment") == "positive")
+        neg = sum(1 for r in rows if r.get("sentiment") == "negative")
+        neu = len(rows) - pos - neg
+        total = len(rows)
+        trend.append(
+            {
+                "time": slot,
+                "positive": round((pos / total) * 100),
+                "negative": round((neg / total) * 100),
+                "neutral": round((neu / total) * 100),
+                "volume": total,
+            }
+        )
+    return trend

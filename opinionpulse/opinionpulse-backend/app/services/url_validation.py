@@ -55,7 +55,9 @@ def is_live_result(result: dict[str, Any]) -> bool:
         return "dev.to/" in url and "/search" not in url
     if platform == "hackernews":
         return "ycombinator.com" in url
-    return False
+    if platform in ("guardian", "mastodon", "stackoverflow", "github", "bluesky"):
+        return True
+    return is_valid_url(result.get("url", ""))
 
 
 def get_fallback_url(platform: str, query: str) -> str:

@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils"
 type StatusPillProps = {
   label: string
   live?: boolean
-  variant?: "live" | "off" | "neutral"
+  variant?: "live" | "off" | "neutral" | "warning"
 }
 
 export function StatusPill({ label, live, variant }: StatusPillProps) {
@@ -18,7 +18,9 @@ export function StatusPill({ label, live, variant }: StatusPillProps) {
         resolved === "off" &&
           "border-border bg-muted/40 text-muted-foreground",
         resolved === "neutral" &&
-          "border-border bg-card text-muted-foreground"
+          "border-border bg-card text-muted-foreground",
+        resolved === "warning" &&
+          "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
       )}
     >
       <span
@@ -26,7 +28,8 @@ export function StatusPill({ label, live, variant }: StatusPillProps) {
           "size-1.5 shrink-0 rounded-full",
           resolved === "live" && "bg-success",
           resolved === "off" && "bg-muted-foreground/40",
-          resolved === "neutral" && "bg-primary"
+          resolved === "neutral" && "bg-primary",
+          resolved === "warning" && "bg-amber-500"
         )}
         aria-hidden
       />

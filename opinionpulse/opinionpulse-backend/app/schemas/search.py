@@ -26,6 +26,18 @@ class SentimentDetail(BaseModel):
     score: int = 0
 
 
+class SourceHealthItem(BaseModel):
+    status: str
+    count: int = 0
+    message: Optional[str] = None
+
+
+class DataFreshness(BaseModel):
+    fetched_at: str
+    sources_used: int = 0
+    sources_failed: int = 0
+
+
 class SearchResultItem(BaseModel):
     id: str
     platform: str
@@ -45,6 +57,8 @@ class SearchResultItem(BaseModel):
     is_demo: bool = False
     content_type: Optional[str] = None
     sentiment_detail: Optional[SentimentDetail] = None
+    relevance_score: Optional[int] = None
+    engagement_available: bool = True
 
     @model_validator(mode="after")
     def sync_url_fields(self):
@@ -132,6 +146,9 @@ class SearchResponse(BaseModel):
     age_analysis: Optional[AgeAnalysis] = None
     usage_context: Optional[list[UsageContextItem]] = None
     risk_assessment: Optional[RiskAssessment] = None
+    source_health: Optional[dict[str, SourceHealthItem]] = None
+    data_freshness: Optional[DataFreshness] = None
+    relevance_mode: Optional[str] = None
 
 
 class SearchHistoryItem(BaseModel):

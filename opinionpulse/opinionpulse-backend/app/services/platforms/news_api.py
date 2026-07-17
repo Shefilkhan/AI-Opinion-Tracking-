@@ -19,6 +19,7 @@ from app.services.platforms.query_helpers import (
     filter_by_time_range,
     filter_headline_results,
     iso_date_days_ago,
+    make_search_cache_key,
     quoted_phrase_query,
     sort_results_by_posted_at,
 )
@@ -33,7 +34,7 @@ def search_news(query: str, time_range: str = "24h", page_size: int = 20) -> lis
         raise ValueError("NEWS_API_KEY not configured")
 
     from_date = iso_date_days_ago(time_range)
-    cache_key = f"newsapi_{query}_{from_date}_{page_size}"
+    cache_key = make_search_cache_key("newsapi", query, time_range, str(page_size))
 
     def fetch() -> list[dict]:
         try:
@@ -97,7 +98,7 @@ def search_news(query: str, time_range: str = "24h", page_size: int = 20) -> lis
                 )
                 if row:
                     out.append(row)
-            out = filter_headline_results(out, query, fallback_to_all=True)
+            out = filter_headline_results(out, query, fallback_to_all=False)
             out = filter_by_time_range(out, time_range, fallback_to_all=False)
             out = sort_results_by_posted_at(out)
             log_platform_success("NewsAPI", query, len(out))
@@ -106,7 +107,7 @@ def search_news(query: str, time_range: str = "24h", page_size: int = 20) -> lis
             log_platform_error("NewsAPI", query, exc)
             return []
 
-    return cached(cache_key, fetch, ttl_seconds=NEWS_CACHE_TTL)
+    return cached(cache_key, fetch, ttl_seconds=60)
 
 
 def get_trending_news() -> list[dict]:

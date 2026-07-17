@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import requests
 
 from app.core.config import get_settings
@@ -14,6 +16,9 @@ from app.services.platforms.platform_common import (
 from app.services.platforms.query_helpers import (
     filter_by_time_range,
     filter_headline_results,
+    iso_date_days_ago,
+    iso_datetime_cutoff,
+    make_search_cache_key,
     quoted_phrase_query,
     sort_results_by_posted_at,
 )
@@ -27,14 +32,18 @@ def search_guardian(query: str, time_range: str = "7d") -> list[dict]:
     if not key:
         raise ValueError("GUARDIAN_API_KEY not configured")
 
-    cache_key = f"guardian_{query}_{time_range}"
+    cache_key = make_search_cache_key("guardian", query, time_range)
 
     def fetch() -> list[dict]:
         try:
+            from_date = iso_date_days_ago(time_range)
+            to_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
             params = {
                 "q": quoted_phrase_query(query),
                 "order-by": "newest",
                 "page-size": "20",
+                "from-date": from_date,
+                "to-date": to_date,
                 "show-fields": "trailText,byline,thumbnail",
                 "api-key": key,
             }
@@ -68,7 +77,7 @@ def search_guardian(query: str, time_range: str = "7d") -> list[dict]:
                 )
                 if row:
                     out.append(row)
-            out = filter_headline_results(out, query, fallback_to_all=True)
+            out = filter_headline_results(out, query, fallback_to_all=False)
             out = filter_by_time_range(out, time_range, fallback_to_all=False)
             out = sort_results_by_posted_at(out)
             log_platform_success("Guardian", query, len(out))
@@ -77,7 +86,7 @@ def search_guardian(query: str, time_range: str = "7d") -> list[dict]:
             log_platform_error("Guardian", query, exc)
             return []
 
-    return cached(cache_key, fetch, ttl_seconds=NEWS_CACHE_TTL)
+    return cached(cache_key, fetch, ttl_seconds=60)
 
 
 def get_trending_guardian(limit: int = 10) -> list[dict]:
@@ -129,4 +138,4 @@ def get_trending_guardian(limit: int = 10) -> list[dict]:
             log_platform_error("Guardian", "trending", exc)
             return []
 
-    return cached(cache_key, fetch, ttl_seconds=NEWS_CACHE_TTL)
+    return cached(cache_key, fetch, ttl_seconds=60)

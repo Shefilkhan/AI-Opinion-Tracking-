@@ -131,4 +131,14 @@ export type SearchResponse = {
   errors: string[] | null
   locked_sources?: string[]
   upgrade_message?: string | null
+  source_health?: Record<
+    string,
+    { status: string; count: number; message?: string }
+  >
+  data_freshness?: {
+    fetched_at: string
+    sources_used: number
+    sources_failed: number
+  }
+  relevance_mode?: string
 }

@@ -10,13 +10,18 @@ from app.services.platforms.platform_common import (
     log_platform_error,
     log_platform_success,
 )
-from app.services.platforms.query_helpers import title_matches_query
+from app.services.platforms.query_helpers import (
+    filter_by_time_range,
+    make_search_cache_key,
+    sort_results_by_posted_at,
+    title_matches_query,
+)
 
 TIMEOUT = 12
 
 
 def search_devto(query: str, time_range: str = "24h") -> list[dict]:
-    cache_key = f"devto_{query}"
+    cache_key = make_search_cache_key("devto", query, time_range)
 
     def fetch() -> list[dict]:
         try:
@@ -27,32 +32,17 @@ def search_devto(query: str, time_range: str = "24h") -> list[dict]:
             if tag:
                 resp = requests.get(
                     "https://dev.to/api/articles",
-                    params={"tag": tag, "per_page": 15},
+                    params={"tag": tag, "per_page": 20},
                     headers={"Accept": "application/json"},
                     timeout=TIMEOUT,
                 )
                 resp.raise_for_status()
                 articles = resp.json() or []
 
-            if len(articles) < 5:
-                resp = requests.get(
-                    "https://dev.to/api/articles",
-                    params={"per_page": 30},
-                    headers={"Accept": "application/json"},
-                    timeout=TIMEOUT,
-                )
-                resp.raise_for_status()
-                seen = {a.get("id") for a in articles}
-                for a in resp.json() or []:
-                    if a.get("id") not in seen:
-                        articles.append(a)
-
             out = []
             for article in articles:
                 title = (article.get("title") or "").strip()
-                if not title:
-                    continue
-                if not title_matches_query(title, query):
+                if not title or not title_matches_query(title, query):
                     continue
                 desc = (article.get("description") or "").strip()
                 user = article.get("user") or {}
@@ -79,16 +69,19 @@ def search_devto(query: str, time_range: str = "24h") -> list[dict]:
                         "comments": int(article.get("comments_count") or 0),
                         "views": 0,
                     },
+                    engagement_available=True,
                     sentiment_text=f"{title} {desc}",
                 )
                 if row:
                     out.append(row)
                 if len(out) >= 15:
                     break
+            out = filter_by_time_range(out, time_range, fallback_to_all=False)
+            out = sort_results_by_posted_at(out)
             log_platform_success("Dev.to", query, len(out))
             return out
         except Exception as exc:
             log_platform_error("Dev.to", query, exc)
             return []
 
-    return cached(cache_key, fetch, ttl_seconds=300)
+    return cached(cache_key, fetch, ttl_seconds=120)

@@ -68,7 +68,7 @@ export function SearchPage() {
   const prevFiltersRef = useRef<SearchFilters>(DEFAULT_FILTERS)
 
   const runSearch = useCallback(
-    async (q: string, f: SearchFilters) => {
+    async (q: string, f: SearchFilters = DEFAULT_FILTERS) => {
       const trimmed = q.trim()
       if (trimmed.length < 2) return
 
@@ -88,8 +88,9 @@ export function SearchPage() {
         addRecentSearch(trimmed)
         setHasSearched(true)
         void refreshUsage()
-      } catch {
+      } catch (err) {
         if (requestId !== requestIdRef.current) return
+        console.error("Search failed:", err)
         setError("Couldn't load results")
         setData(null)
         setBaseData(null)
@@ -243,7 +244,10 @@ export function SearchPage() {
                       type="button"
                       onClick={() => {
                         setQuery(s.query)
-                        runSearch(s.query)
+                        setHasSearched(true)
+                        prevFiltersRef.current = DEFAULT_FILTERS
+                        setFilters(DEFAULT_FILTERS)
+                        void runSearch(s.query, DEFAULT_FILTERS)
                       }}
                       className="inline-flex items-center rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:border-primary/30 hover:bg-accent hover:text-accent-foreground"
                     >

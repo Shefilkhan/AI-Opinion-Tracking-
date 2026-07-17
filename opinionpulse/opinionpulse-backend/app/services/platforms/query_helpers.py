@@ -8,8 +8,23 @@ from typing import Any
 from dateutil.parser import parse as parse_date
 
 
+def time_range_delta(time_range: str) -> timedelta:
+    """True window: 24h = 24 hours, not 1 calendar day."""
+    mapping = {
+        "24h": timedelta(hours=24),
+        "7d": timedelta(days=7),
+        "30d": timedelta(days=30),
+    }
+    return mapping.get(time_range, timedelta(hours=24))
+
+
 def time_range_days(time_range: str) -> int:
-    return {"24h": 1, "7d": 7, "30d": 30}.get(time_range, 1)
+    """Calendar days for APIs that only accept date (not datetime)."""
+    return { "24h": 1, "7d": 7, "30d": 30 }.get(time_range, 1)
+
+
+def time_range_cutoff(time_range: str) -> datetime:
+    return datetime.now(timezone.utc) - time_range_delta(time_range)
 
 
 def iso_date_days_ago(time_range: str) -> str:
@@ -17,9 +32,12 @@ def iso_date_days_ago(time_range: str) -> str:
     return (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d")
 
 
+def iso_datetime_cutoff(time_range: str) -> str:
+    return time_range_cutoff(time_range).isoformat().replace("+00:00", "Z")
+
+
 def iso_datetime_days_ago(time_range: str) -> str:
-    days = time_range_days(time_range)
-    return (datetime.now(timezone.utc) - timedelta(days=days)).isoformat().replace("+00:00", "Z")
+    return iso_datetime_cutoff(time_range)
 
 
 def query_terms(query: str) -> list[str]:
@@ -64,27 +82,33 @@ def filter_headline_results(
     return results if fallback_to_all else []
 
 
-def coerce_posted_at_iso(value: Any) -> str:
-    """Normalize posted_at to an ISO-8601 string for API responses."""
+def coerce_posted_at_iso(value: Any) -> str | None:
+    """Normalize posted_at to ISO-8601 UTC string; None if missing/invalid."""
     if value is None:
-        return datetime.now(timezone.utc).isoformat()
+        return None
     if isinstance(value, datetime):
         dt = value if value.tzinfo else value.replace(tzinfo=timezone.utc)
-        return dt.isoformat()
+        return dt.astimezone(timezone.utc).isoformat()
     if isinstance(value, (int, float)):
         try:
             return datetime.fromtimestamp(float(value), tz=timezone.utc).isoformat()
         except (ValueError, OSError, OverflowError):
-            return datetime.now(timezone.utc).isoformat()
+            return None
     text = str(value).strip()
     if not text:
-        return datetime.now(timezone.utc).isoformat()
+        return None
     if text.isdigit():
         try:
             return datetime.fromtimestamp(int(text), tz=timezone.utc).isoformat()
         except (ValueError, OSError, OverflowError):
-            pass
-    return text
+            return None
+    try:
+        dt = parse_date(text)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc).isoformat()
+    except (ValueError, TypeError, OverflowError):
+        return None
 
 
 def parse_posted_at(value: str | int | float | None) -> datetime | None:
@@ -99,31 +123,33 @@ def parse_posted_at(value: str | int | float | None) -> datetime | None:
         dt = parse_date(str(value))
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)
-        return dt
+        return dt.astimezone(timezone.utc)
     except (ValueError, TypeError, OverflowError):
         return None
 
 
 def sort_results_by_posted_at(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Newest first — used after merging API responses."""
-    return sorted(
-        results,
-        key=lambda row: parse_posted_at(row.get("posted_at")) or datetime.min.replace(tzinfo=timezone.utc),
-        reverse=True,
-    )
+    """Newest first — rows without valid timestamps sort last."""
+
+    def sort_key(row: dict[str, Any]) -> tuple[int, datetime]:
+        dt = parse_posted_at(row.get("posted_at"))
+        if dt is None:
+            return (0, datetime.min.replace(tzinfo=timezone.utc))
+        return (1, dt)
+
+    return sorted(results, key=sort_key, reverse=True)
 
 
 def filter_by_time_range(
     results: list[dict[str, Any]],
     time_range: str,
     *,
-    fallback_to_all: bool = True,
+    fallback_to_all: bool = False,
 ) -> list[dict[str, Any]]:
-    """Keep rows within the requested window; APIs often miss same-day items."""
+    """Keep rows within the requested window."""
     if not results:
         return results
-    days = time_range_days(time_range)
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    cutoff = time_range_cutoff(time_range)
     matched = [
         row
         for row in results
@@ -132,3 +158,10 @@ def filter_by_time_range(
     if matched:
         return matched
     return results if fallback_to_all else []
+
+
+def make_search_cache_key(
+    platform: str, query: str, time_range: str, extra: str = ""
+) -> str:
+    suffix = f"_{extra}" if extra else ""
+    return f"{platform}_{query}_{time_range}{suffix}"
