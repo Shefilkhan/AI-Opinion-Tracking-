@@ -1,5 +1,14 @@
 import { apiRequest } from "@/api/client"
 
+export type PulseChatStructured = {
+  type: "theme_breakdown" | "comparison_chart"
+  items?: { label: string; pct: number; detail?: string }[]
+  a_label?: string
+  b_label?: string
+  dimensions?: { name: string; a: number; b: number }[]
+  leaders?: { a?: string[]; b?: string[] }
+}
+
 export type PulseChatDataUsed = {
   query?: string | null
   results_count: number
@@ -14,6 +23,8 @@ export type PulseChatResponse = {
   data_used: PulseChatDataUsed
   wiki_summary?: Record<string, unknown> | null
   has_real_data: boolean
+  response_format?: string | null
+  structured?: PulseChatStructured | null
 }
 
 export type PulseConversation = {
@@ -30,6 +41,8 @@ export type PulseStoredMessage = {
     suggestions?: string[]
     data_used?: PulseChatDataUsed
     has_real_data?: boolean
+    structured?: PulseChatStructured | null
+    response_format?: string | null
   }
   created_at: string
 }

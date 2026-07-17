@@ -14,6 +14,11 @@ export type UsageFeatures = {
   chat_history_days: number
 }
 
+export type BillingSummary = {
+  available: boolean
+  renews_at: string | null
+}
+
 export type UsageStatus = {
   plan: { id: string; name: string; status: string }
   usage: {
@@ -23,4 +28,5 @@ export type UsageStatus = {
   }
   period: { start: string; end: string }
   features: UsageFeatures
+  billing: BillingSummary
 }

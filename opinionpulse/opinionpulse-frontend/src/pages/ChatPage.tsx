@@ -48,6 +48,8 @@ function storedToChatMessages(rows: PulseStoredMessage[]): ChatMessageItem[] {
       : [],
     hasRealData: row.metadata?.has_real_data,
     dataUsed: row.metadata?.data_used,
+    structured: row.metadata?.structured ?? null,
+    responseFormat: row.metadata?.response_format ?? null,
   }))
 }
 
@@ -57,7 +59,8 @@ function generateConversationId() {
 
 export function ChatPage() {
   const [conversations, setConversations] = useState<PulseConversation[]>([])
-  const [activeConvId, setActiveConvId] = useState<string | null>(null)
+  const [activeConvId, setActiveConvId] = useState(generateConversationId)
+  const [chatSessionKey, setChatSessionKey] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
   const [loadedMessages, setLoadedMessages] = useState<ChatMessageItem[] | null>(
     null
@@ -80,19 +83,20 @@ export function ChatPage() {
   }, [refreshConversations])
 
   const loadConversation = useCallback(async (conversationId: string) => {
-    setActiveConvId(conversationId)
     try {
       const res = await getChatConversation(conversationId)
       setLoadedMessages(storedToChatMessages(res.messages))
     } catch {
       setLoadedMessages([])
     }
+    setActiveConvId(conversationId)
+    setChatSessionKey((k) => k + 1)
   }, [])
 
   function startNewChat() {
-    const id = generateConversationId()
-    setActiveConvId(id)
+    setActiveConvId(generateConversationId())
     setLoadedMessages(null)
+    setChatSessionKey((k) => k + 1)
   }
 
   async function handleDelete(conversationId: string) {
@@ -221,7 +225,7 @@ export function ChatPage() {
             setActiveConvId(id)
             void refreshConversations()
           }}
-          key={activeConvId ?? "new"}
+          key={chatSessionKey}
         />
       </div>
     </div>

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import os
 import re
@@ -87,21 +88,28 @@ OUTPUT FORMAT RULES (MANDATORY)
 • If data is provided, cite it. Never invent statistics.
 
 ──────────────────────────────
-TEMPLATE A — Opinion / Sentiment query
+TEMPLATE A — Opinion / Sentiment query (with theme classification)
 ──────────────────────────────
 ### 📊 [Topic] — Opinion Snapshot
 **Overall Sentiment:** [Positive X% · Neutral Y% · Negative Z%]
 **Dominant Platform:** [platform]
 
+**Discussion themes** (classify what people talk about — percentages must sum to ~100%)
+| Theme | Share | Detail |
+|---|---|---|
+| [theme 1] | [X]% | [1 short phrase] |
+| [theme 2] | [Y]% | [1 short phrase] |
+| [theme 3] | [Z]% | [1 short phrase] |
+
 **Why people are positive**
-• [reason 1]
-• [reason 2]
+• **[label]:** [reason]
 
 **Why people are negative**
-• [reason 1]
-• [reason 2]
+• **[label]:** [reason]
 
 **Key Insight:** [1 sentence]
+
+Include a STRUCTURED block (see below) with type theme_breakdown mirroring the theme rows.
 
 ──────────────────────────────
 TEMPLATE B — Risk / Content analysis query
@@ -144,6 +152,49 @@ TEMPLATE E — Quick factual / other queries
 ──────────────────────────────
 Answer in ≤ 5 bullet points. No filler. Data > prose.
 
+──────────────────────────────
+TEMPLATE F — Comparison / Pros & Cons (A vs B)
+──────────────────────────────
+Use when comparing two topics, products, currencies, or "pros and cons".
+
+Opening: 1–2 sentences — neutral verdict on which fits which use case.
+
+**Comparison table**
+| Aspect | [Side A name] | [Side B name] |
+|---|---|---|
+| [aspect 1] | [value] | [value] |
+| [aspect 2] | [value] | [value] |
+| [aspect 3] | [value] | [value] |
+| [aspect 4] | [value] | [value] |
+| [aspect 5] | [value] | [value] |
+
+### Pros of [Side A]
+• **[Label]:** [detail]
+• **[Label]:** [detail]
+
+### Cons of [Side A]
+• **[Label]:** [detail]
+• **[Label]:** [detail]
+
+### Pros of [Side B]
+• **[Label]:** [detail]
+• **[Label]:** [detail]
+
+### Cons of [Side B]
+• **[Label]:** [detail]
+• **[Label]:** [detail]
+
+### Which is better?
+• **For [use case 1]:** [Side A or B] — [why]
+• **For [use case 2]:** [Side A or B] — [why]
+• **For [use case 3]:** [Side A or B] — [why]
+
+**Summary:** [1 sentence tying both together]
+
+Include a STRUCTURED block (see below) with type comparison_chart:
+- 5–7 dimensions scored 1–5 (1=weaker, 5=stronger) for each side
+- leaders.a / leaders.b = lists of aspects each side leads in
+
 IMPORTANT LIMITS:
 • You do NOT have live sports scores, weather, or stock prices unless a post explicitly states them.
 • Never infer a winner or score from sentiment percentages.
@@ -160,6 +211,18 @@ IDENTITY
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 REQUIRED ENDING (every response, no exceptions)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+When using Template A or F, append this block BEFORE suggestions (exact format):
+
+---STRUCTURED---
+{"type":"theme_breakdown","items":[{"label":"Theme","pct":40,"detail":"optional"}]}
+---END---
+
+OR for comparisons:
+
+---STRUCTURED---
+{"type":"comparison_chart","a_label":"Side A","b_label":"Side B","dimensions":[{"name":"Price stability","a":1,"b":5}],"leaders":{"a":["Decentralization"],"b":["Price stability"]}}
+---END---
+
 SUGGESTIONS: ["follow-up 1", "follow-up 2", "follow-up 3"]"""
 
 
@@ -190,15 +253,30 @@ COMPARE_INTENT = re.compile(
     re.I,
 )
 
+PROS_CONS_INTENT = re.compile(
+    r"\b("
+    r"pros and cons|advantages and disadvantages|"
+    r"benefits and drawbacks|pros & cons"
+    r")\b",
+    re.I,
+)
+
+STRUCTURED_BLOCK = re.compile(
+    r"---STRUCTURED---\s*(\{.*?\})\s*---END---",
+    re.DOTALL | re.IGNORECASE,
+)
+
 
 def classify_question(message: str) -> str:
-    """Return: factual | compare | sentiment | trend | general."""
+    """Return: factual | compare | pros_cons | sentiment | trend | general."""
     lower = message.lower()
     if FACTUAL_LOOKUP.search(message) or (
         SPORTS_CONTEXT.search(message) and re.search(r"\bvs\.?\b", lower)
     ):
         return "factual"
     if is_opinion_compare_query(message):
+        if PROS_CONS_INTENT.search(message):
+            return "pros_cons"
         return "compare"
     if any(x in lower for x in ("predict", "forecast", "trend", "heading")):
         return "trend"
@@ -210,9 +288,21 @@ def classify_question(message: str) -> str:
     return "general"
 
 
+def _strip_pros_cons_suffix(text: str) -> str:
+    return re.sub(
+        r":?\s*(pros and cons|advantages and disadvantages|benefits and drawbacks|pros & cons).*$",
+        "",
+        text,
+        flags=re.I,
+    ).strip()
+
+
 def is_opinion_compare_query(message: str) -> bool:
-    """True only when user wants an A-vs-B opinion comparison, not sports scores."""
+    """True when user wants an A-vs-B or pros/cons comparison."""
     lower = message.lower()
+    if PROS_CONS_INTENT.search(message):
+        return True
+
     has_vs = bool(re.search(r"\bvs\.?\b", lower)) or " versus " in lower
     has_compare = "compare" in lower or "compared to" in lower
     if not has_vs and not has_compare:
@@ -223,23 +313,8 @@ def is_opinion_compare_query(message: str) -> bool:
     if SPORTS_CONTEXT.search(message):
         return False
 
-    if has_compare or COMPARE_INTENT.search(message):
+    if has_compare or COMPARE_INTENT.search(message) or has_vs:
         return True
-
-    # "React vs Angular" style — both sides short, no sports/factual markers
-    for sep in (" vs ", " versus ", " vs. "):
-        if sep in lower:
-            left, _, right = lower.partition(sep.strip())
-            right = right.strip()
-            if FACTUAL_LOOKUP.search(right) or SPORTS_CONTEXT.search(right):
-                return False
-            if re.search(r"\d", right):
-                return False
-            if len(right.split()) > 4:
-                return False
-            if len(left.split()) > 4:
-                return False
-            return True
 
     return False
 
@@ -320,13 +395,14 @@ def extract_comparison_queries(message: str) -> list[str]:
     if not is_opinion_compare_query(message):
         return []
 
-    lower = message.lower()
-    for sep in (" vs ", " versus ", " vs. ", " compare ", " compared to "):
+    cleaned = _strip_pros_cons_suffix(message)
+    lower = cleaned.lower()
+    for sep in (" vs. ", " vs ", " versus ", " compare ", " compared to "):
         if sep in lower:
-            parts = re.split(re.escape(sep.strip()), message, maxsplit=1, flags=re.I)
+            parts = re.split(re.escape(sep.strip()), cleaned, maxsplit=1, flags=re.I)
             if len(parts) == 2:
                 left = extract_search_query(parts[0].replace("compare", "").strip())
-                right = extract_search_query(parts[1].strip())
+                right = extract_search_query(_strip_pros_cons_suffix(parts[1].strip()))
                 if left and right:
                     return [left, right]
     return []
@@ -358,6 +434,19 @@ def extract_suggestions(response_text: str) -> list[str]:
     return []
 
 
+def extract_structured_payload(response_text: str) -> dict[str, Any] | None:
+    match = STRUCTURED_BLOCK.search(response_text)
+    if not match:
+        return None
+    try:
+        payload = json.loads(match.group(1))
+        if isinstance(payload, dict) and payload.get("type"):
+            return payload
+    except json.JSONDecodeError:
+        logger.warning("Invalid STRUCTURED JSON in AI response")
+    return None
+
+
 def _response_format_hint(message: str) -> str:
     kind = classify_question(message)
     if kind == "factual":
@@ -367,13 +456,29 @@ def _response_format_hint(message: str) -> str:
             "Then up to 3 bullets quoting what posts say about the match. "
             "Do NOT use **A:**/**B:** labels. Do NOT invent scores or winners."
         )
-    if kind == "compare":
-        return "Reply format: 1-line verdict, then **A:** and **B:** with 2 bullets each (max 150 words)."
+    if kind in ("compare", "pros_cons"):
+        return (
+            "Use TEMPLATE F exactly: intro paragraph, comparison markdown table (5+ rows), "
+            "Pros/Cons sections for BOTH sides with **Label:** bullets, Which is better? section, "
+            "Summary, ---STRUCTURED--- comparison_chart block, then SUGGESTIONS."
+        )
     if kind == "trend":
         return "Reply format: **Direction:** one phrase, then 2 trend bullets with data."
     if kind == "sentiment":
-        return "Reply format: **Sentiment:** X% pos · Y% neg · Z% neutral, then 2–3 short bullets."
+        return (
+            "Use TEMPLATE A exactly: sentiment line, Discussion themes table (3–5 rows with %), "
+            "positive/negative bullets with **labels**, Key Insight, "
+            "---STRUCTURED--- theme_breakdown block, then SUGGESTIONS."
+        )
     return "Reply format: 1-line direct answer, then up to 4 short bullets. Max 100 words."
+
+
+def _max_tokens_for_kind(kind: str) -> int:
+    if kind in ("compare", "pros_cons", "sentiment"):
+        return 1200
+    if kind == "trend":
+        return 600
+    return 400
 
 
 def _trim_response_body(text: str, max_chars: int = 650) -> str:
@@ -389,14 +494,21 @@ def _trim_response_body(text: str, max_chars: int = 650) -> str:
     return cut.strip() + "…"
 
 
-def clean_response_text(response: str) -> str:
+def clean_response_text(response: str, response_format: str | None = None) -> str:
+    body = re.sub(
+        r"---STRUCTURED---.*?---END---",
+        "",
+        response,
+        flags=re.DOTALL | re.IGNORECASE,
+    )
     body = re.sub(
         r"\n?SUGGESTIONS:\s*\[[^\]]+\]",
         "",
-        response,
+        body,
         flags=re.IGNORECASE,
     ).strip()
-    return _trim_response_body(body)
+    limit = 2800 if response_format in ("compare", "pros_cons", "sentiment") else 650
+    return _trim_response_body(body, max_chars=limit)
 
 
 def _sentiment_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
@@ -464,7 +576,7 @@ Top signals:
 Use only these numbers. Be brief."""
 
 
-def _call_groq(messages: list[dict[str, str]], system_prompt: str) -> str:
+def _call_groq(messages: list[dict[str, str]], system_prompt: str, max_tokens: int = 400) -> str:
     client = get_groq_client()
     if client is None:
         raise RuntimeError("GROQ_API_KEY not configured")
@@ -472,7 +584,7 @@ def _call_groq(messages: list[dict[str, str]], system_prompt: str) -> str:
     response = client.chat.completions.create(
         model=GROQ_MODEL,
         messages=formatted_messages,
-        max_tokens=400,
+        max_tokens=max_tokens,
         temperature=0.35,
         stream=False,
     )
@@ -495,13 +607,14 @@ def _call_anthropic(messages: list[dict[str, str]], system_prompt: str) -> str:
 async def call_ai_provider(
     messages: list[dict[str, str]],
     system_prompt: str,
+    max_tokens: int = 400,
 ) -> str:
     """Call Groq first, fall back to Anthropic if available."""
 
     if get_groq_client():
         try:
             result = await asyncio.wait_for(
-                asyncio.to_thread(_call_groq, messages, system_prompt),
+                asyncio.to_thread(_call_groq, messages, system_prompt, max_tokens),
                 timeout=AI_TIMEOUT_SECONDS,
             )
             logger.info("Groq response received")
@@ -608,6 +721,8 @@ async def process_chat_message(
             )
 
     format_hint = _response_format_hint(message)
+    question_kind = classify_question(message)
+    max_tokens = _max_tokens_for_kind(question_kind)
     current_content = f"{format_hint}\n\nQuestion: {message}"
     if context_data:
         current_content = f"{context_data}\n\n{format_hint}\n\nQuestion: {message}"
@@ -615,13 +730,18 @@ async def process_chat_message(
     messages_for_ai.append({"role": "user", "content": current_content})
 
     try:
-        ai_response = await call_ai_provider(messages_for_ai, SYSTEM_PROMPT)
+        ai_response = await call_ai_provider(
+            messages_for_ai, SYSTEM_PROMPT, max_tokens=max_tokens
+        )
         suggestions = extract_suggestions(ai_response)
-        clean_response = clean_response_text(ai_response)
+        structured = extract_structured_payload(ai_response)
+        clean_response = clean_response_text(ai_response, response_format=question_kind)
 
         return {
             "message": clean_response,
             "suggestions": suggestions,
+            "response_format": question_kind,
+            "structured": structured,
             "data_used": {
                 "query": search_query,
                 "results_count": len(fetched_results),

@@ -30,11 +30,17 @@ class UsageFeatures(BaseModel):
     chat_history_days: int
 
 
+class BillingSummary(BaseModel):
+    available: bool
+    renews_at: Optional[str] = None
+
+
 class UsageStatusResponse(BaseModel):
     plan: UsagePlanInfo
     usage: dict[str, Any]
     period: UsagePeriod
     features: UsageFeatures
+    billing: BillingSummary
 
 
 class AdminSetPlanRequest(BaseModel):

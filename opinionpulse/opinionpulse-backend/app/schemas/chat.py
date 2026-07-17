@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -86,6 +86,8 @@ class PulseChatMessageResponse(BaseModel):
     data_used: PulseChatDataUsed = Field(default_factory=PulseChatDataUsed)
     wiki_summary: Optional[dict] = None
     has_real_data: bool = False
+    response_format: Optional[str] = None
+    structured: Optional[dict[str, Any]] = None
 
 
 class PulseConversationSummary(BaseModel):

@@ -11,6 +11,7 @@ from app.db.models import CrisisEvent, PulseBucket, SavedSearch, User
 from app.services.crisis_narrative_service import cluster_narratives
 from app.services.crisis_timeline_service import build_spread_timeline
 from app.services.email_service import send_crisis_alert_email
+from app.services.notification_service import create_user_notification
 from app.services.pulse_metrics import (
     QUADRANT_EXPLANATIONS,
     QUADRANT_LABELS,
@@ -206,6 +207,27 @@ async def scan_brand_watch(
         db.commit()
         db.refresh(event)
         event_id = event.id
+
+        if quadrant == "crisis":
+            create_user_notification(
+                db,
+                user_id=watch.user_id,
+                type="crisis_detected",
+                title="Crisis detected",
+                message=f'Negative sentiment spiked for "{query}". Review it on Crisis Radar.',
+                href="/crisis",
+            )
+            db.commit()
+        elif quadrant == "watch":
+            create_user_notification(
+                db,
+                user_id=watch.user_id,
+                type="watch_detected",
+                title="Sentiment watch",
+                message=f'"{query}" is trending negative. Keep an eye on it in Crisis Radar.',
+                href="/crisis",
+            )
+            db.commit()
 
         if should_alert and user and user.email:
             alert_sent = send_crisis_alert_email(

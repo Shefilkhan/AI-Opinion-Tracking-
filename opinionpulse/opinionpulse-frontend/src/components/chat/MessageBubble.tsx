@@ -1,8 +1,8 @@
 import { useState } from "react"
-import ReactMarkdown from "react-markdown"
 import { Copy, Sparkles } from "lucide-react"
-import type { PulseChatDataUsed } from "@/api/chat"
+import type { PulseChatDataUsed, PulseChatStructured } from "@/api/chat"
 import { SuggestionsBar } from "@/components/chat/SuggestionsBar"
+import { StructuredChatRenderer } from "@/components/chat/StructuredChatRenderer"
 import { cn } from "@/lib/utils"
 
 export type ChatMessageItem = {
@@ -14,6 +14,8 @@ export type ChatMessageItem = {
   dataUsed?: PulseChatDataUsed
   hasRealData?: boolean
   isError?: boolean
+  structured?: PulseChatStructured | null
+  responseFormat?: string | null
 }
 
 type MessageBubbleProps = {
@@ -21,19 +23,6 @@ type MessageBubbleProps = {
   onSuggestionClick: (text: string) => void
 }
 
-const MARKDOWN_CLASS =
-  "text-sm leading-relaxed text-foreground " +
-  "[&_strong]:font-medium [&_strong]:text-foreground " +
-  "[&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-4 " +
-  "[&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-4 " +
-  "[&_li]:my-0.5 " +
-  "[&_p]:my-1.5 " +
-  "[&_h1]:my-2 [&_h1]:text-lg [&_h1]:font-medium [&_h1]:text-foreground " +
-  "[&_h2]:my-1.5 [&_h2]:text-base [&_h2]:font-medium [&_h2]:text-foreground " +
-  "[&_h3]:my-1 [&_h3]:text-sm [&_h3]:font-medium [&_h3]:text-foreground " +
-  "[&_a]:text-primary [&_a]:hover:underline " +
-  "[&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_blockquote]:text-muted-foreground " +
-  "[&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:text-xs"
 
 function isDatabaseError(content: string): boolean {
   const lower = content.toLowerCase()
@@ -113,9 +102,10 @@ export function MessageBubble({ message, onSuggestionClick }: MessageBubbleProps
               </p>
             </div>
           ) : (
-            <div className={MARKDOWN_CLASS}>
-              <ReactMarkdown>{message.content}</ReactMarkdown>
-            </div>
+            <StructuredChatRenderer
+              content={message.content}
+              structured={message.structured}
+            />
           )}
         </div>
 

@@ -123,6 +123,8 @@ export function ChatWindow({
           suggestions: Array.isArray(data.suggestions) ? data.suggestions : [],
           dataUsed: data.data_used,
           hasRealData: data.has_real_data,
+          structured: data.structured ?? null,
+          responseFormat: data.response_format ?? null,
         }
 
         setMessages((prev) => [...prev, aiMessage])

@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.db.database import get_db
 from app.db.models import SavedSearch, User
+from app.services.notification_service import create_user_notification
 from app.services.plan_limits import check_keyword_alert_limit
 
 logger = logging.getLogger(__name__)
@@ -118,6 +119,14 @@ def create_personal_alert(
         alert_enabled=True,
     )
     db.add(row)
+    create_user_notification(
+        db,
+        user_id=current_user.id,
+        type="alert_created",
+        title="Alert created",
+        message=f'Your alert for "{keyword}" is active and will notify you when negative sentiment exceeds {body.threshold}%.',
+        href="/alerts",
+    )
     db.commit()
     db.refresh(row)
     logger.info("Created personal alert %s for user %s (keyword=%r)", row.id, current_user.id, keyword)
@@ -147,6 +156,19 @@ def update_personal_alert(
         meta["frequency"] = body.frequency
 
     row.filters_json = json.dumps(meta)
+    if body.enabled is not None:
+        create_user_notification(
+            db,
+            user_id=current_user.id,
+            type="alert_updated",
+            title="Alert enabled" if body.enabled else "Alert paused",
+            message=(
+                f'Your alert for "{row.query}" is now active.'
+                if body.enabled
+                else f'Your alert for "{row.query}" is paused.'
+            ),
+            href="/alerts",
+        )
     db.commit()
     db.refresh(row)
     return _row_to_out(row)
@@ -159,6 +181,15 @@ def delete_personal_alert(
     db: Session = Depends(get_db),
 ):
     row = _get_alert(alert_id, current_user, db)
+    keyword = row.query
+    create_user_notification(
+        db,
+        user_id=current_user.id,
+        type="alert_deleted",
+        title="Alert removed",
+        message=f'Your alert for "{keyword}" was deleted.',
+        href="/alerts",
+    )
     db.delete(row)
     db.commit()
     return None

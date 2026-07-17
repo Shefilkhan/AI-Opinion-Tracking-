@@ -76,6 +76,8 @@ async def send_pulse_chat_message(
                 "suggestions": result.get("suggestions", []),
                 "data_used": result.get("data_used", {}),
                 "has_real_data": result.get("has_real_data", False),
+                "structured": result.get("structured"),
+                "response_format": result.get("response_format"),
             },
         )
     except Exception as exc:
@@ -96,6 +98,8 @@ async def send_pulse_chat_message(
         ),
         wiki_summary=result.get("wiki_summary"),
         has_real_data=result.get("has_real_data", False),
+        response_format=result.get("response_format"),
+        structured=result.get("structured"),
     )
 
 

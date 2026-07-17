@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
+import { useQueryClient } from "@tanstack/react-query"
 import { Bell, Loader2, Plus, Radar, RefreshCw, Trash2 } from "lucide-react"
 import {
   createPersonalAlert,
@@ -34,6 +35,7 @@ function lsSave(rules: PersonalAlert[]) {
 }
 
 export function AlertsPage() {
+  const queryClient = useQueryClient()
   const [alerts, setAlerts] = useState<PersonalAlert[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -79,6 +81,7 @@ export function AlertsPage() {
         const next = [created, ...alerts]
         setAlerts(next)
         lsSave(next)
+        void queryClient.invalidateQueries({ queryKey: ["notifications"] })
       } else {
         const next: PersonalAlert[] = [
           {
@@ -108,6 +111,7 @@ export function AlertsPage() {
       if (useBackend) {
         await updatePersonalAlert(id, { enabled })
         lsSave(alerts.map((x) => (x.id === id ? { ...x, enabled } : x)))
+        void queryClient.invalidateQueries({ queryKey: ["notifications"] })
       } else {
         lsSave(prev.map((x) => (x.id === id ? { ...x, enabled } : x)))
       }
@@ -124,6 +128,7 @@ export function AlertsPage() {
     try {
       if (useBackend) {
         await deletePersonalAlert(id)
+        void queryClient.invalidateQueries({ queryKey: ["notifications"] })
       }
     } catch {
       // Revert on error
