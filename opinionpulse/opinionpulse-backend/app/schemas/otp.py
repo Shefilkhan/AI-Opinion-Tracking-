@@ -1,10 +1,15 @@
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class OtpEmailRequest(BaseModel):
     email: EmailStr
+
+    @field_validator("email")
+    @classmethod
+    def lowercase_email(cls, v: str) -> str:
+        return v.lower().strip()
 
 
 class VerifyOtpRequest(BaseModel):
@@ -12,6 +17,11 @@ class VerifyOtpRequest(BaseModel):
     otp_code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
     code: Optional[str] = Field(default=None, min_length=6, max_length=6)
     type: Optional[str] = None
+
+    @field_validator("email")
+    @classmethod
+    def lowercase_email(cls, v: str) -> str:
+        return v.lower().strip()
 
     @property
     def resolved_code(self) -> str:
@@ -21,6 +31,11 @@ class VerifyOtpRequest(BaseModel):
 class ResendOtpRequest(BaseModel):
     email: EmailStr
     type: Optional[str] = None
+
+    @field_validator("email")
+    @classmethod
+    def lowercase_email(cls, v: str) -> str:
+        return v.lower().strip()
 
 
 class RegisterPendingResponse(BaseModel):

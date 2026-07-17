@@ -1,4 +1,7 @@
 import { useCallback, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { getCurrentUser } from "@/api/auth"
+import { ChangePasswordSection } from "@/components/settings/ChangePasswordSection"
 import { PageSection } from "@/components/layout/PageSection"
 import { Button } from "@/components/ui/button"
 import { SettingsPanel } from "@/components/settings/SettingsPanel"
@@ -22,6 +25,7 @@ const VISIBILITY: { id: ProfileVisibility; label: string; desc: string }[] = [
 
 export function PrivacySettings() {
   const { showToast } = useToast()
+  const userQuery = useQuery({ queryKey: ["current-user"], queryFn: getCurrentUser })
   const [saving, setSaving] = useState(false)
   const { draft, setDraft, dirty, commitSaved, discard } =
     useSectionDirty<PrivacySettingsData>(loadUserSettings().privacy)
@@ -43,6 +47,10 @@ export function PrivacySettings() {
       onSave={handleSave}
       saving={saving}
     >
+      {userQuery.data?.email && (
+        <ChangePasswordSection email={userQuery.data.email} />
+      )}
+
       <PageSection title="Profile visibility" className="mb-0">
         <fieldset className="space-y-2">
           <legend className="sr-only">Profile visibility</legend>

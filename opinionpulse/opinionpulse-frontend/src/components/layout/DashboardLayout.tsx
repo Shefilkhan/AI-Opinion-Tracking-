@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import {
   Activity,
@@ -15,8 +15,8 @@ import {
   User,
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
-import { UsageWidget } from "@/components/billing/UsageWidget"
 import { DashboardTopBar } from "@/components/dashboard/DashboardTopBar"
+import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { Skeleton } from "@/components/ui/Skeleton"
 import { cn } from "@/lib/utils"
 import { pageShell } from "@/lib/ui-classes"
@@ -38,16 +38,11 @@ type NavItem = {
 const mainNav: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Search", href: "/search", icon: Search },
-  { label: "Crisis Radar", href: "/crisis", icon: Radar, badge: "New" },
+  { label: "Crisis Radar", href: "/crisis", icon: Radar },
   { label: "Compare", href: "/compare", icon: Activity },
   { label: "Ask Pulse AI", href: "/chat", icon: MessageCircle, badge: "AI" },
   { label: "Reports", href: "/reports", icon: FileText },
   { label: "Alerts", href: "/alerts", icon: Bell },
-]
-
-const accountNav: NavItem[] = [
-  { label: "Settings", href: "/settings", icon: Settings },
-  { label: "My Account", href: "/account", icon: User },
 ]
 
 function NavLinkItem({
@@ -117,6 +112,108 @@ function NavGroup({
   )
 }
 
+function SidebarProfileMenu({
+  user,
+  initials,
+  onNavigate,
+  onLogout,
+}: {
+  user: { name: string; email: string }
+  initials?: string
+  onNavigate?: () => void
+  onLogout: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handleClick(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [open])
+
+  function closeAndNavigate() {
+    setOpen(false)
+    onNavigate?.()
+  }
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-center gap-2.5 rounded-[10px] p-2 text-left transition-colors duration-150 hover:bg-[var(--dash-surface-alt)]"
+        aria-expanded={open}
+        aria-haspopup="menu"
+      >
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--dash-accent)] text-[13px] font-semibold text-white">
+          {initials || "?"}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[13px] font-semibold text-[var(--dash-text)]">
+            {user.name}
+          </p>
+          <p className="truncate text-[11.5px] text-[var(--dash-text-faint)]">
+            {user.email}
+          </p>
+        </div>
+        <ChevronDown
+          className={cn(
+            "size-4 shrink-0 text-[var(--dash-text-faint)] transition-transform duration-150",
+            open && "rotate-180"
+          )}
+          strokeWidth={2}
+          aria-hidden
+        />
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute bottom-full left-0 right-0 z-[200] mb-2 overflow-hidden rounded-[12px] border border-[var(--dash-border)] bg-[var(--dash-surface)] py-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] ring-1 ring-black/5"
+        >
+          <Link
+            to="/account"
+            role="menuitem"
+            onClick={closeAndNavigate}
+            className="flex min-h-10 items-center gap-2.5 px-3.5 text-[13px] font-medium text-[var(--dash-text)] transition-colors hover:bg-[var(--dash-surface-alt)]"
+          >
+            <User className="size-4 shrink-0 text-[var(--dash-text-mid)]" strokeWidth={2} aria-hidden />
+            My Account
+          </Link>
+          <Link
+            to="/settings"
+            role="menuitem"
+            onClick={closeAndNavigate}
+            className="flex min-h-10 items-center gap-2.5 px-3.5 text-[13px] font-medium text-[var(--dash-text)] transition-colors hover:bg-[var(--dash-surface-alt)]"
+          >
+            <Settings className="size-4 shrink-0 text-[var(--dash-text-mid)]" strokeWidth={2} aria-hidden />
+            Settings
+          </Link>
+          <div className="my-1 border-t border-[var(--dash-border)]" />
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false)
+              onLogout()
+            }}
+            className="flex min-h-10 w-full items-center gap-2.5 px-3.5 text-left text-[13px] font-medium text-[var(--dash-neg)] transition-colors hover:bg-[var(--dash-neg-soft)]"
+          >
+            <LogOut className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+            Log out
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 type DashboardLayoutProps = {
   title?: string
   subtitle?: string
@@ -178,37 +275,15 @@ export function DashboardLayout({
           pathname={location.pathname}
           onNavigate={() => setMobileOpen(false)}
         />
-        <NavGroup
-          label="Account"
-          items={accountNav}
-          pathname={location.pathname}
-          onNavigate={() => setMobileOpen(false)}
-        />
       </nav>
-      <div className="border-t border-[var(--dash-border)] p-4">
-        <UsageWidget />
+      <div className="relative z-30 shrink-0 border-t border-[var(--dash-border)] p-4">
         {user ? (
-          <Link
-            to="/account"
-            className="flex items-center gap-2.5 rounded-[10px] p-2 transition-colors duration-150 hover:bg-[var(--dash-surface-alt)]"
-          >
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--dash-accent)] text-[13px] font-semibold text-white">
-              {initials || "?"}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-semibold text-[var(--dash-text)]">
-                {user.name}
-              </p>
-              <p className="truncate text-[11.5px] text-[var(--dash-text-faint)]">
-                {user.email}
-              </p>
-            </div>
-            <ChevronDown
-              className="size-4 shrink-0 text-[var(--dash-text-faint)]"
-              strokeWidth={2}
-              aria-hidden
-            />
-          </Link>
+          <SidebarProfileMenu
+            user={{ name: user.name, email: user.email }}
+            initials={initials}
+            onNavigate={() => setMobileOpen(false)}
+            onLogout={handleLogout}
+          />
         ) : (
           <div className="flex items-center gap-2.5 p-2" aria-hidden>
             <Skeleton className="size-8 shrink-0 rounded-full" />
@@ -218,14 +293,9 @@ export function DashboardLayout({
             </div>
           </div>
         )}
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="mt-2 flex w-full min-h-9 items-center gap-2.5 rounded-[9px] px-3 text-[13px] font-medium text-[var(--dash-text-mid)] transition-colors duration-150 hover:bg-[var(--dash-neg-soft)] hover:text-[var(--dash-neg)]"
-        >
-          <LogOut className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-          Log out
-        </button>
+        <div className="mt-3 flex justify-center sm:hidden">
+          <ThemeToggle />
+        </div>
       </div>
     </>
   )
@@ -262,7 +332,7 @@ export function DashboardLayout({
           "relative z-20 hidden h-full shrink-0 flex-col border-r border-[var(--dash-border)] bg-[var(--dash-sidebar-bg)] md:flex md:w-[250px] lg:w-[260px]"
         )}
       >
-        {sidebar}
+        <div className="flex h-full min-h-0 flex-col">{sidebar}</div>
       </aside>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">

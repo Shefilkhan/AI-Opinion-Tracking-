@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import BackgroundTasks, HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -121,7 +122,7 @@ def validate_email_otp(
     """Check OTP validity; optionally mark it used (consume=True)."""
     settings = get_settings()
     email_lower = email.lower().strip()
-    user = db.query(User).filter(User.email == email_lower).first()
+    user = db.query(User).filter(func.lower(User.email) == email_lower).first()
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

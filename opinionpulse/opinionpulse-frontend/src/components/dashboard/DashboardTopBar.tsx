@@ -1,7 +1,10 @@
 import { type FormEvent, useState } from "react"
-import { Bell, Search, Settings } from "lucide-react"
-import { Link, useNavigate } from "react-router-dom"
-import { useAuth } from "@/contexts/AuthContext"
+import { Search } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { PlanTopBarBadge } from "@/components/billing/PlanTopBarBadge"
+import { ProfileMenu } from "@/components/layout/ProfileMenu"
+import { NotificationPanel } from "@/components/notifications/NotificationPanel"
+import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { formatUpdatedLabel } from "@/lib/formatTimeAgo"
 import { cn } from "@/lib/utils"
 
@@ -19,15 +22,7 @@ export function DashboardTopBar({
   pageTitle = "Overview",
 }: DashboardTopBarProps) {
   const navigate = useNavigate()
-  const { user } = useAuth()
   const [query, setQuery] = useState("")
-
-  const initials = user?.name
-    ?.split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase()
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -77,6 +72,8 @@ export function DashboardTopBar({
         </form>
 
         <div className="flex shrink-0 items-center justify-end gap-2 sm:gap-3">
+          <PlanTopBarBadge />
+
           <span
             className={cn(
               "mr-1 hidden items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold sm:inline-flex",
@@ -95,30 +92,11 @@ export function DashboardTopBar({
             Live
           </span>
 
-          <Link
-            to="/settings"
-            className="inline-flex size-10 items-center justify-center rounded-full bg-[var(--dash-surface-alt)] text-[var(--dash-text-mid)] transition-colors hover:text-[var(--dash-text)]"
-            aria-label="Settings"
-          >
-            <Settings className="size-[18px]" strokeWidth={2} />
-          </Link>
+          <ThemeToggle className="hidden sm:inline-flex" />
 
-          <Link
-            to="/alerts"
-            className="relative inline-flex size-10 items-center justify-center rounded-full bg-[var(--dash-surface-alt)] text-[var(--dash-text-mid)] transition-colors hover:text-[var(--dash-text)]"
-            aria-label="Notifications"
-          >
-            <Bell className="size-[18px]" strokeWidth={2} />
-            <span className="absolute right-2 top-2 size-2 rounded-full bg-[var(--dash-neg)] ring-2 ring-[var(--dash-surface)]" />
-          </Link>
+          <NotificationPanel />
 
-          <Link
-            to="/account"
-            className="flex size-10 items-center justify-center overflow-hidden rounded-full bg-[var(--dash-accent)] text-sm font-semibold text-white"
-            aria-label="Account"
-          >
-            {initials || "?"}
-          </Link>
+          <ProfileMenu />
         </div>
       </div>
     </div>

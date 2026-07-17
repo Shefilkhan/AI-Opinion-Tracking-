@@ -14,13 +14,11 @@ function GitHubIcon({ className }: { className?: string }) {
   )
 }
 import { getSettingsStatus } from "@/api/settings"
-import { updateAccountPassword } from "@/api/account"
-import { ApiError } from "@/api/client"
 import { PageSection } from "@/components/layout/PageSection"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { FormField, SettingsPanel } from "@/components/settings/SettingsPanel"
+import { SettingsPanel } from "@/components/settings/SettingsPanel"
 import { useRegisterSectionSave, useSectionDirty } from "@/components/settings/useSectionDirty"
 import { useToast } from "@/components/ui/toast"
 import {
@@ -28,17 +26,10 @@ import {
   saveSettingsSection,
   type AccountSettingsState,
 } from "@/lib/userSettingsStore"
-import { getPasswordStrength } from "@/lib/settingsValidation"
 import { cardTitle, inputSurface, proCard } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 const inputClass = cn(inputSurface, "h-10 w-full px-3")
-
-type PasswordForm = {
-  current: string
-  next: string
-  confirm: string
-}
 
 export function AccountSettings() {
   const { showToast } = useToast()
@@ -49,22 +40,12 @@ export function AccountSettings() {
   })
   const confirmEmail = userQuery.data?.email ?? ""
   const [saving, setSaving] = useState(false)
-  const [passwordSaving, setPasswordSaving] = useState(false)
-  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({})
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteEmail, setDeleteEmail] = useState("")
 
   const initialAccount = loadUserSettings().account
   const { draft, setDraft, dirty, commitSaved, discard } =
     useSectionDirty<AccountSettingsState>(initialAccount)
-
-  const [passwordForm, setPasswordForm] = useState<PasswordForm>({
-    current: "",
-    next: "",
-    confirm: "",
-  })
-
-  const strength = getPasswordStrength(passwordForm.next)
 
   const handleSaveAccount = useCallback(async () => {
     setSaving(true)
@@ -75,33 +56,6 @@ export function AccountSettings() {
   }, [draft, commitSaved, showToast])
 
   useRegisterSectionSave("account", dirty, handleSaveAccount, discard)
-
-  async function handlePasswordSave() {
-    const errs: Record<string, string> = {}
-    if (!passwordForm.current) errs.current = "Current password is required."
-    if (passwordForm.next.length < 6) errs.next = "New password must be at least 6 characters."
-    if (passwordForm.next !== passwordForm.confirm) errs.confirm = "Passwords do not match."
-    setPasswordErrors(errs)
-    if (Object.keys(errs).length > 0) return
-
-    setPasswordSaving(true)
-    try {
-      await updateAccountPassword({
-        current_password: passwordForm.current,
-        new_password: passwordForm.next,
-        confirm_password: passwordForm.confirm,
-      })
-      setPasswordForm({ current: "", next: "", confirm: "" })
-      showToast("Password updated successfully.")
-    } catch (err) {
-      showToast(
-        err instanceof ApiError ? String(err.detail) : "Could not update password.",
-        "error"
-      )
-    } finally {
-      setPasswordSaving(false)
-    }
-  }
 
   function toggleProvider(provider: "google" | "github") {
     setDraft((prev) => ({
@@ -122,73 +76,11 @@ export function AccountSettings() {
     <>
       <SettingsPanel
         title="Account"
-        description="Security, connected accounts, and integration status."
+        description="Two-factor authentication, connected accounts, and integration status."
         onSave={handleSaveAccount}
         saving={saving}
         saveLabel="Save account preferences"
       >
-        <PageSection title="Change password" className="mb-0">
-          <div className={cn(proCard, "space-y-4 bg-muted/20 p-4 sm:p-5")}>
-            <FormField label="Current password" htmlFor="current-pw" error={passwordErrors.current}>
-              <Input
-                id="current-pw"
-                type="password"
-                value={passwordForm.current}
-                onChange={(e) =>
-                  setPasswordForm((p) => ({ ...p, current: e.target.value }))
-                }
-                className={inputClass}
-                autoComplete="current-password"
-              />
-            </FormField>
-            <FormField label="New password" htmlFor="new-pw" error={passwordErrors.next}>
-              <Input
-                id="new-pw"
-                type="password"
-                value={passwordForm.next}
-                onChange={(e) => setPasswordForm((p) => ({ ...p, next: e.target.value }))}
-                className={inputClass}
-                autoComplete="new-password"
-              />
-              {passwordForm.next && (
-                <p className="text-xs">
-                  Strength:{" "}
-                  <span
-                    className={cn(
-                      "font-medium capitalize",
-                      strength === "strong" && "text-success",
-                      strength === "fair" && "text-primary",
-                      strength === "weak" && "text-destructive"
-                    )}
-                  >
-                    {strength}
-                  </span>
-                </p>
-              )}
-            </FormField>
-            <FormField label="Confirm new password" htmlFor="confirm-pw" error={passwordErrors.confirm}>
-              <Input
-                id="confirm-pw"
-                type="password"
-                value={passwordForm.confirm}
-                onChange={(e) =>
-                  setPasswordForm((p) => ({ ...p, confirm: e.target.value }))
-                }
-                className={inputClass}
-                autoComplete="new-password"
-              />
-            </FormField>
-            <Button
-              type="button"
-              onClick={handlePasswordSave}
-              disabled={passwordSaving}
-              className="min-h-10 px-5"
-            >
-              {passwordSaving ? "Updating…" : "Update password"}
-            </Button>
-          </div>
-        </PageSection>
-
         <PageSection title="Two-factor authentication" className="mb-0">
           <div className={cn(proCard, "bg-muted/20 p-4 sm:p-5")}>
             <div className="flex items-center justify-between gap-4">

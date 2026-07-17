@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   AlertCircle,
   AlertTriangle,
@@ -11,17 +11,15 @@ import {
   Clock,
   Download,
   Loader2,
-  Lock,
   MessageCircle,
   Search,
   Settings,
   Trash2,
+  User,
 } from "lucide-react"
-import { ApiError } from "@/api/client"
-import { getAccountProfile, updateAccountPassword } from "@/api/account"
+import { getAccountProfile } from "@/api/account"
 import { getUserStats, uploadUserAvatar } from "@/api/users"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
-import { InlineNotice } from "@/components/layout/InlineNotice"
 import { PageSection } from "@/components/layout/PageSection"
 import { StatCard } from "@/components/layout/StatCard"
 import { Button } from "@/components/ui/button"
@@ -29,9 +27,6 @@ import { LoadingState } from "@/components/ui/LoadingState"
 import { useToast } from "@/components/ui/toast"
 import { formatNumber, formatTimeAgo, resolveMediaUrl } from "@/lib/formatUtils"
 import {
-  btnPrimary,
-  inputSurface,
-  labelText,
   proCard,
   sectionTitle,
 } from "@/lib/ui-classes"
@@ -41,13 +36,6 @@ export function MyAccountPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { showToast } = useToast()
-  const [passwords, setPasswords] = useState({
-    current: "",
-    new: "",
-    confirm: "",
-  })
-  const [passwordError, setPasswordError] = useState<string | null>(null)
-  const [passwordSuccess, setPasswordSuccess] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
 
@@ -59,25 +47,6 @@ export function MyAccountPage() {
   const statsQuery = useQuery({
     queryKey: ["user-stats"],
     queryFn: getUserStats,
-  })
-
-  const passwordMutation = useMutation({
-    mutationFn: () =>
-      updateAccountPassword({
-        current_password: passwords.current,
-        new_password: passwords.new,
-        confirm_password: passwords.confirm,
-      }),
-    onSuccess: () => {
-      setPasswordError(null)
-      setPasswordSuccess(true)
-      setPasswords({ current: "", new: "", confirm: "" })
-      setTimeout(() => setPasswordSuccess(false), 4000)
-    },
-    onError: (err) => {
-      setPasswordSuccess(false)
-      setPasswordError(err instanceof ApiError ? err.detail : "Password update failed")
-    },
   })
 
   const userProfile = profileQuery.data
@@ -102,20 +71,6 @@ export function MyAccountPage() {
       setUploadingAvatar(false)
       e.target.value = ""
     }
-  }
-
-  function handlePasswordChange() {
-    setPasswordError(null)
-    setPasswordSuccess(false)
-    if (!passwords.current || !passwords.new || !passwords.confirm) {
-      setPasswordError("Please fill in all password fields.")
-      return
-    }
-    if (passwords.new !== passwords.confirm) {
-      setPasswordError("New passwords do not match.")
-      return
-    }
-    passwordMutation.mutate()
   }
 
   function handleExportData() {
@@ -220,15 +175,26 @@ export function MyAccountPage() {
               </p>
             </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate("/settings#profile")}
-              className="h-10 shrink-0 gap-2"
-            >
-              <Settings size={14} />
-              Edit Profile
-            </Button>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate("/settings#profile")}
+                className="h-10 gap-2"
+              >
+                <User size={14} />
+                Edit Profile
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate("/settings")}
+                className="h-10 gap-2"
+              >
+                <Settings size={14} />
+                Settings
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -264,121 +230,62 @@ export function MyAccountPage() {
         </div>
       </PageSection>
 
-      <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-2">
-        <PageSection
-          title="Change Password"
-          description="Update your password to keep your account secure."
-          className="mb-0"
-        >
-          <div className={cn(proCard, "space-y-4 bg-muted/20 p-5 sm:p-6")}>
-            <PasswordField
-              label="Current Password"
-              value={passwords.current}
-              onChange={(v) => setPasswords((p) => ({ ...p, current: v }))}
-              placeholder="Enter current password"
+      <PageSection title="Account Details" className="mb-8">
+        <div className={cn(proCard, "bg-muted/20 p-5 sm:p-6")}>
+          <div className="space-y-0">
+            <DetailRow
+              label="Full Name"
+              value={displayName}
+              actionLabel="Edit"
+              onAction={() => navigate("/settings#profile")}
             />
-            <PasswordField
-              label="New Password"
-              value={passwords.new}
-              onChange={(v) => setPasswords((p) => ({ ...p, new: v }))}
-              placeholder="Enter new password"
-            />
-            <PasswordField
-              label="Confirm New Password"
-              value={passwords.confirm}
-              onChange={(v) => setPasswords((p) => ({ ...p, confirm: v }))}
-              placeholder="Confirm new password"
-            />
-
-            {passwordError && (
-              <InlineNotice variant="warning" className="text-sm">
-                {passwordError}
-              </InlineNotice>
-            )}
-            {passwordSuccess && (
-              <InlineNotice variant="success" className="text-sm">
-                Password updated successfully
-              </InlineNotice>
-            )}
-
-            <Button
-              type="button"
-              onClick={handlePasswordChange}
-              disabled={passwordMutation.isPending}
-              className={cn("w-full gap-2", btnPrimary)}
-            >
-              {passwordMutation.isPending ? (
-                <>
-                  <Loader2 size={14} className="animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                <>
-                  <Lock size={14} />
-                  Update Password
-                </>
-              )}
-            </Button>
-          </div>
-        </PageSection>
-
-        <PageSection title="Account Details" className="mb-0">
-          <div className={cn(proCard, "bg-muted/20 p-5 sm:p-6")}>
-            <div className="space-y-0">
-              <DetailRow
-                label="Full Name"
-                value={displayName}
-                actionLabel="Edit"
-                onAction={() => navigate("/settings#profile")}
-              />
-              <div className="flex items-center justify-between border-b border-border py-3">
-                <div>
-                  <p className="mb-0.5 text-xs text-muted-foreground">Email Address</p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-foreground">
-                      {userProfile?.email || "—"}
-                    </p>
-                    {userProfile?.is_email_verified && (
-                      <span className="rounded-full border border-success/20 bg-success/5 px-1.5 py-0.5 text-[10px] font-medium text-success">
-                        Verified
-                      </span>
-                    )}
-                  </div>
+            <div className="flex items-center justify-between border-b border-border py-3">
+              <div>
+                <p className="mb-0.5 text-xs text-muted-foreground">Email Address</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-foreground">
+                    {userProfile?.email || "—"}
+                  </p>
+                  {userProfile?.is_email_verified && (
+                    <span className="rounded-full border border-success/20 bg-success/5 px-1.5 py-0.5 text-[10px] font-medium text-success">
+                      Verified
+                    </span>
+                  )}
                 </div>
               </div>
-              <DetailRow
-                label="Username"
-                value={
-                  userProfile?.username
-                    ? `@${userProfile.username}`
-                    : "Not set"
-                }
-                actionLabel={userProfile?.username ? "Edit" : "Add"}
-                onAction={() => navigate("/settings#profile")}
-              />
-              <div className="border-b border-border py-3">
-                <p className="mb-0.5 text-xs text-muted-foreground">Account Role</p>
-                <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
-                  {userProfile?.role === "ADMIN" ? "Admin" : "User"}
-                </span>
-              </div>
-              <div className="py-3">
-                <p className="mb-0.5 text-xs text-muted-foreground">Member Since</p>
-                <p className="text-sm font-medium text-foreground">
-                  {userProfile?.created_at
-                    ? new Date(userProfile.created_at).toLocaleDateString("en-US", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })
-                    : "—"}
-                </p>
-              </div>
+            </div>
+            <DetailRow
+              label="Username"
+              value={
+                userProfile?.username
+                  ? `@${userProfile.username}`
+                  : "Not set"
+              }
+              actionLabel={userProfile?.username ? "Edit" : "Add"}
+              onAction={() => navigate("/settings#profile")}
+            />
+            <div className="border-b border-border py-3">
+              <p className="mb-0.5 text-xs text-muted-foreground">Account Role</p>
+              <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
+                {userProfile?.role === "ADMIN" ? "Admin" : "User"}
+              </span>
+            </div>
+            <div className="py-3">
+              <p className="mb-0.5 text-xs text-muted-foreground">Member Since</p>
+              <p className="text-sm font-medium text-foreground">
+                {userProfile?.created_at
+                  ? new Date(userProfile.created_at).toLocaleDateString("en-US", {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })
+                  : "—"}
+              </p>
             </div>
           </div>
-        </PageSection>
-      </div>
+        </div>
+      </PageSection>
 
       <PageSection title="Quick Actions" className="mb-8">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -395,7 +302,7 @@ export function MyAccountPage() {
           <QuickAction
             icon={Settings}
             label="Settings"
-            onClick={() => navigate("/settings")}
+            onClick={() => navigate("/settings#privacy")}
           />
           <QuickAction
             icon={BarChart2}
@@ -468,31 +375,6 @@ export function MyAccountPage() {
         </div>
       )}
     </DashboardLayout>
-  )
-}
-
-function PasswordField({
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string
-  value: string
-  onChange: (v: string) => void
-  placeholder: string
-}) {
-  return (
-    <div>
-      <label className={cn(labelText, "mb-1.5 block text-xs")}>{label}</label>
-      <input
-        type="password"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className={cn(inputSurface, "w-full")}
-      />
-    </div>
   )
 }
 

@@ -1,3 +1,4 @@
+from datetime import timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -15,6 +16,7 @@ from app.schemas.account import (
     AccountStatsResponse,
 )
 from app.schemas.usage import UsageStatusResponse
+from app.services.notification_service import create_user_notification
 from app.services.plan_limits import plan_features_for_client
 from app.services.plan_service import get_or_create_usage, get_user_plan
 from app.services.user_profile_service import (
@@ -83,6 +85,14 @@ def update_password(
             detail="Current password is incorrect",
         )
     current_user.password_hash = hash_password(payload.new_password)
+    create_user_notification(
+        db,
+        user_id=current_user.id,
+        type="security",
+        title="Password updated",
+        message="Your account password was changed successfully.",
+        href="/settings#privacy",
+    )
     db.commit()
     return {"message": "Password updated successfully"}
 
@@ -112,11 +122,19 @@ def get_usage_status(
     usage = get_or_create_usage(current_user.id, db)
     features = plan_features_for_client(plan)
 
+    renews_at = current_user.plan_renews_at
+    if renews_at is not None and renews_at.tzinfo is None:
+        renews_at = renews_at.replace(tzinfo=timezone.utc)
+
     return UsageStatusResponse(
         plan={
             "id": plan["id"],
             "name": plan["name"],
             "status": plan.get("_status", "active"),
+        },
+        billing={
+            "available": bool(current_user.stripe_subscription_id),
+            "renews_at": renews_at.isoformat() if renews_at else None,
         },
         usage={
             "searches": {
