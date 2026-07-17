@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Loader2 } from "lucide-react"
 import { getAuthProviders, getGoogleAuthUrl } from "@/api/auth"
+import { removeToken } from "@/lib/authStore"
 import { GoogleIcon } from "@/lib/auth/authUi"
 import { useToast } from "@/components/ui/toast"
 
@@ -26,7 +27,7 @@ export function GoogleSignInButton({ redirect = "/dashboard" }: GoogleSignInButt
     }
   }, [])
 
-  function handleClick() {
+  async function handleClick() {
     if (configured === false) {
       showToast(
         "Google sign-in is not configured. Ask your team lead for GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, add them to opinionpulse-backend/.env.local, then restart the backend.",
@@ -34,13 +35,14 @@ export function GoogleSignInButton({ redirect = "/dashboard" }: GoogleSignInButt
       )
       return
     }
+    removeToken()
     window.location.href = getGoogleAuthUrl(redirect)
   }
 
   return (
     <button
       type="button"
-      onClick={handleClick}
+      onClick={() => void handleClick()}
       disabled={configured === null}
       className="le-auth-google-btn"
     >

@@ -11,12 +11,14 @@ import {
   initAppearanceListeners,
   initThemeOnStartup,
 } from "@/lib/applyAppearance"
+import { bootstrapOAuthTokenFromUrl } from "@/lib/bootstrapOAuthToken"
 import "./index.css"
 import App from "./App.tsx"
 
 const queryClient = new QueryClient()
 
 initThemeOnStartup()
+bootstrapOAuthTokenFromUrl()
 
 function AppProviders({ children }: { children: React.ReactNode }) {
   useEffect(() => initAppearanceListeners(), [])

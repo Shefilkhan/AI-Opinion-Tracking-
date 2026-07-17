@@ -4,13 +4,16 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { ArrowRight, Loader2 } from "lucide-react"
 import { signInUser } from "@/api/auth"
 import { getApiErrorMessage } from "@/lib/apiErrorMessage"
+import { clearAuthSession } from "@/lib/clearAuthSession"
 import { PasswordInput } from "@/components/auth/PasswordInput"
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton"
+import { useAuth } from "@/contexts/AuthContext"
 import { authInputClass, authLabelClass } from "@/lib/auth/authUi"
 import { signInSchema, type SignInFormValues } from "@/lib/validations/auth"
 
 export function SignInForm() {
   const navigate = useNavigate()
+  const { setUser } = useAuth()
   const [searchParams] = useSearchParams()
   const redirect = searchParams.get("redirect") ?? "/dashboard"
   const oauthError = searchParams.get("error")
@@ -34,7 +37,12 @@ export function SignInForm() {
 
   async function onSubmit(values: SignInFormValues) {
     try {
-      const res = await signInUser(values)
+      await clearAuthSession()
+      setUser(null)
+      const res = await signInUser({
+        email: values.email.trim().toLowerCase(),
+        password: values.password,
+      })
       const type = res.requires_email_verification ? "signup" : "login"
       navigate(
         `/auth/verify-otp?email=${encodeURIComponent(res.email)}&type=${type}&redirect=${encodeURIComponent(redirect)}`,

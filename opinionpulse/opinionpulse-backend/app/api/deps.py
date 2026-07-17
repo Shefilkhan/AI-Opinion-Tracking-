@@ -18,12 +18,11 @@ def extract_request_token(
     request: Request,
     credentials: Optional[HTTPAuthorizationCredentials],
 ) -> Optional[str]:
-    cookie_token = request.cookies.get(settings.auth_cookie_name)
-    if cookie_token:
-        return cookie_token
+    # Prefer explicit Bearer token (SPA localStorage) over HttpOnly cookies so
+    # account switches cannot keep serving the previous user's cookie session.
     if credentials and credentials.credentials:
         return credentials.credentials
-    return None
+    return request.cookies.get(settings.auth_cookie_name)
 
 
 def get_current_user(

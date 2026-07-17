@@ -81,6 +81,47 @@ On startup, the backend logs `ENV CHECK:` with which settings are configured. En
 
 ## Google sign-in for teammates
 
+Clicking **Continue with Google** on sign-in or sign-up sends users to **Google's official OAuth screen** (account picker + permission request), similar to Stripe:
+
+- **"Sign in to OpinionPulse"** (your app name from Google Cloud)
+- **Name and profile picture**
+- **Email address**
+- **Cancel** / **Continue** buttons
+
+That screen is controlled by **Google Cloud Console**, not by React UI. Configure it once:
+
+### OAuth consent screen (required for Stripe-style branding)
+
+1. Open [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services** → **OAuth consent screen**.
+2. Set **App name** to **`OpinionPulse`** (this is the "Sign in to …" title — not your GCP project name).
+3. Upload an **App logo** (120×120 PNG; you can export `opinionpulse-frontend/public/favicon.svg` to PNG).
+4. Set **User support email** and **Developer contact email**.
+5. **App domain** (for production): home page `https://your-domain.com`, privacy policy `/privacy`, terms `/terms`.
+6. Under **Scopes**, add:
+   - `.../auth/userinfo.email`
+   - `.../auth/userinfo.profile`
+   - `openid`
+7. If the app is in **Testing** mode, add each tester Gmail under **Test users** (including your own).
+
+### OAuth client (credentials)
+
+1. **APIs & Services** → **Credentials** → **OAuth 2.0 Client ID** (Web application).
+2. **Authorized redirect URIs** (must match exactly):
+   - `http://127.0.0.1:8000/api/auth/google/callback`
+   - `http://localhost:8000/api/auth/google/callback`
+3. Copy **Client ID** → `GOOGLE_CLIENT_ID` and **Client secret** → `GOOGLE_CLIENT_SECRET` in `.env.local`.
+
+Optional in `.env.local`:
+
+```env
+# Default: select_account (account picker; Google shows consent on first connect)
+# Use during testing to always show the permission screen:
+# GOOGLE_OAUTH_PROMPT=select_account consent
+GOOGLE_OAUTH_PROMPT=select_account
+```
+
+Restart the backend after changes. First-time Google users see the full consent screen; returning users usually only pick an account.
+
 **Error `401: invalid_client` / "The OAuth client was not found"** means the backend sent an invalid `GOOGLE_CLIENT_ID` to Google. This is not a frontend bug.
 
 Common causes:

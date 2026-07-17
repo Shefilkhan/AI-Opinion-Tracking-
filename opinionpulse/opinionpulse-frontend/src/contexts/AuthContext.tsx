@@ -9,7 +9,8 @@ import {
 } from "react"
 import { getCurrentUser, logoutUser, type User } from "@/api/auth"
 import { ApiError } from "@/api/client"
-import { removeToken } from "@/lib/authStore"
+import { isGoogleOAuthCallback } from "@/lib/bootstrapOAuthToken"
+import { getToken, removeToken } from "@/lib/authStore"
 
 type AuthContextValue = {
   user: User | null
@@ -39,6 +40,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
+    // GoogleCallbackPage owns the session handoff; avoid clearing a fresh OAuth token.
+    if (isGoogleOAuthCallback() && getToken()) {
+      setLoading(false)
+      return
+    }
     refreshUser().finally(() => setLoading(false))
   }, [refreshUser])
 

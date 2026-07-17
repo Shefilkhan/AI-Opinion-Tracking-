@@ -2,17 +2,29 @@ import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { Loader2 } from "lucide-react"
 import { getCurrentUser } from "@/api/auth"
+import { ApiError } from "@/api/client"
 import { useAuth } from "@/contexts/AuthContext"
-import { setToken } from "@/lib/authStore"
+import { getToken, setToken } from "@/lib/authStore"
 import { pageShell } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
-function readTokenFromHash(): string | null {
+function readOAuthToken(searchParams: URLSearchParams): string | null {
+  const fromQuery = searchParams.get("token")
+  if (fromQuery) return fromQuery
+
   const raw = window.location.hash.startsWith("#")
     ? window.location.hash.slice(1)
     : window.location.hash
   if (!raw) return null
   return new URLSearchParams(raw).get("token")
+}
+
+function stripTokenFromUrl(redirect: string) {
+  window.history.replaceState(
+    null,
+    "",
+    `${window.location.pathname}?redirect=${encodeURIComponent(redirect)}`
+  )
 }
 
 export function GoogleCallbackPage() {
@@ -26,26 +38,34 @@ export function GoogleCallbackPage() {
 
     async function complete() {
       const redirect = searchParams.get("redirect") ?? "/dashboard"
-      const token = readTokenFromHash()
+      const token = readOAuthToken(searchParams) ?? getToken()
 
-      if (token) {
+      if (token && token !== getToken()) {
         setToken(token)
-        window.history.replaceState(
-          null,
-          "",
-          `${window.location.pathname}?redirect=${encodeURIComponent(redirect)}`
-        )
+      }
+
+      if (!getToken()) {
+        if (!cancelled) {
+          setError(
+            "Google sign-in could not be completed. No session token was returned. Please try again."
+          )
+        }
+        return
       }
 
       try {
         const me = await getCurrentUser()
         if (cancelled) return
         setUser(me)
+        stripTokenFromUrl(redirect)
         navigate(redirect, { replace: true })
-      } catch {
-        if (!cancelled) {
-          setError("Google sign-in could not be completed. Please try again.")
+      } catch (err) {
+        if (cancelled) return
+        if (import.meta.env.DEV && err instanceof ApiError) {
+          setError(err.detail || "Google sign-in could not be completed.")
+          return
         }
+        setError("Google sign-in could not be completed. Please try again.")
       }
     }
 

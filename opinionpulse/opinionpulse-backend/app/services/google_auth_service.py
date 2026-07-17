@@ -17,6 +17,8 @@ def get_or_create_google_user(db: Session, profile: GoogleUserInfo) -> User:
     )
     if by_google is not None:
         _sync_google_profile(by_google, profile)
+        if not by_google.is_active:
+            by_google.is_active = True
         db.commit()
         db.refresh(by_google)
         return by_google
@@ -32,6 +34,8 @@ def get_or_create_google_user(db: Session, profile: GoogleUserInfo) -> User:
         _sync_google_profile(by_email, profile)
         if profile.email_verified:
             by_email.is_email_verified = True
+        if not by_email.is_active:
+            by_email.is_active = True
         db.commit()
         db.refresh(by_email)
         return by_email

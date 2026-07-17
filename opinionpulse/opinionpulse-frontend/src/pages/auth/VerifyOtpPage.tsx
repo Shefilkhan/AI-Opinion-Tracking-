@@ -14,6 +14,14 @@ import { OtpInput } from "@/components/auth/OtpInput"
 import { useToast } from "@/components/ui/toast"
 import { useAuth } from "@/contexts/AuthContext"
 import { maskEmail } from "@/lib/auth/maskEmail"
+import { clearAuthSession } from "@/lib/clearAuthSession"
+import {
+  getSelectedBillingInterval,
+  getSelectedPlan,
+  type BillingInterval,
+} from "@/lib/planStorage"
+import { planCheckoutUrl } from "@/lib/startCheckout"
+import type { PlanId } from "@/data/pricingData"
 import { cn } from "@/lib/utils"
 
 const OTP_SECONDS = 120
@@ -49,6 +57,11 @@ export function VerifyOtpPage() {
   useEffect(() => {
     if (!email) navigate("/auth/signin", { replace: true })
   }, [email, navigate])
+
+  useEffect(() => {
+    void clearAuthSession()
+    setUser(null)
+  }, [email, setUser])
 
   useEffect(() => {
     if (secondsLeft <= 0) return
@@ -113,10 +126,26 @@ export function VerifyOtpPage() {
           return
         }
 
-        const res: AuthResponse = await verifyOtp(email, otpCode, type)
+        const res: AuthResponse = await verifyOtp(email.trim().toLowerCase(), otpCode, type)
         setUser(res.user)
         await refreshUser()
         showToast("Signed in successfully", "success")
+
+        const selectedPlan = getSelectedPlan()
+        const billingInterval: BillingInterval =
+          searchParams.get("billing") === "annual"
+            ? "annual"
+            : getSelectedBillingInterval()
+
+        if (
+          type === "signup" &&
+          selectedPlan &&
+          selectedPlan !== "enterprise"
+        ) {
+          navigate(planCheckoutUrl(selectedPlan as PlanId, billingInterval), { replace: true })
+          return
+        }
+
         navigate(redirect, { replace: true })
       } catch (err) {
         setError(
@@ -135,6 +164,7 @@ export function VerifyOtpPage() {
       navigate,
       redirect,
       refreshUser,
+      searchParams,
       secondsLeft,
       setUser,
       showToast,

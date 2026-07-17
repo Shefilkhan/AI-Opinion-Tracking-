@@ -4,9 +4,11 @@ from urllib.parse import quote
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, Response, status
 from fastapi.responses import RedirectResponse
+from fastapi.security import HTTPAuthorizationCredentials
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import extract_request_token, get_current_user, security
 from app.core.auth_cookies import clear_auth_cookie, set_auth_cookie
 from app.core.otp_types import normalize_otp_type
 from app.core.security import hash_password, verify_password
@@ -45,7 +47,6 @@ from app.services.google_oauth_service import (
     parse_oauth_state,
 )
 from app.services.session_service import create_user_session, revoke_token_session
-from app.api.deps import extract_request_token
 from app.core.auth_errors import raise_auth_error
 from app.core.config import get_settings
 
@@ -142,8 +143,8 @@ def _login_handler(
     db: Session,
 ):
     rate_limit_by_ip(request, "signin", 10, 900)
-    email_lower = payload.email
-    user = db.query(User).filter(User.email == email_lower).first()
+    email_lower = payload.email.lower().strip()
+    user = db.query(User).filter(func.lower(User.email) == email_lower).first()
 
     if user is None:
         log_auth_event("signin_failed", email=email_lower, request=request)
@@ -523,11 +524,12 @@ def google_callback(
             status_code=302,
         )
 
-    response = RedirectResponse(
-        f"{frontend}/auth/google/callback?redirect={quote(redirect_path)}"
-        f"#token={token_response.access_token}",
-        status_code=302,
+    redirect_url = (
+        f"{frontend}/auth/google/callback"
+        f"?redirect={quote(redirect_path)}"
+        f"&token={quote(token_response.access_token, safe='')}"
     )
+    response = RedirectResponse(url=redirect_url, status_code=302)
     set_auth_cookie(response, token_response.access_token)
     return response
 
@@ -536,9 +538,10 @@ def google_callback(
 def logout(
     request: Request,
     response: Response,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db),
 ):
-    token = extract_request_token(request, None)
+    token = extract_request_token(request, credentials)
     if token:
         revoke_token_session(db, token)
     clear_auth_cookie(response)

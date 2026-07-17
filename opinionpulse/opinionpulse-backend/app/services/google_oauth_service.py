@@ -89,16 +89,20 @@ def parse_oauth_state(state: str) -> str:
 
 
 def build_authorization_url(redirect_path: str = "/dashboard") -> str:
+    """Build Google OAuth URL — redirects to Google's official sign-in & consent screen."""
     settings = get_settings()
     state = create_oauth_state(redirect_path)
+    prompt = settings.google_oauth_prompt.strip() or "select_account"
     params = {
         "client_id": settings.google_client_id,
         "redirect_uri": google_redirect_uri(),
         "response_type": "code",
+        # Scopes shown on Google's consent screen: name, profile picture, email
         "scope": "openid email profile",
         "state": state,
         "access_type": "online",
-        "prompt": "select_account",
+        "include_granted_scopes": "true",
+        "prompt": prompt,
     }
     return f"{GOOGLE_AUTH_URL}?{urlencode(params)}"
 
