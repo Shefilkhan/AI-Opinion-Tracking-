@@ -32,6 +32,21 @@ async def _async_scan() -> None:
             logger.info("Early-Warning Pulse: scanned %s brand watch(es)", count)
 
 
+def _run_trending_snapshot_job() -> None:
+    try:
+        asyncio.run(_async_trending())
+    except Exception as exc:
+        logger.error("Trending snapshot job failed: %s", exc)
+
+
+async def _async_trending() -> None:
+    from app.services.trending_snapshot_service import collect_trending_snapshots
+
+    count = await collect_trending_snapshots()
+    if count:
+        logger.info("Daily trending snapshot: %s items", count)
+
+
 def start_pulse_scheduler() -> None:
     global _scheduler
     if _scheduler is not None:
@@ -44,6 +59,13 @@ def start_pulse_scheduler() -> None:
         trigger="interval",
         minutes=max(interval, 5),
         id="pulse_brand_watch_scan",
+        replace_existing=True,
+    )
+    _scheduler.add_job(
+        _run_trending_snapshot_job,
+        trigger="interval",
+        minutes=30,
+        id="trending_snapshot_collect",
         replace_existing=True,
     )
     _scheduler.start()

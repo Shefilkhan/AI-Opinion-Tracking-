@@ -104,6 +104,9 @@ class User(Base):
     pulse_chat_messages: Mapped[list["PulseChatMessage"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    notifications: Mapped[list["UserNotification"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class Plan(Base):
@@ -303,6 +306,30 @@ class Mention(Base):
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
+class TrendingSnapshot(Base):
+    """Daily trending news/topics snapshot for dashboard."""
+
+    __tablename__ = "trending_snapshots"
+    __table_args__ = (
+        Index("idx_trending_date_engagement", "snapshot_date", "engagement_score"),
+        UniqueConstraint("snapshot_date", "source_url", name="uq_trending_date_url"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    snapshot_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    topic: Mapped[str] = mapped_column(String(120), nullable=False)
+    title: Mapped[str] = mapped_column(String(300), nullable=False)
+    platform: Mapped[str] = mapped_column(String(50), nullable=False)
+    source_url: Mapped[str] = mapped_column(String(512), nullable=False)
+    author: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    sentiment: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    engagement_score: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    posted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    fetched_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
 class PersonRiskProfile(Base):
     """
     Aggregate risk profile for a subject (person/handle) computed from many
@@ -400,3 +427,27 @@ class CrisisEvent(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+
+class UserNotification(Base):
+    """In-app activity notifications (distinct from keyword alert rules)."""
+
+    __tablename__ = "user_notifications"
+    __table_args__ = (Index("idx_user_notifications_user_read", "user_id", "read_at"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    type: Mapped[str] = mapped_column(String(50), nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    href: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    read_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    user: Mapped["User"] = relationship(back_populates="notifications")

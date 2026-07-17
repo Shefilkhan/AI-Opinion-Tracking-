@@ -8,7 +8,9 @@ import threading
 from datetime import datetime, timezone
 from typing import Any
 
+from app.db.database import SessionLocal
 from app.services.cache_utils import cache_get, cache_set
+from app.services.trending_snapshot_service import get_discovered_topics
 from app.services.search_service import search_all_platforms
 from app.services.sentiment_analysis import calculate_sentiment_summary
 
@@ -93,8 +95,20 @@ def _trim_result(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _debate_topics() -> list[str]:
+    with SessionLocal() as db:
+        discovered = get_discovered_topics(db, limit=5)
+    return discovered if discovered else DEBATE_TOPICS[:5]
+
+
+def _most_discussed_queries() -> list[str]:
+    with SessionLocal() as db:
+        discovered = get_discovered_topics(db, limit=8)
+    return discovered if discovered else MOST_DISCUSSED_QUERIES[:8]
+
+
 async def _build_live_debates() -> list[dict[str, Any]]:
-    topics = DEBATE_TOPICS[:5]
+    topics = _debate_topics()
     topic_results = await asyncio.gather(
         *[search_all_platforms(t, "24h", fetch_timeout=FETCH_TIMEOUT) for t in topics]
     )
@@ -154,7 +168,7 @@ async def _build_live_debates() -> list[dict[str, Any]]:
 
 
 async def _build_most_discussed() -> list[dict[str, Any]]:
-    queries = MOST_DISCUSSED_QUERIES[:8]
+    queries = _most_discussed_queries()
     query_results = await asyncio.gather(
         *[search_all_platforms(q, "7d", fetch_timeout=FETCH_TIMEOUT) for q in queries]
     )

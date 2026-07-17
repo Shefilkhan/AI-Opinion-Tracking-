@@ -237,7 +237,11 @@ def fetch_aggregated_topics(
     for entry in merged.values():
         sparkline = get_mention_volume_history(db, entry["search_query"], days)
         if sum(p["mentions"] for p in sparkline) == 0:
-            sparkline = _synthetic_sparkline(entry["mention_count"], days)
+            today = date.today()
+            sparkline = [
+                {"day": (today - timedelta(days=i)).strftime("%a"), "mentions": 0}
+                for i in range(days - 1, -1, -1)
+            ]
 
         direction_raw = entry.pop("direction", "flat")
         direction, direction_pct = _direction_from_sparkline(sparkline)

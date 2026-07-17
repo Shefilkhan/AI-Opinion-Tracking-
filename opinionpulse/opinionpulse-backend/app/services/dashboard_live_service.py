@@ -21,6 +21,11 @@ from app.services.platforms import (
 from app.services.dashboard_debates_service import get_dashboard_extras
 from app.services.search_service import platforms_live_status
 from app.services.sentiment_analysis import calculate_sentiment_summary
+from app.services.trending_snapshot_service import (
+    collect_trending_snapshots,
+    get_todays_trending,
+    get_yesterday_comparison,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -87,8 +92,18 @@ def get_dashboard_overview(db: Session | None = None) -> dict[str, Any]:
     own_session = db is None
     if own_session:
         db = SessionLocal()
+    snapshots: list[dict[str, Any]] = []
+    trending_comparison: dict[str, int] = {"today": 0, "yesterday": 0, "delta": 0}
     try:
         searches_today = _search_stats_today(db)
+        snapshots = get_todays_trending(db, 20)
+        if not snapshots:
+            try:
+                asyncio.run(collect_trending_snapshots())
+                snapshots = get_todays_trending(db, 20)
+            except Exception as exc:
+                logger.warning("Could not seed trending snapshots: %s", exc)
+        trending_comparison = get_yesterday_comparison(db)
     finally:
         if own_session and db:
             db.close()
@@ -101,25 +116,49 @@ def get_dashboard_overview(db: Session | None = None) -> dict[str, Any]:
         logger.error("Dashboard gather failed: %s", exc)
         reddit_data, news_data, youtube_data = [], [], []
 
-    all_items = [*reddit_data, *news_data, *youtube_data]
-    all_items.sort(
-        key=lambda x: x.get("posted_at", ""),
-        reverse=True,
-    )
-    debates = [_debate_from_row(r) for r in all_items[:10]]
-
-    trending = extract_trending_topics(all_items, 10)
-    if not trending and debates:
+    if snapshots:
+        snapshot_rows = [
+            {
+                "id": s["id"],
+                "title": s["title"],
+                "content": s["title"],
+                "platform": s["platform"],
+                "source_url": s["source_url"],
+                "source_label": s["platform"],
+                "posted_at": s["posted_at"],
+                "sentiment": s["sentiment"],
+                "engagement": {"likes": s["engagement_score"], "comments": 0, "shares": 0, "views": 0},
+            }
+            for s in snapshots
+        ]
+        debates = [_debate_from_row(r) for r in snapshot_rows[:10]]
         trending = [
             {
-                "name": d["title"][:40],
-                "mentions": "Live",
-                "sentiment": "mixed",
-                "trend": "up",
-                "query": d["query"],
+                "name": s["title"][:40],
+                "mentions": str(s["engagement_score"]),
+                "sentiment": s["sentiment"],
+                "trend": "up" if trending_comparison.get("delta", 0) >= 0 else "down",
+                "query": s["topic"],
             }
-            for d in debates[:8]
+            for s in snapshots[:10]
         ]
+        all_items = snapshot_rows
+    else:
+        all_items = [*reddit_data, *news_data, *youtube_data]
+        all_items.sort(key=lambda x: x.get("posted_at", ""), reverse=True)
+        debates = [_debate_from_row(r) for r in all_items[:10]]
+        trending = extract_trending_topics(all_items, 10)
+        if not trending and debates:
+            trending = [
+                {
+                    "name": d["title"][:40],
+                    "mentions": "Live",
+                    "sentiment": "mixed",
+                    "trend": "up",
+                    "query": d["query"],
+                }
+                for d in debates[:8]
+            ]
 
     if all_items:
         summary = calculate_sentiment_summary(all_items)
@@ -216,6 +255,8 @@ def get_dashboard_overview(db: Session | None = None) -> dict[str, Any]:
             },
         },
         "trending_topics": trending,
+        "daily_trending": snapshots,
+        "trending_comparison": trending_comparison,
         "debates": debates,
         "live_debates": live_debates,
         "most_discussed": most_discussed,

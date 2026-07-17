@@ -133,6 +133,10 @@ def ensure_users_schema(engine: Engine) -> None:
                     text(f"ALTER TABLE users ADD COLUMN {col_name} {col_def}")
                 )
 
+        conn.execute(
+            text("UPDATE users SET email = LOWER(TRIM(email)) WHERE email IS NOT NULL")
+        )
+
 
 def ensure_plans_schema(engine: Engine) -> None:
     """Create plans + usage_tracking tables if missing (legacy DBs)."""
@@ -206,6 +210,90 @@ REQUIRED_CHAT_COLUMNS = {
     "metadata_json",
     "created_at",
 }
+
+
+REQUIRED_MENTION_COLUMNS = {
+    "id",
+    "search_query",
+    "platform",
+    "content",
+    "source_url",
+    "fetched_at",
+}
+
+
+def ensure_mentions_schema(engine: Engine) -> None:
+    """Recreate mentions if the legacy project-based schema is still present."""
+    inspector = inspect(engine)
+    table_names = inspector.get_table_names()
+
+    if "mentions" in table_names:
+        columns = {col["name"] for col in inspector.get_columns("mentions")}
+        if REQUIRED_MENTION_COLUMNS.issubset(columns):
+            return
+
+    with engine.begin() as conn:
+        conn.execute(text("SET FOREIGN_KEY_CHECKS = 0"))
+        conn.execute(text("DROP TABLE IF EXISTS sentiment_results"))
+        conn.execute(text("DROP TABLE IF EXISTS mentions"))
+        conn.execute(
+            text(
+                """
+                CREATE TABLE mentions (
+                    id VARCHAR(36) PRIMARY KEY,
+                    search_query VARCHAR(100) NOT NULL,
+                    platform VARCHAR(50) NOT NULL,
+                    author VARCHAR(255) NULL,
+                    content TEXT NOT NULL,
+                    source_url VARCHAR(512) NULL,
+                    sentiment VARCHAR(20) NULL,
+                    sentiment_score FLOAT NULL,
+                    media_type VARCHAR(50) NULL,
+                    severity_level VARCHAR(20) NULL,
+                    demographics VARCHAR(50) NULL,
+                    social_media_usage_hours FLOAT NULL,
+                    risk_assessment VARCHAR(50) NULL,
+                    comparative_risk_reasoning TEXT NULL,
+                    posted_at DATETIME NULL,
+                    fetched_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    INDEX ix_mentions_search_query (search_query),
+                    INDEX ix_mentions_posted_at (posted_at),
+                    INDEX idx_search_query_fetched (search_query, fetched_at)
+                )
+                """
+            )
+        )
+        conn.execute(text("SET FOREIGN_KEY_CHECKS = 1"))
+
+
+def ensure_trending_snapshots_schema(engine: Engine) -> None:
+    """Create trending_snapshots table if missing."""
+    inspector = inspect(engine)
+    if "trending_snapshots" in inspector.get_table_names():
+        return
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                CREATE TABLE trending_snapshots (
+                    id VARCHAR(36) PRIMARY KEY,
+                    snapshot_date DATE NOT NULL,
+                    topic VARCHAR(120) NOT NULL,
+                    title VARCHAR(300) NOT NULL,
+                    platform VARCHAR(50) NOT NULL,
+                    source_url VARCHAR(512) NOT NULL,
+                    author VARCHAR(255) NULL,
+                    sentiment VARCHAR(20) NULL,
+                    engagement_score INT NOT NULL DEFAULT 0,
+                    posted_at DATETIME NULL,
+                    fetched_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    INDEX ix_trending_snapshots_snapshot_date (snapshot_date),
+                    INDEX idx_trending_date_engagement (snapshot_date, engagement_score),
+                    UNIQUE KEY uq_trending_date_url (snapshot_date, source_url)
+                )
+                """
+            )
+        )
 
 
 def ensure_chat_messages_schema(engine: Engine) -> None:
