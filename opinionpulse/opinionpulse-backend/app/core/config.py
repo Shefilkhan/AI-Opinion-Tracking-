@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     google_client_id: str = ""
     google_client_secret: str = ""
     google_redirect_uri: str = ""
+    # OAuth prompt: select_account (default) or "select_account consent" to always show permissions
+    google_oauth_prompt: str = "select_account"
 
     youtube_api_key: str = ""
     youtube_max_videos_per_keyword: int = 3
@@ -76,6 +78,16 @@ class Settings(BaseSettings):
     smtp_from_email: str = ""
     newsletter_notify_email: str = ""
 
+    stripe_secret_key: str = ""
+    stripe_publishable_key: str = ""
+    stripe_webhook_secret: str = ""
+    stripe_price_starter_monthly: str = ""
+    stripe_price_starter_annual: str = ""
+    stripe_price_pro_monthly: str = ""
+    stripe_price_pro_annual: str = ""
+    stripe_price_enterprise_monthly: str = ""
+    stripe_price_enterprise_annual: str = ""
+
     @model_validator(mode="after")
     def apply_email_env_aliases(self):
         """Map EMAIL_USER / EMAIL_APP_PASSWORD to SMTP settings (Gmail)."""
@@ -116,6 +128,10 @@ class Settings(BaseSettings):
     def expose_dev_otp_in_api(self) -> bool:
         """Expose OTP in API responses when email is not configured (local dev only)."""
         return self.app_env == "development" and not self.email_configured
+
+    @property
+    def stripe_configured(self) -> bool:
+        return bool(self.stripe_secret_key and self.stripe_publishable_key)
 
     @property
     def database_url(self) -> str:

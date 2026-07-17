@@ -5,6 +5,7 @@ import { UpgradeModal } from "@/components/billing/UpgradeModal"
 import { ChatBubble } from "@/components/chat/ChatBubble"
 import { AppearanceFab } from "@/components/ui/AppearanceFab"
 import { useUpgradeModal } from "@/contexts/UpgradeModalContext"
+import { cn } from "@/lib/utils"
 import { LandingPage } from "@/pages/LandingPage"
 import { ExplorePage } from "@/pages/ExplorePage"
 import { PricingPage } from "@/pages/PricingPage"
@@ -25,6 +26,8 @@ import { AlertsPage } from "@/pages/AlertsPage"
 import { CrisisRadarPage } from "@/pages/CrisisRadarPage"
 import { SettingsPage, SettingsLegacyRedirect } from "@/pages/SettingsPage"
 import { MyAccountPage } from "@/pages/MyAccountPage"
+import { BillingSuccessPage } from "@/pages/BillingSuccessPage"
+import { BillingCancelPage } from "@/pages/BillingCancelPage"
 import { ChatPage } from "@/pages/ChatPage"
 
 function LegacyVerifyRedirect({ type }: { type: "signup" | "login" }) {
@@ -49,10 +52,15 @@ function isMarketingRoute(pathname: string) {
   )
 }
 
+function isDashboardRoute(pathname: string) {
+  return !isMarketingRoute(pathname)
+}
+
 function AppRoutes() {
   const location = useLocation()
   const { isOpen, message, upgradeTo, close } = useUpgradeModal()
   const hideMobileAppearanceFab = isMarketingRoute(location.pathname)
+  const hideAppearanceFab = isDashboardRoute(location.pathname)
 
   return (
     <>
@@ -163,13 +171,34 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/billing/success"
+          element={
+            <ProtectedRoute>
+              <BillingSuccessPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/billing/cancel"
+          element={
+            <ProtectedRoute>
+              <BillingCancelPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/my-account" element={<Navigate to="/account" replace />} />
         <Route path="/mentions" element={<Navigate to="/search" replace />} />
         <Route path="/projects" element={<Navigate to="/search" replace />} />
         <Route path="/projects/*" element={<Navigate to="/search" replace />} />
       </Routes>
       <ChatBubble />
-      <AppearanceFab className={hideMobileAppearanceFab ? "max-md:hidden" : undefined} />
+      <AppearanceFab
+        className={cn(
+          hideAppearanceFab && "hidden",
+          hideMobileAppearanceFab && "max-md:hidden"
+        )}
+      />
       <UpgradeModal
         isOpen={isOpen}
         message={message}

@@ -1,150 +1,199 @@
-import { useCallback, useState } from "react"
-import { Download } from "lucide-react"
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { CreditCard, ExternalLink, Loader2, Sparkles } from "lucide-react"
+import { createPortalSession } from "@/api/billing"
+import { ApiError } from "@/api/client"
 import { PageSection } from "@/components/layout/PageSection"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { LoadingState } from "@/components/ui/LoadingState"
 import { SettingsPanel } from "@/components/settings/SettingsPanel"
-import { useRegisterSectionSave, useSectionDirty } from "@/components/settings/useSectionDirty"
-import { useToast } from "@/components/ui/toast"
-import {
-  loadUserSettings,
-  saveSettingsSection,
-  type BillingSettings as BillingSettingsData,
-  type BillingPlan,
-} from "@/lib/userSettingsStore"
-import { proCard, tableHeader, tableRow } from "@/lib/ui-classes"
+import { useUsage } from "@/hooks/useUsage"
+import { redirectToCheckout } from "@/lib/startCheckout"
+import { proCard } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
-const PLAN_LABELS: Record<BillingPlan, string> = {
-  free: "Free",
-  pro: "Pro",
-  enterprise: "Enterprise",
+function BillingEmptyState({ planName }: { planName: string }) {
+  const [loadingPlan, setLoadingPlan] = useState<"pro" | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleUpgrade() {
+    setLoadingPlan("pro")
+    setError(null)
+    try {
+      await redirectToCheckout("pro", "monthly")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not start checkout.")
+      setLoadingPlan(null)
+    }
+  }
+
+  return (
+    <SettingsPanel
+      title="Billing"
+      description="Manage your plan and payment details."
+      showSave={false}
+    >
+      <div className={cn(proCard, "bg-muted/20 p-6 sm:p-8")}>
+        <div className="mx-auto max-w-md text-center">
+          <span className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <CreditCard className="size-5" strokeWidth={2} aria-hidden />
+          </span>
+          <h3 className="text-lg font-semibold text-foreground">No active subscription</h3>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            You&apos;re on the <strong>{planName}</strong> plan. Subscribe to unlock paid
+            features and manage billing here.
+          </p>
+          <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <Button
+              type="button"
+              className="min-h-10 gap-2 px-5"
+              onClick={() => void handleUpgrade()}
+              disabled={loadingPlan !== null}
+            >
+              {loadingPlan ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Sparkles className="size-4" />
+              )}
+              Upgrade to Pro
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-10 px-5"
+              onClick={() => window.location.assign("/pricing")}
+            >
+              Compare plans
+            </Button>
+          </div>
+          {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+        </div>
+      </div>
+    </SettingsPanel>
+  )
 }
 
-const INVOICES = [
-  { id: "1", date: "2026-04-01", amount: "$0.00", status: "Paid" },
-  { id: "2", date: "2026-03-01", amount: "$0.00", status: "Paid" },
-  { id: "3", date: "2026-02-01", amount: "$29.00", status: "Paid" },
-]
-
 export function BillingSettings() {
-  const { showToast } = useToast()
-  const [saving, setSaving] = useState(false)
-  const { draft, setDraft, dirty, commitSaved, discard } =
-    useSectionDirty<BillingSettingsData>(loadUserSettings().billing)
+  const navigate = useNavigate()
+  const { usage, loading } = useUsage()
+  const [portalLoading, setPortalLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSave = useCallback(async () => {
-    setSaving(true)
-    saveSettingsSection("billing", draft)
-    commitSaved(draft)
-    setSaving(false)
-    showToast("Billing preferences saved.")
-  }, [draft, commitSaved, showToast])
+  if (loading) {
+    return <LoadingState label="Loading billing…" />
+  }
 
-  useRegisterSectionSave("billing", dirty, handleSave, discard)
+  if (!usage?.billing.available) {
+    return <BillingEmptyState planName={usage?.plan.name ?? "Starter"} />
+  }
+
+  const statusLabel =
+    usage.plan.status === "past_due"
+      ? "Past due"
+      : usage.plan.status === "canceled"
+        ? "Canceled"
+        : "Active"
+
+  const statusClass =
+    usage.plan.status === "past_due"
+      ? "bg-destructive/10 text-destructive"
+      : usage.plan.status === "canceled"
+        ? "bg-muted text-muted-foreground"
+        : "bg-success/5 text-success"
+
+  async function openPortal() {
+    setPortalLoading(true)
+    setError(null)
+    try {
+      const { portal_url } = await createPortalSession()
+      window.location.assign(portal_url)
+    } catch (err) {
+      setError(err instanceof ApiError ? String(err.detail) : "Could not open billing portal.")
+      setPortalLoading(false)
+    }
+  }
 
   return (
     <>
       <SettingsPanel
         title="Billing"
         description="Manage your plan and payment details."
-        onSave={handleSave}
-        saving={saving}
-        saveLabel="Save billing info"
+        showSave={false}
       >
         <PageSection title="Current plan" className="mb-0">
-          <div className={cn(proCard, "flex flex-wrap items-center justify-between gap-4 bg-muted/20 p-4 sm:p-5")}>
+          <div
+            className={cn(
+              proCard,
+              "flex flex-wrap items-center justify-between gap-4 bg-muted/20 p-4 sm:p-5"
+            )}
+          >
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xl font-medium text-foreground">
-                  {PLAN_LABELS[draft.plan]}
-                </span>
-                <Badge variant="secondary">Active</Badge>
+                <span className="text-xl font-medium text-foreground">{usage.plan.name}</span>
+                <Badge className={statusClass}>{statusLabel}</Badge>
               </div>
+              {usage.billing.renews_at && (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Renews on{" "}
+                  {new Date(usage.billing.renews_at).toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </p>
+              )}
             </div>
             <Button
               type="button"
+              variant="outline"
               className="min-h-10 px-4"
-              onClick={() => {
-                setDraft((p) => ({
-                  ...p,
-                  plan: p.plan === "free" ? "pro" : p.plan === "pro" ? "enterprise" : "free",
-                }))
-              }}
+              onClick={() => navigate("/pricing")}
             >
-              {draft.plan === "enterprise" ? "Downgrade" : "Upgrade plan"}
+              Change plan
             </Button>
           </div>
         </PageSection>
 
-        <PageSection title="Payment method" className="mb-0">
+        <PageSection title="Payment & invoices" className="mb-0">
           <div className={cn(proCard, "bg-muted/20 p-4 sm:p-5")}>
             <p className="text-sm text-muted-foreground">
-              {draft.cardBrand} ending in {draft.cardLast4}
+              Update your card, download invoices, or cancel your subscription in the
+              secure Stripe customer portal.
             </p>
             <Button
               type="button"
               variant="outline"
-              className="mt-3 min-h-10 px-4"
-              onClick={() => showToast("Payment method update (demo).")}
+              className="mt-3 min-h-10 gap-2 px-4"
+              onClick={() => void openPortal()}
+              disabled={portalLoading}
             >
-              Update payment method
+              {portalLoading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <ExternalLink className="size-4" />
+              )}
+              Manage billing
             </Button>
-          </div>
-        </PageSection>
-
-        <PageSection title="Billing history" className="mb-0">
-          <div className={cn(proCard, "overflow-x-auto bg-muted/20")}>
-            <table className="w-full min-w-[400px] text-left text-sm">
-              <thead>
-                <tr className={tableHeader}>
-                  <th className="px-4 py-3">Date</th>
-                  <th className="px-4 py-3">Amount</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Invoice</th>
-                </tr>
-              </thead>
-              <tbody>
-                {INVOICES.map((row) => (
-                  <tr key={row.id} className={tableRow}>
-                    <td className="px-4 py-3 text-foreground">{row.date}</td>
-                    <td className="px-4 py-3 text-foreground">{row.amount}</td>
-                    <td className="px-4 py-3">
-                      <Badge className="bg-success/5 text-success">{row.status}</Badge>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="gap-1 text-primary"
-                        onClick={() => showToast(`Downloading invoice ${row.id} (demo).`)}
-                      >
-                        <Download className="size-3.5" aria-hidden />
-                        PDF
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
           </div>
         </PageSection>
       </SettingsPanel>
 
       <SettingsPanel
         title="Danger zone"
-        description="Cancel your subscription. You will retain access until the end of the billing period."
+        description="Cancel or change your subscription through the billing portal."
         showSave={false}
         danger
       >
         <Button
           type="button"
           variant="destructive"
-          className="min-h-10 px-4"
-          onClick={() => showToast("Subscription cancellation (demo).", "error")}
+          className="min-h-10 gap-2 px-4"
+          onClick={() => void openPortal()}
+          disabled={portalLoading}
         >
-          Cancel subscription
+          Cancel or change subscription
         </Button>
       </SettingsPanel>
     </>

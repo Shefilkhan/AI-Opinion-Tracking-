@@ -14,6 +14,7 @@ from app.api.routes import (
     admin,
     ai,
     auth,
+    billing,
     chat,
     crisis,
     dashboard,
@@ -21,6 +22,7 @@ from app.api.routes import (
     market,
     newsletter,
     personal_alerts,
+    notifications,
     public_demo,
     risk,
     search,
@@ -33,7 +35,9 @@ from app.db import models  # noqa: F401 — register models with metadata
 from app.db.database import Base, SessionLocal, engine
 from app.db.schema_sync import (
     ensure_chat_messages_schema,
+    ensure_mentions_schema,
     ensure_plans_schema,
+    ensure_trending_snapshots_schema,
     ensure_users_schema,
 )
 from app.services.plan_service import load_plans, seed_default_plans
@@ -70,6 +74,8 @@ async def lifespan(app: FastAPI):
         Base.metadata.create_all(bind=engine)
         ensure_users_schema(engine)
     ensure_plans_schema(engine)
+    ensure_mentions_schema(engine)
+    ensure_trending_snapshots_schema(engine)
     ensure_chat_messages_schema(engine)
     with SessionLocal() as db:
         seed_default_plans(db)
@@ -121,6 +127,7 @@ app.include_router(health.router)
 app.include_router(newsletter.router)
 app.include_router(auth.router)
 app.include_router(account.router)
+app.include_router(billing.router)
 app.include_router(dashboard.router)
 app.include_router(search.router)
 app.include_router(public_demo.router)
@@ -130,6 +137,7 @@ app.include_router(chat.router)
 app.include_router(users.router)
 app.include_router(settings_routes.router)
 app.include_router(personal_alerts.router)
+app.include_router(notifications.router)
 app.include_router(crisis.router)
 app.include_router(market.router)
 app.include_router(admin.router)

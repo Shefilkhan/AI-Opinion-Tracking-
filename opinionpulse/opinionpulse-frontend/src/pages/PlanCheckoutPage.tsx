@@ -1,17 +1,12 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom"
-import { ArrowLeft } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import "@/styles/landing-editorial.css"
-import { EditorialNavbar } from "@/components/landing/editorial/EditorialNavbar"
-import { EditorialFooter } from "@/components/landing/editorial/EditorialFooter"
-import { EditorialBillingToggle } from "@/components/landing/editorial/EditorialBillingToggle"
-import {
-  EditorialPricingCard,
-  editorialPlanOrder,
-} from "@/components/landing/editorial/EditorialPricingCard"
-import { PlatformLogoMarquee } from "@/components/pricing/PlatformLogoMarquee"
-import { planPrices, pricingPlans, type PlanId } from "@/data/pricingData"
-import { cn } from "@/lib/utils"
+import { CheckoutOrderSummary } from "@/components/billing/CheckoutOrderSummary"
+import { StripeEmbeddedCheckout } from "@/components/billing/StripeEmbeddedCheckout"
+import { useAuth } from "@/contexts/AuthContext"
+import { pricingPlans, ENTERPRISE_EMAIL, type PlanId } from "@/data/pricingData"
+import { signupUrlForPlan } from "@/lib/startCheckout"
 
 const VALID_PLANS: PlanId[] = ["starter", "pro", "enterprise"]
 
@@ -23,6 +18,7 @@ export function PlanCheckoutPage() {
   const { planId } = useParams<{ planId: string }>()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const { isAuthenticated, loading: authLoading, user } = useAuth()
   const initialAnnual = searchParams.get("billing") === "annual"
   const [isAnnual, setIsAnnual] = useState(initialAnnual)
 
@@ -43,89 +39,104 @@ export function PlanCheckoutPage() {
     return <Navigate to="/pricing" replace />
   }
 
-  const prices = planPrices[plan.id]
-  const amount = isAnnual ? prices.annual : prices.monthly
+  const interval = isAnnual ? "annual" : "monthly"
 
   return (
-    <div className="landing-editorial min-h-screen">
-      <EditorialNavbar />
+    <div className="landing-editorial le-checkout-page">
+      <CheckoutOrderSummary
+        plan={plan}
+        planId={planId}
+        isAnnual={isAnnual}
+        onBillingChange={setIsAnnual}
+      />
 
-      <main className="pb-8 pt-10">
-        <div className="le-container">
-          <Link
-            to="/pricing"
-            className="mb-8 inline-flex items-center gap-2 text-sm text-[var(--le-muted)] transition-colors hover:text-[var(--le-text)]"
-          >
-            <ArrowLeft className="size-4" />
-            Back to all plans
-          </Link>
-
-          <div className="mx-auto max-w-3xl text-center">
-            <span className="le-auth-badge mb-4">Selected plan</span>
-            <h1 className="font-serif-display text-4xl font-semibold tracking-tight text-[var(--le-text)] md:text-5xl">
-              {plan.id === "pro" ? "Track like a Pro." : `Start with ${plan.name}.`}
-            </h1>
-            <p className="le-body mx-auto mt-4 max-w-xl">
-              {plan.id === "enterprise"
-                ? "Get advanced security, team workspaces, and dedicated support for your organization."
-                : `Get full access from only $${(amount / 30).toFixed(2)} per day — cancel anytime.`}
-            </p>
-
-            <div className="mt-8 flex justify-center">
-              <EditorialBillingToggle isAnnual={isAnnual} onChange={setIsAnnual} />
+      <section className="le-checkout-payment">
+        <div className="le-checkout-payment-inner">
+          {planId === "enterprise" ? (
+            <EnterpriseCheckoutPanel />
+          ) : authLoading ? (
+            <div className="flex min-h-[320px] items-center justify-center text-[var(--le-muted)]">
+              <Loader2 className="size-6 animate-spin" />
             </div>
-            {isAnnual && (
-              <p className="mt-3 text-sm font-medium text-[var(--le-forest)]">
-                Save 20% on a yearly subscription.
-              </p>
-            )}
-          </div>
+          ) : isAuthenticated ? (
+            <>
+              {user?.email && (
+                <p className="mb-6 text-sm text-[var(--le-muted)]">
+                  Subscribing as <span className="font-medium text-[var(--le-text)]">{user.email}</span>
+                </p>
+              )}
+              <StripeEmbeddedCheckout planId={planId} interval={interval} />
+            </>
+          ) : (
+            <AuthCheckoutPanel planId={planId} interval={interval} />
+          )}
 
-          <div className="mx-auto mt-10 max-w-6xl">
-            <div className="le-pricing-panel">
-              <p className="mb-6 text-center text-sm text-[var(--le-muted)]">
-                Compare all plans below — your selection is highlighted.
-              </p>
-              <div className="grid gap-4 md:grid-cols-3 md:gap-3 lg:gap-4">
-                {pricingPlans.map((item) => (
-                  <div
-                    key={item.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() =>
-                      navigate(`/pricing/${item.id}?billing=${isAnnual ? "annual" : "monthly"}`)
-                    }
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault()
-                        navigate(`/pricing/${item.id}?billing=${isAnnual ? "annual" : "monthly"}`)
-                      }
-                    }}
-                    className={cn(
-                      "cursor-pointer rounded-[1.25rem] transition-transform hover:scale-[1.01]",
-                      editorialPlanOrder(item.id)
-                    )}
-                  >
-                    <EditorialPricingCard
-                      plan={item}
-                      isAnnual={isAnnual}
-                      compact={false}
-                      selected={item.id === planId}
-                      mode="checkout"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <p className="le-checkout-powered mt-8 text-center text-xs text-[var(--le-muted)]">
+            Secure payments powered by{" "}
+            <a
+              href="https://stripe.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium underline-offset-2 hover:underline"
+            >
+              Stripe
+            </a>
+          </p>
         </div>
+      </section>
+    </div>
+  )
+}
 
-        <div className="mt-16 border-t border-[var(--le-border)] pt-12">
-          <PlatformLogoMarquee />
-        </div>
-      </main>
+function AuthCheckoutPanel({
+  planId,
+  interval,
+}: {
+  planId: PlanId
+  interval: "monthly" | "annual"
+}) {
+  const signInUrl = `/auth/signin?redirect=${encodeURIComponent(`/pricing/${planId}?billing=${interval}`)}`
+  const signUpUrl = signupUrlForPlan(planId, interval)
 
-      <EditorialFooter />
+  return (
+    <div className="le-checkout-auth-card">
+      <h2 className="font-serif-display text-2xl font-semibold text-[var(--le-text)]">
+        Sign in to subscribe
+      </h2>
+      <p className="mt-2 text-sm text-[var(--le-muted)]">
+        Create an account or sign in to complete your subscription with secure checkout.
+      </p>
+      <div className="mt-8 flex flex-col gap-3">
+        <Link to={signUpUrl} className="le-pricing-cta bg-[var(--le-forest)] text-white hover:opacity-90">
+          Create account
+        </Link>
+        <Link
+          to={signInUrl}
+          className="le-pricing-cta border border-[var(--le-border)] bg-transparent text-[var(--le-text)] hover:bg-[var(--le-sage-soft)]"
+        >
+          Sign in
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+function EnterpriseCheckoutPanel() {
+  return (
+    <div className="le-checkout-auth-card">
+      <h2 className="font-serif-display text-2xl font-semibold text-[var(--le-text)]">
+        Talk to sales
+      </h2>
+      <p className="mt-2 text-sm text-[var(--le-muted)]">
+        Enterprise includes team workspaces, advanced security, custom integrations, and dedicated
+        support. We&apos;ll tailor a plan for your organization.
+      </p>
+      <a
+        href={ENTERPRISE_EMAIL}
+        className="le-pricing-cta mt-8 inline-flex bg-[var(--le-forest)] text-white hover:opacity-90"
+      >
+        Contact sales
+      </a>
     </div>
   )
 }

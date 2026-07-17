@@ -2,7 +2,7 @@ import { Link } from "react-router-dom"
 import { Check } from "lucide-react"
 import type { PlanId, PricingPlan } from "@/data/pricingData"
 import { planPrices } from "@/data/pricingData"
-import { saveSelectedPlan } from "@/lib/planStorage"
+import { CheckoutButton } from "@/components/billing/CheckoutButton"
 import { cn } from "@/lib/utils"
 
 type EditorialPricingCardProps = {
@@ -35,25 +35,26 @@ export function EditorialPricingCard({
     : "bg-[var(--le-sage-soft)] text-[var(--le-forest)] hover:bg-[var(--le-sage-muted)]"
 
   const billingQuery = isAnnual ? "annual" : "monthly"
-  const ctaHref =
-    mode === "checkout"
-      ? `/auth/signup?plan=${plan.id}&billing=${billingQuery}`
-      : `/pricing/${plan.id}?billing=${billingQuery}`
   const ctaLabel =
     mode === "checkout" && selected ? `Continue with ${plan.name} →` : plan.cta
 
-  const ctaContent = (
-    <Link
-      to={ctaHref}
-      onClick={(event) => {
-        event.stopPropagation()
-        saveSelectedPlan(plan.id)
-      }}
-      className={cn("le-pricing-cta", ctaClass)}
-    >
-      {ctaLabel}
-    </Link>
-  )
+  const ctaContent =
+    mode === "checkout" ? (
+      <CheckoutButton
+        planId={plan.id}
+        interval={billingQuery}
+        label={ctaLabel}
+        className={ctaClass}
+      />
+    ) : (
+      <Link
+        to={`/pricing/${plan.id}?billing=${billingQuery}`}
+        onClick={(event) => event.stopPropagation()}
+        className={cn("le-pricing-cta", ctaClass)}
+      >
+        {plan.cta}
+      </Link>
+    )
 
   return (
     <div
