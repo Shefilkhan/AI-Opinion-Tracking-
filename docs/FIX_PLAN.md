@@ -35,7 +35,7 @@
 | B4 | Medium | `services/crisis_narrative_service.py:132` | LLM `severity` stored unvalidated; schema requires `low\|medium\|high\|critical` → 500 on detail/scan | `_normalize_severity()` maps synonyms, defaults `medium` | ✅ verified |
 | B5 | Medium | `services/cache_utils.py` | Empty/failed fetch (`[]`) cached for the TTL → a transient failure blanks a source for minutes; `print()` emoji can raise on non‑UTF‑8 consoles | Don't cache falsy results; `print`→`logger.debug` | ✅ |
 | B6 | Low | `services/search_service.py:405` | `most_active_platform` only counted a few platforms | Count by actual result `platform` generically | ✅ |
-| B7 | Medium | `services/ai_service.py` (fallbacks) | `_fallback_*` returned with `ai_enabled=True` → outage looks like analysis | 📝 Documented — recommend surfacing `ai_enabled=false` + logging on real errors | 📝 |
+| B7 | Low-Med | `routes/ai.py`, `services/ai_service.py` | `ai_enabled` actually tracks `ai_available()` on most routes; summarize/debate/predict 503 without a key. Residual: an in-service fallback on a *configured* call (timeout/parse error) isn't logged/flagged | 📝 Documented — add warning logs on in-service fallback for observability | 📝 |
 
 ## C. Auth / account security
 
@@ -49,7 +49,7 @@
 | C6 | Low-Med | `routes/account.py`, `routes/users.py` | Username uniqueness TOCTOU → raw 500 | Catch `IntegrityError` → 400 | ✅ |
 | C7 | High | `api/routes/auth.py:527` (Google callback) | 7-day token placed in redirect **URL**; no CSRF state nonce | 📝 Documented — needs coordinated FE change + OAuth testing (no Google keys here) | 📝 |
 | C8 | Medium | `services/google_auth_service.py:27` | Google auto-linked to an existing local account without a verified email (takeover vector) | Reject linking unless `profile.email_verified` is true | 🩹 |
-| C9 | Medium | `services/otp_service.py:41` | OTP resend window mixes Python‑UTC with MySQL `NOW()` (server tz) | 📝 Documented — set `created_at` via Python UTC or pin DB tz | 📝 |
+| C9 | Medium | `db/models.py` (EmailOTP), `services/otp_service.py:44` | OTP resend window mixed Python‑UTC with MySQL `NOW()` (server tz) | Gave `EmailOTP.created_at` a Python‑UTC default so both sides are UTC | 🩹 |
 | C10 | Low | `services/auth_rate_limit.py` | In-memory limiter ineffective across workers | 📝 Documented — back with Redis for multi-worker | 📝 |
 
 ## D. Search / sentiment correctness
@@ -70,8 +70,8 @@
 | E3 | Medium | `services/newsletter_service.py:22` | SMTP failure after the row commit → 503 with wrong "verification email" message | Best-effort email; return `email_sent=false` | 🩹 |
 | E4 | Low | `services/plan_service.py:191` | `parse_data_sources` failed **open** to `"all"` on corrupt config | Fail closed to the Starter source set | 🩹 |
 | E5 | Low | `services/plan_service.py:257` | Concurrent first-request-of-period → `IntegrityError` | Catch, rollback, re-select | 🩹 |
-| E6 | Medium | `services/stripe_service.py:223` | Portal plan switch keeps stale `metadata.plan_id` | 📝 Documented — resolve plan from the price id | 📝 |
-| E7 | Low-Med | `routes/reports.py`, `plan_limits.py:119` | `check_csv_export_limit` has no callers; cap never enforced | 📝 Documented — call it + truncate rows | 📝 |
+| E6 | Medium | `services/stripe_service.py:223` | Portal plan switch kept stale `metadata.plan_id` | Resolve plan from the subscription's actual price id (reverse map), metadata fallback | 🩹 |
+| E7 | Low-Med | `routes/reports.py` (deprecated), `SearchPage.tsx` | Backend CSV endpoints are dead legacy (unmounted); the live CSV export is client-side and **already** slices to the plan row cap | N/A — client-side cap verified; backend `check_csv_export_limit` is dead code | ✅ |
 
 ## F. Frontend runtime
 
@@ -84,7 +84,7 @@
 | F5 | Low | `pages/SearchPage.tsx:148` | CSV escaped only `content` → comma in author/URL corrupts rows | Escape every field | ✅ |
 | F6 | Low | `components/settings/ChangePasswordSection.tsx` | Client allowed 6 chars vs backend 8 | Align to 8 | ✅ |
 | F7 | Low | `lib/api/searchFilters.ts:53` | Sentiment filter no-ops when nothing matches (keeps full list) | Filter unconditionally; show empty-state | ✅ |
-| F8 | Low | `lib/api/sentiment.ts` (demo_mode) | Dead client re-scoring path (confirmed unused) | 📝 Documented — safe to delete | 📝 |
+| F8 | Low | `lib/api/search.ts` (demo_mode) | Dead client re-scoring path that could mask a degraded backend | Removed the dead `demo_mode` branch | ✅ |
 
 ## G. Config / env / cleanup
 
@@ -95,6 +95,8 @@
 | G3 | `core/startup_checks.py` + `main.py` | `verify_production_secrets()` — refuse to boot in production with placeholder `SECRET_KEY`/`OTP_SECRET` or insecure cookie | ✅ |
 | G4 | 9 legacy routes + 2 dead services | Prepend DEPRECATED banner (not mounted; ImportError against current model) | ✅ syntax-verified |
 | G5 | `scripts/test_apis.py` | Add Anthropic + Reddit-adapter checks; fix stdout rewrap that broke captured runs | ✅ ran clean |
+| G6 | `app/__init__.py` | Reassigned `sys.stdout` at import → broke pytest capture & captured pipes | Use `reconfigure()` instead of replacing the stream objects | ✅ |
+| G7 | `tests/` (new) + `requirements-dev.txt`, `pytest.ini` | Project had **zero** automated tests | Added 45-test pytest suite (SQLite + TestClient) covering logic, DB services, auth flow, plan gating, billing, and endpoint smokes — all green | ✅ |
 
 ## Needs your input / environment (not code bugs)
 - **Invalid API keys** (smoke test): `GROQ_API_KEY` (401), `YOUTUBE_API_KEY` (invalid), `CURRENTS_API_KEY` (401). Replace these — likely mis-copied. Guardian/GNews/NewsAPI valid; Reddit works (rate-limited under heavy testing).

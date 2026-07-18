@@ -59,6 +59,30 @@ def get_price_id(plan_id: str, interval: BillingInterval) -> Optional[str]:
     return price_id or None
 
 
+def plan_id_from_price(price_id: Optional[str]) -> Optional[str]:
+    """Reverse-map a Stripe price id to our plan id (either interval)."""
+    if not price_id:
+        return None
+    settings = get_settings()
+    reverse = {
+        (settings.stripe_price_starter_monthly or "").strip(): "starter",
+        (settings.stripe_price_starter_annual or "").strip(): "starter",
+        (settings.stripe_price_pro_monthly or "").strip(): "pro",
+        (settings.stripe_price_pro_annual or "").strip(): "pro",
+        (settings.stripe_price_enterprise_monthly or "").strip(): "enterprise",
+        (settings.stripe_price_enterprise_annual or "").strip(): "enterprise",
+    }
+    reverse.pop("", None)  # ignore unconfigured (empty) price ids
+    return reverse.get(price_id.strip())
+
+
+def _price_id_from_subscription(subscription: dict) -> Optional[str]:
+    items = (subscription.get("items") or {}).get("data") or []
+    if items:
+        return (items[0].get("price") or {}).get("id")
+    return None
+
+
 def get_or_create_customer(db: Session, user: User) -> str:
     _require_stripe()
     if user.stripe_customer_id:
@@ -225,7 +249,15 @@ def sync_subscription_for_user(
     subscription: dict,
 ) -> None:
     metadata = subscription.get("metadata") or {}
-    plan_id = metadata.get("plan_id") or user.plan_id
+    # Prefer the plan implied by the ACTUAL price on the subscription so a plan
+    # switch made in the Stripe Customer Portal is honored (metadata.plan_id is
+    # only written at checkout and goes stale). Fall back to metadata, then the
+    # user's current plan.
+    plan_id = (
+        plan_id_from_price(_price_id_from_subscription(subscription))
+        or metadata.get("plan_id")
+        or user.plan_id
+    )
     status_value = _subscription_status_label(subscription.get("status", "active"))
     renews_at = _parse_renews_at(subscription)
 

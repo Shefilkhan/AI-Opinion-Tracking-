@@ -29,6 +29,7 @@ environment or a product decision.
 | `npm run lint` | ✅ 0 errors (41 warnings, all pre-existing React-Compiler advisories) |
 | `python scripts/test_apis.py` | ✅ runs; Guardian 20, GNews 10, NewsAPI valid, Reddit adapter working |
 | Backend unit checks (sentiment, pulse metrics, severity, validators, session helpers) | ✅ all pass |
+| **`pytest` suite (45 tests: in-memory SQLite + FastAPI TestClient)** | ✅ **45 passed** — incl. signup→verify→logout→401, plan-gating 402 (search+chat), alert re-enable limit (E2), ownership, username-taken 400, endpoint smokes |
 | MySQL-backed flows, live Stripe/OAuth/SMTP | ⚠️ not runnable here (no DB / those keys) — fixed by code-correctness |
 
 ## What was fixed, by area
@@ -62,6 +63,21 @@ sentiment filter applies correctly (F7).
 `VITE_API_BASE_URL`) (G1–G2), 9 legacy routes + 2 dead services marked
 DEPRECATED (G4), smoke harness hardened with Anthropic + search checks (G5).
 
+## Test suite (new — the project shipped with none)
+
+Added `opinionpulse-backend/tests/` — 33 `pytest` tests that run on in-memory
+SQLite against the real FastAPI app (no MySQL needed):
+- **Logic:** sentiment negation, pulse-metric quadrants, crisis severity, HN URL validity, username rules.
+- **DB services:** session create/revoke/validate (proves the logout fix), plan-limit 402 at cap, password-policy schema.
+- **API (TestClient):** signup → dev-OTP → verify → `/me` → logout → `/me`=401; plan-gating 402 (search + chat at cap); alert re-enable limit (E2); username-taken 400 (C6); resend-OTP no-enumeration (C2); notification ownership; weak-password 422.
+- **Endpoint smokes (externals mocked):** crisis radar, dashboard overview, notifications, account usage, settings status, AI status — all return valid responses, including empty-data paths.
+- **Billing:** price→plan reverse map (E6) and `renews_at` read from subscription items (E1).
+
+Testing also surfaced and fixed real bugs: `app/__init__.py` reassigned
+`sys.stdout` at import (breaking pytest capture and any captured pipe) — now uses
+`reconfigure()`; and the auth rate limiter's process-global state (C10) leaked
+across tests (now reset per-test). Run: `pip install -r requirements-dev.txt && python -m pytest`.
+
 ## ⚠️ Needs your attention (not code — config/keys/infra)
 
 1. **Replace three invalid API keys** — the live smoke test rejected them:
@@ -72,7 +88,7 @@ DEPRECATED (G4), smoke harness hardened with Anthropic + search checks (G5).
 2. **Add `ANTHROPIC_API_KEY`** for real AI insights on the Search page / dashboard (Groq alone powers chat, not `/api/ai/*`). Without it those endpoints return deterministic fallbacks.
 3. **Start MySQL** (XAMPP) so auth, search history, dashboard snapshots, saved searches, and crisis events persist. The app auto-creates `opinionpulse_db` in development.
 4. **Set strong `SECRET_KEY` / `OTP_SECRET`** in `.env.local` for any non-local use — the app now refuses to boot in `APP_ENV=production` with the placeholder defaults. (Dev secrets were generated into `.env.local`.)
-5. **Deferred items** needing coordinated work / live testing: OAuth token-in-URL + CSRF nonce (C7), OTP-window DB timezone (C9), multi-worker rate limiting (C10), Stripe portal plan-switch sync (E6), CSV export cap enforcement (E7). Details in FIX_PLAN.md. *(Google unverified-email auto-link, C8, was fixed.)*
+5. **Deferred items** (need live infra or a product call): OAuth token-in-URL + CSRF nonce (C7) and multi-worker rate limiting via Redis (C10). Everything else the audit surfaced — C8, C9, E6, E7, F8 — has been fixed or verified N/A. Details in FIX_PLAN.md.
 
 ## Remaining risks
 - Several dashboard/crisis figures remain heuristic/hardcoded (e.g. fabricated 65/35 sentiment splits) — display-only, not measured. Left as-is (product decision).
