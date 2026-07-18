@@ -52,6 +52,9 @@ const RANGE_OPTIONS = [
 
 export function ReportsPage() {
   const [range, setRange] = useState<"7" | "30" | "all">("30")
+  // Capture "now" once at mount so the recency filter stays render-pure
+  // (Date.now() during render is flagged as impure by react-hooks/purity).
+  const [mountedAt] = useState(() => Date.now())
   const { data, isLoading } = useQuery({
     queryKey: ["search-history"],
     queryFn: fetchSearchHistory,
@@ -61,9 +64,9 @@ export function ReportsPage() {
     const list = data?.items ?? []
     if (range === "all") return list
     const days = range === "7" ? 7 : 30
-    const cutoff = Date.now() - days * 86400000
+    const cutoff = mountedAt - days * 86400000
     return list.filter((r) => new Date(r.searched_at).getTime() >= cutoff)
-  }, [data, range])
+  }, [data, range, mountedAt])
 
   return (
     <DashboardLayout

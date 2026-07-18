@@ -10,7 +10,7 @@
  *   - Hours badge
  */
 
-import { AlertTriangle, CheckCircle, Clock, Info, ShieldAlert, User } from "lucide-react"
+import { AlertTriangle, CheckCircle, Clock, Info, ShieldAlert } from "lucide-react"
 import type { RiskProfile } from "@/lib/api/types"
 import { cn } from "@/lib/utils"
 

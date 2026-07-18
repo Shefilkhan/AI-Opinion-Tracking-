@@ -228,12 +228,41 @@ def _refresh_cache_async(key: str, builder) -> None:
     threading.Thread(target=_run, daemon=True).start()
 
 
+def _run_coro(coro):
+    """Run a coroutine to completion from sync OR async call sites.
+
+    FastAPI runs sync endpoints in a threadpool (no running loop, so
+    ``asyncio.run`` works), but async endpoints such as
+    ``/api/ai/insight-of-the-day`` are already inside the event loop, where
+    ``asyncio.run()`` raises "cannot be called from a running event loop".
+    In that case we run the coroutine on a dedicated thread with its own loop.
+    """
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+    box: dict[str, Any] = {}
+
+    def _worker() -> None:
+        try:
+            box["value"] = asyncio.run(coro)
+        except BaseException as exc:  # noqa: BLE001 — re-raised below
+            box["error"] = exc
+
+    thread = threading.Thread(target=_worker)
+    thread.start()
+    thread.join()
+    if "error" in box:
+        raise box["error"]
+    return box["value"]
+
+
 def _cached_list(key: str, builder) -> list[dict[str, Any]]:
     hit = cache_get(key)
     if hit is not None:
         _refresh_cache_async(key, builder)
         return hit
-    data = asyncio.run(builder())
+    data = _run_coro(builder())
     cache_set(key, data, CACHE_TTL)
     return data
 
@@ -270,7 +299,7 @@ def get_dashboard_extras() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
         _refresh_cache_async("dashboard_most_discussed", _build_most_discussed)
         return d_hit, m_hit
 
-    debates, most = asyncio.run(_fetch_both_parallel())
+    debates, most = _run_coro(_fetch_both_parallel())
     cache_set("dashboard_debates", debates, CACHE_TTL)
     cache_set("dashboard_most_discussed", most, CACHE_TTL)
     return debates, most

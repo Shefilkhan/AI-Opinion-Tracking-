@@ -29,6 +29,29 @@ def _guess_severity(text: str) -> str:
     return "low"
 
 
+_ALLOWED_SEVERITY = {"low", "medium", "high", "critical"}
+_SEVERITY_SYNONYMS = {
+    "moderate": "medium", "mid": "medium", "med": "medium", "normal": "medium",
+    "severe": "high", "serious": "high", "elevated": "high", "major": "high",
+    "extreme": "critical", "urgent": "critical", "catastrophic": "critical",
+    "emergency": "critical", "minor": "low", "minimal": "low", "none": "low",
+    "informational": "low", "info": "low",
+}
+
+
+def _normalize_severity(value: object) -> str:
+    """Coerce an LLM-provided severity to the CrisisNarrative enum.
+
+    schemas/crisis.py requires low|medium|high|critical; the model sometimes
+    emits synonyms ("moderate", "severe"). Anything unknown maps to "medium",
+    so a stray value can never fail response validation with a 500.
+    """
+    sev = str(value or "medium").strip().lower()
+    if sev in _ALLOWED_SEVERITY:
+        return sev
+    return _SEVERITY_SYNONYMS.get(sev, "medium")
+
+
 def _heuristic_narratives(query: str, results: list[dict], *, max_n: int = 4) -> list[dict]:
     """Group by platform + top keywords when AI is unavailable."""
     negative = [r for r in results if (r.get("sentiment") or "").lower() == "negative"]
@@ -129,7 +152,7 @@ Focus on DISTINCT causes (outage vs CEO tweet vs leak). Return valid JSON only."
                     "id": str(uuid4()),
                     "label": str(item.get("label", "Unnamed narrative"))[:120],
                     "summary": str(item.get("summary", ""))[:300],
-                    "severity": str(item.get("severity", "medium"))[:20],
+                    "severity": _normalize_severity(item.get("severity")),
                     "negative_pct": float(item.get("negative_pct", 50)),
                     "mention_count": int(item.get("mention_count", 1)),
                     "primary_platform": str(item.get("primary_platform", "unknown"))[:50],

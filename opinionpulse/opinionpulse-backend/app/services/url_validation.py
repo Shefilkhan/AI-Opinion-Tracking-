@@ -54,7 +54,9 @@ def is_live_result(result: dict[str, Any]) -> bool:
     if platform == "devto":
         return "dev.to/" in url and "/search" not in url
     if platform == "hackernews":
-        return "ycombinator.com" in url
+        # HN "story" submissions carry the EXTERNAL article URL, not an
+        # ycombinator.com link; the URL already passed is_valid_url above.
+        return True
     if platform in ("guardian", "mastodon", "stackoverflow", "github", "bluesky"):
         return True
     return is_valid_url(result.get("url", ""))

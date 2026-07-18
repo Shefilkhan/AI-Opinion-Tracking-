@@ -30,10 +30,17 @@ def get_or_create_google_user(db: Session, profile: GoogleUserInfo) -> User:
                 status_code=status.HTTP_409_CONFLICT,
                 detail="This email is linked to a different Google account.",
             )
+        if not profile.email_verified:
+            # Never auto-link a Google identity whose email Google has NOT
+            # verified to an existing local account — that is an account
+            # takeover vector.
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Your Google email is not verified. Verify it with Google and try again.",
+            )
         by_email.google_id = profile.google_id
         _sync_google_profile(by_email, profile)
-        if profile.email_verified:
-            by_email.is_email_verified = True
+        by_email.is_email_verified = True
         if not by_email.is_active:
             by_email.is_active = True
         db.commit()

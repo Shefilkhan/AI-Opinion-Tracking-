@@ -200,6 +200,11 @@ def _downgrade_to_starter(db: Session, user: User) -> None:
 def _parse_renews_at(subscription: dict) -> Optional[datetime]:
     end = subscription.get("current_period_end")
     if not end:
+        # Stripe API 2025+ moved current_period_end onto the subscription items.
+        items = (subscription.get("items") or {}).get("data") or []
+        if items:
+            end = items[0].get("current_period_end")
+    if not end:
         return None
     return datetime.fromtimestamp(int(end), tz=timezone.utc)
 

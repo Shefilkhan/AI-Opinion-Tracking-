@@ -23,7 +23,8 @@ export async function redirectToCheckout(
   } catch (err) {
     if (err instanceof ApiError && err.status === 503) {
       throw new Error(
-        "Payments are not configured yet. Add your Stripe keys to the backend .env.local file."
+        "Payments are not configured yet. Add your Stripe keys to the backend .env.local file.",
+        { cause: err }
       )
     }
     throw err

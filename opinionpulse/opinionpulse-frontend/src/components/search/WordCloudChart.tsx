@@ -1,3 +1,4 @@
+import { useMemo } from "react"
 import type { SearchResponse } from "@/lib/api/types"
 import { proCard, cardTitle } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
@@ -10,15 +11,25 @@ type WordCloudChartProps = {
 export function WordCloudChart({ data }: WordCloudChartProps) {
   const keywords = data.trending_keywords || []
 
+  // Stable pseudo-random order (deterministic hash of the word) keeps the
+  // "cloud" look without reshuffling on every render — Math.random() during
+  // render is impure. Declared before the early return so the hook order
+  // stays constant (rules-of-hooks).
+  const shuffledKeywords = useMemo(() => {
+    const hash = (s: string) => {
+      let h = 0
+      for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) | 0
+      return h
+    }
+    return [...keywords].sort((a, b) => hash(a.word) - hash(b.word))
+  }, [keywords])
+
   if (keywords.length === 0) {
     return null
   }
 
   // Find max count to scale fonts
   const maxCount = Math.max(...keywords.map((k) => k.count), 1)
-
-  // Shuffle array for a more "cloud" like appearance rather than strictly ordered
-  const shuffledKeywords = [...keywords].sort(() => Math.random() - 0.5)
 
   return (
     <div className={cn(proCard, "p-5 flex flex-col")}>

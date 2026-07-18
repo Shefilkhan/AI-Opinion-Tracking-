@@ -149,6 +149,9 @@ def update_personal_alert(
             pass
 
     if body.enabled is not None:
+        if body.enabled and not row.alert_enabled:
+            # Re-enabling a paused alert counts against the plan's active limit.
+            check_keyword_alert_limit(current_user.id, db)
         row.alert_enabled = body.enabled
     if body.threshold is not None:
         meta["threshold"] = body.threshold

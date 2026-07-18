@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Cell, Pie, PieChart, ResponsiveContainer, Sector } from "recharts"
+import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts"
 import type { DashboardOverview } from "@/api/dashboard"
 import { dashCardStatic } from "@/lib/dash-classes"
 import { cn } from "@/lib/utils"
@@ -23,29 +23,6 @@ const SENTIMENT_DESCRIPTIONS: Record<string, string> = {
 function parsePercent(value: string): number {
   const n = parseInt(value.replace(/[^\d]/g, ""), 10)
   return Number.isFinite(n) ? n : 0
-}
-
-function ActiveShape(props: {
-  cx?: number
-  cy?: number
-  innerRadius?: number
-  outerRadius?: number
-  startAngle?: number
-  endAngle?: number
-  fill?: string
-}) {
-  const { cx = 0, cy = 0, innerRadius = 0, outerRadius = 0, startAngle, endAngle, fill } = props
-  return (
-    <Sector
-      cx={cx}
-      cy={cy}
-      innerRadius={innerRadius}
-      outerRadius={outerRadius + 4}
-      startAngle={startAngle}
-      endAngle={endAngle}
-      fill={fill}
-    />
-  )
 }
 
 export function SentimentDonutChart({ stats }: SentimentDonutChartProps) {
@@ -82,13 +59,16 @@ export function SentimentDonutChart({ stats }: SentimentDonutChartProps) {
                 paddingAngle={3}
                 dataKey="value"
                 stroke="none"
-                activeIndex={activeIndex}
-                activeShape={ActiveShape}
                 onMouseEnter={(_, index) => setActiveIndex(index)}
                 onMouseLeave={() => setActiveIndex(undefined)}
               >
-                {data.map((entry) => (
-                  <Cell key={entry.name} fill={entry.color} className="cursor-pointer" />
+                {data.map((entry, index) => (
+                  <Cell
+                    key={entry.name}
+                    fill={entry.color}
+                    className="cursor-pointer transition-opacity"
+                    opacity={activeIndex == null || activeIndex === index ? 1 : 0.45}
+                  />
                 ))}
               </Pie>
             </PieChart>

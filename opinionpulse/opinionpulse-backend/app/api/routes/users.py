@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -63,7 +64,14 @@ def patch_user_profile(
             )
 
     apply_profile_updates(current_user, data)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already taken",
+        )
     db.refresh(current_user)
     return profile_to_response(current_user)
 
@@ -74,7 +82,11 @@ def check_username_available(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    validate_username(username)
+    try:
+        validate_username(username)
+    except HTTPException:
+        # Invalid format or reserved name -> simply not available.
+        return {"available": False}
     taken = (
         db.query(User)
         .filter(
@@ -83,14 +95,7 @@ def check_username_available(
         )
         .first()
     )
-    reserved = username.strip().lower() in {
-        "admin",
-        "opinionpulse",
-        "support",
-        "test",
-        "user",
-    }
-    return {"available": not taken and not reserved}
+    return {"available": not taken}
 
 
 @router.post("/avatar")

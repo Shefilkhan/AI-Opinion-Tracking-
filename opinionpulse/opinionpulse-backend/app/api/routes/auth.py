@@ -347,13 +347,18 @@ def resend_otp(
 
     user = db.query(User).filter(User.email == payload.email.lower()).first()
     if user is None:
-        raise HTTPException(status_code=404, detail="No account found for this email.")
+        # Do not reveal whether an account exists (mirror forgot-password).
+        return ResendOtpResponse(
+            success=True,
+            message="If an account exists, a new code has been sent.",
+            dev_otp_code=None,
+        )
 
     plain_otp = otp_service.create_email_otp(db, user, purpose, background_tasks)
     log_auth_event("otp_resent", email=user.email, user_id=user.id, request=request)
     return ResendOtpResponse(
         success=True,
-        message="A new code has been sent",
+        message="If an account exists, a new code has been sent.",
         dev_otp_code=otp_service.dev_otp_payload(plain_otp),
     )
 
@@ -444,6 +449,10 @@ def reset_password(
     user.failed_login_attempts = 0
     user.lock_until = None
     db.commit()
+    # Security: a password reset invalidates every existing session.
+    from app.services.session_service import revoke_all_user_sessions
+
+    revoke_all_user_sessions(db, user.id)
     log_auth_event("password_reset", email=user.email, user_id=user.id, request=request)
     return AuthSuccessResponse(success=True, message="Password updated successfully.")
 

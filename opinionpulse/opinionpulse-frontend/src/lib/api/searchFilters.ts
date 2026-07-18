@@ -51,10 +51,9 @@ export function applyClientFilters(
   let results = [...data.results]
 
   if (filters.sentiment !== "all") {
-    const filtered = results.filter((r) => r.sentiment === filters.sentiment)
-    if (filtered.length > 0) {
-      results = filtered
-    }
+    // Apply unconditionally; if nothing matches, let the empty-state render
+    // rather than silently keeping the full (unfiltered) list.
+    results = results.filter((r) => r.sentiment === filters.sentiment)
   }
 
   results = sortResults(results, filters.sortBy)

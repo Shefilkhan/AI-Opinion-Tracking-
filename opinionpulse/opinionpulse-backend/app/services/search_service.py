@@ -403,15 +403,8 @@ async def run_search(
         "demo_mode": False,
         "peak_discussion": datetime.now(timezone.utc).strftime("Today at %I:%M %p"),
         "most_active_platform": max(
-            platforms_searched,
-            key=lambda p: sum(
-                1
-                for r in combined
-                if (p == "reddit" and r.get("platform") == "reddit")
-                or (p == "youtube" and r.get("platform") == "youtube")
-                or (p in TECH_SOURCES and r.get("platform") in ("devto", "hackernews"))
-                or (p in NEWS_SOURCES and r.get("platform") in ("news", "guardian"))
-            ),
+            {r.get("platform") for r in combined if r.get("platform")},
+            key=lambda p: sum(1 for r in combined if r.get("platform") == p),
             default="reddit",
         ),
         "results": combined[:40],

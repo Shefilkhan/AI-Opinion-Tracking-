@@ -113,8 +113,11 @@ def compute_metrics_from_history(
         avg_mentions = sum(b[1] for b in historical_buckets) / len(historical_buckets)
         avg_negative = sum(b[2] for b in historical_buckets) / len(historical_buckets)
     else:
-        avg_mentions = max(current_total * 0.5, 1.0)
-        avg_negative = max(current_negative * 0.5, 0.5)
+        # No history yet: use the current window as its own baseline so a
+        # brand watch's first scan cannot self-trigger a false crisis
+        # (ratio ~= 1 keeps volume/velocity below the "high" thresholds).
+        avg_mentions = max(float(current_total), 1.0)
+        avg_negative = max(float(current_negative), 0.5)
 
     volume = score_volume(current_total, avg_mentions)
     velocity = score_velocity(current_negative, avg_negative)

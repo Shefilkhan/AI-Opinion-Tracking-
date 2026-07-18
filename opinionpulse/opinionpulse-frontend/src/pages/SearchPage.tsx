@@ -145,15 +145,21 @@ export function SearchPage() {
         : data.results
 
     const headers = ["ID", "Platform", "Author", "Sentiment", "Sentiment Score", "Date", "Content", "URL"]
+    // Escape EVERY field (commas/quotes/newlines) so a comma in an author name
+    // or URL can't shift columns and corrupt the row.
+    const csvCell = (v: unknown) => {
+      const s = v == null ? "" : String(v)
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+    }
     const rows = exportRows.map(r => [
-      r.id,
-      r.platform,
-      r.author,
-      r.sentiment,
-      r.sentiment_score?.toFixed(2) || "",
-      r.posted_at,
-      `"${(r.content || "").replace(/"/g, '""').replace(/\n/g, ' ')}"`, // escape quotes and newlines
-      r.source_url
+      csvCell(r.id),
+      csvCell(r.platform),
+      csvCell(r.author),
+      csvCell(r.sentiment),
+      csvCell(r.sentiment_score?.toFixed(2) || ""),
+      csvCell(r.posted_at),
+      csvCell(r.content || ""),
+      csvCell(r.source_url),
     ])
     
     const csvContent = [

@@ -42,8 +42,11 @@ export function useAiInsights(
 
   const loadInsights = useCallback(async () => {
     if (!searchData || searchData.results.length === 0 || !aiEnabled) return
+    // Wait for usage to load before deciding. Treating a null (failed/pending)
+    // usage as "allowed" fired gated AI calls that 402'd and popped the upgrade
+    // modal mid-search; loadInsights re-runs once usage resolves.
+    if (!usage) return
     if (
-      usage &&
       !usage.features.ai_opinion_summary &&
       !usage.features.ai_debate_analysis &&
       !usage.features.ai_trend_prediction

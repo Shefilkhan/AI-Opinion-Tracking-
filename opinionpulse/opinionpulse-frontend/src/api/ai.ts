@@ -137,7 +137,7 @@ export type AiCrisisResponse = {
   donts: string[]
 }
 
-export async function generateCrisisResponse(data: { topic: string; results: any[] }): Promise<{ response: AiCrisisResponse; ai_enabled: boolean }> {
+export async function generateCrisisResponse(data: { topic: string; results: SearchResultItem[] }): Promise<{ response: AiCrisisResponse; ai_enabled: boolean }> {
   return apiRequest<{ response: AiCrisisResponse; ai_enabled: boolean }>("/api/ai/crisis-response", {
     method: "POST",
     body: data,

@@ -152,7 +152,7 @@ export function MarketPriceChart({ data, loading }: MarketPriceChartProps) {
                 borderRadius: "8px",
                 fontSize: "12px",
               }}
-              formatter={(value: number) => [formatPrice(value, data.currency), "Price"]}
+              formatter={(value) => [formatPrice(Number(value), data.currency), "Price"]}
             />
             <Area
               type="monotone"
