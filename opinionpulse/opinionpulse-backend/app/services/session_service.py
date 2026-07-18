@@ -57,6 +57,32 @@ def revoke_token_session(db: Session, token: str) -> None:
     db.commit()
 
 
+def revoke_all_user_sessions(db: Session, user_id: int) -> int:
+    """Delete every auth session for a user (e.g. after a password reset)."""
+    count = (
+        db.query(AuthSession)
+        .filter(AuthSession.user_id == user_id)
+        .delete(synchronize_session=False)
+    )
+    db.commit()
+    return count
+
+
+def revoke_other_user_sessions(db: Session, user_id: int, keep_token: str) -> int:
+    """Delete all of a user's sessions except the one for ``keep_token``."""
+    keep_hash = hash_session_token(keep_token)
+    count = (
+        db.query(AuthSession)
+        .filter(
+            AuthSession.user_id == user_id,
+            AuthSession.token_hash != keep_hash,
+        )
+        .delete(synchronize_session=False)
+    )
+    db.commit()
+    return count
+
+
 def is_session_valid(db: Session, token: str) -> bool:
     from app.core.security import decode_access_token
 
@@ -72,7 +98,9 @@ def is_session_valid(db: Session, token: str) -> bool:
         .first()
     )
     if row is None:
-        return True
+        # No live session row: the token was revoked (logout) or never
+        # registered. Deny it — server-side revocation depends on this.
+        return False
     expires = row.expires_at
     if expires.tzinfo is None:
         expires = expires.replace(tzinfo=timezone.utc)

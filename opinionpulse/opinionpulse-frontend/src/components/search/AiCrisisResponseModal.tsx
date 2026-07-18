@@ -2,6 +2,7 @@ import { useState } from "react"
 import { AlertTriangle, Bot, CheckCircle2, ChevronRight, XCircle } from "lucide-react"
 import { useMutation } from "@tanstack/react-query"
 import { generateCrisisResponse, type AiCrisisResponse } from "@/api/ai"
+import type { SearchResultItem } from "@/lib/api/types"
 import { Button } from "@/components/ui/button"
 import { btnPrimary } from "@/lib/ui-classes"
 
@@ -12,7 +13,7 @@ export function AiCrisisResponseModal({
   onClose,
 }: {
   topic: string
-  results: any[]
+  results: SearchResultItem[]
   isOpen: boolean
   onClose: () => void
 }) {

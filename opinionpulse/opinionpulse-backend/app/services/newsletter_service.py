@@ -18,13 +18,26 @@ logger = logging.getLogger(__name__)
 
 
 def _deliver_signup_emails(email_lower: str, *, is_new: bool) -> bool:
-    """Send welcome email always; admin alert only for brand-new signups."""
-    welcome_sent = send_newsletter_welcome_email(email_lower)
+    """Send welcome email (best-effort); admin alert only for new signups.
+
+    Email delivery must never fail the signup: the subscriber row is already
+    committed, so an SMTP error degrades to email_sent=False rather than a 503.
+    """
+    try:
+        welcome_sent = send_newsletter_welcome_email(email_lower)
+    except EmailSendError as exc:
+        logger.warning("Newsletter welcome email failed for %s: %s", email_lower, exc)
+        welcome_sent = False
 
     if is_new:
         admin_email = get_settings().newsletter_admin_email
         if admin_email:
-            send_newsletter_admin_notification(email_lower, admin_email)
+            try:
+                send_newsletter_admin_notification(email_lower, admin_email)
+            except EmailSendError as exc:
+                logger.warning(
+                    "Newsletter admin alert failed for %s: %s", email_lower, exc
+                )
 
     return welcome_sent
 

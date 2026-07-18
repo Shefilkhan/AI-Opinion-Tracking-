@@ -14,7 +14,7 @@ import { OtpInput } from "@/components/auth/OtpInput"
 import { useToast } from "@/components/ui/toast"
 import { useAuth } from "@/contexts/AuthContext"
 import { maskEmail } from "@/lib/auth/maskEmail"
-import { clearAuthSession } from "@/lib/clearAuthSession"
+import { removeToken } from "@/lib/authStore"
 import {
   getSelectedBillingInterval,
   getSelectedPlan,
@@ -59,7 +59,9 @@ export function VerifyOtpPage() {
   }, [email, navigate])
 
   useEffect(() => {
-    void clearAuthSession()
+    // Clear any stale local token synchronously so a fast OTP verify's fresh
+    // token can't be deleted by a late async logout (removeToken in finally).
+    removeToken()
     setUser(null)
   }, [email, setUser])
 

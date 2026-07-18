@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from urllib.parse import urlparse
 
 import requests
@@ -25,6 +26,10 @@ TIMEOUT = 12
 NEWS_CACHE_TTL = 180
 
 
+def _today_utc_date() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+
 def search_mediastack(query: str, time_range: str = "24h") -> list[dict]:
     key = get_settings().mediastack_api_key.strip()
     if not key:
@@ -39,7 +44,7 @@ def search_mediastack(query: str, time_range: str = "24h") -> list[dict]:
                 "keywords": quoted_phrase_query(query),
                 "languages": "en",
                 "sort": "published_desc",
-                "date": iso_date_days_ago(time_range),
+                "date": f"{iso_date_days_ago(time_range)},{_today_utc_date()}",
                 "limit": 20,
             }
             resp = requests.get(
@@ -73,7 +78,7 @@ def search_mediastack(query: str, time_range: str = "24h") -> list[dict]:
                 )
                 if row:
                     out.append(row)
-            out = filter_headline_results(out, query, fallback_to_all=False)
+            out = filter_headline_results(out, query, fallback_to_all=True)
             out = filter_by_time_range(out, time_range, fallback_to_all=False)
             out = sort_results_by_posted_at(out)
             log_platform_success("Mediastack", query, len(out))

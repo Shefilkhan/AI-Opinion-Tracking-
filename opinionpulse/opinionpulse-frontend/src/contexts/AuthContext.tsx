@@ -48,6 +48,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshUser().finally(() => setLoading(false))
   }, [refreshUser])
 
+  useEffect(() => {
+    // A 401 on any authenticated request dispatches this; drop the stale
+    // session so ProtectedRoute redirects to sign-in instead of degrading.
+    const onExpired = () => {
+      removeToken()
+      setUser(null)
+    }
+    window.addEventListener("opinionpulse:session-expired", onExpired)
+    return () =>
+      window.removeEventListener("opinionpulse:session-expired", onExpired)
+  }, [])
+
   const logout = useCallback(async () => {
     await logoutUser()
     setUser(null)

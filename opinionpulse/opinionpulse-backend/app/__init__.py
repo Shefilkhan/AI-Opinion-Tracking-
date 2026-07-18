@@ -1,9 +1,12 @@
 import sys
-import io
 
-# Windows console: avoid emoji logging crashes from print/platform helpers
+# Windows console: force UTF-8 so emoji in logs don't crash, WITHOUT replacing
+# the stream objects. Reassigning sys.stdout/stderr breaks pytest's output
+# capture and any captured pipe / embedding; reconfigure() keeps the same
+# objects and only changes the encoding.
 if sys.platform == "win32":
-    if hasattr(sys.stdout, "buffer"):
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    if hasattr(sys.stderr, "buffer"):
-        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass

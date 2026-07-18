@@ -101,12 +101,14 @@ def search_reddit(query: str, time_range: str = "24h", limit: int = 20) -> list[
                 f"?q={requests.utils.quote(query)}&sort=new&t={t}&limit={limit}"
             )
             resp = requests.get(url, headers=_headers(), timeout=TIMEOUT)
-            if resp.status_code == 403:
+            if resp.status_code in (403, 429):
                 results = _fetch_reddit_rss(query, time_range, t, limit)
                 results = sort_results_by_posted_at(results)
                 log_platform_success("Reddit (RSS fallback)", query, len(results))
                 return results
             resp.raise_for_status()
+            payload = resp.json()
+            children = (payload.get("data") or {}).get("children") or []
             results = []
             for child in children:
                 d = child.get("data") or {}

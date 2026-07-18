@@ -66,7 +66,11 @@ def analyze_sentiment(text: str) -> dict:
             continue
 
         prev = words[i - 1] if i > 0 else ""
-        is_negated = prev in NEGATORS or prev.endswith("nt")
+        # Contractions like "don't"/"can't" are already normalized to "not"
+        # above, so NEGATORS covers them. A bare .endswith("nt") test wrongly
+        # negated words after common tokens (government, president, current,
+        # investment, recent...), inverting sentiment across the product.
+        is_negated = prev in NEGATORS
 
         if word in POSITIVE_WORDS:
             if is_negated:

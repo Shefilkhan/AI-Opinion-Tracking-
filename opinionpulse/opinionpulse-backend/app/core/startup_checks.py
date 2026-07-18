@@ -32,3 +32,34 @@ def log_env_check() -> None:
             "APP_ENV": s.app_env,
         },
     )
+
+
+_DEFAULT_SECRET_KEY = "change_this_secret_key_later"
+_DEFAULT_OTP_SECRET = "change_this_otp_pepper_secret"
+
+
+def verify_production_secrets() -> None:
+    """Refuse to boot in production with placeholder security secrets.
+
+    In development we only warn, so local onboarding stays frictionless; in
+    production a default SECRET_KEY / OTP_SECRET (or a non-secure auth cookie)
+    is a real vulnerability and must block startup.
+    """
+    s = get_settings()
+    problems: list[str] = []
+    if not s.secret_key or s.secret_key == _DEFAULT_SECRET_KEY:
+        problems.append("SECRET_KEY is unset or still the placeholder default")
+    if not s.otp_secret or s.otp_secret == _DEFAULT_OTP_SECRET:
+        problems.append("OTP_SECRET is unset or still the placeholder default")
+    if s.app_env == "production" and not s.auth_cookie_secure:
+        problems.append("AUTH_COOKIE_SECURE should be true in production")
+
+    if not problems:
+        return
+
+    message = "Insecure configuration: " + "; ".join(problems)
+    if s.app_env == "production":
+        raise RuntimeError(
+            message + ". Refusing to start in production — set strong secrets."
+        )
+    logger.warning("%s (permitted in development only)", message)

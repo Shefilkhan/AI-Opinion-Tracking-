@@ -1,10 +1,12 @@
 from datetime import timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import extract_request_token, get_current_user
+from app.services.session_service import revoke_other_user_sessions
 from app.services.user_profile_service import validate_username
 from app.core.security import hash_password, verify_password
 from app.db.database import get_db
@@ -63,7 +65,14 @@ def update_profile(
             )
 
     apply_profile_updates(current_user, data)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already taken",
+        )
     db.refresh(current_user)
     return profile_to_response(current_user)
 
@@ -71,6 +80,7 @@ def update_profile(
 @router.put("/password")
 def update_password(
     payload: AccountPasswordUpdate,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -94,6 +104,11 @@ def update_password(
         href="/settings#privacy",
     )
     db.commit()
+    # Security: revoke every OTHER session so a token issued before the
+    # password change can't keep authenticating; the caller's stays valid.
+    token = extract_request_token(request)
+    if token:
+        revoke_other_user_sessions(db, current_user.id, token)
     return {"message": "Password updated successfully"}
 
 

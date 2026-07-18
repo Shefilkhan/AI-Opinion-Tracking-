@@ -188,7 +188,9 @@ def parse_data_sources(raw: Any) -> list[str] | str:
                 return parsed
         except (json.JSONDecodeError, TypeError):
             pass
-    return "all"
+    # Fail CLOSED on malformed config: default to the Starter source set, not
+    # "all", so a corrupt data_sources_json can't silently grant every source.
+    return ["reddit", "hackernews", "devto", "newsapi", "guardian", "bluesky", "mastodon"]
 
 
 def get_user_plan(user_id: int, db: Session) -> dict[str, Any]:
@@ -247,6 +249,8 @@ def get_or_create_usage(user_id: int, db: Session) -> dict[str, Any]:
             "ai_trend_calls": usage.ai_trend_calls,
         }
 
+    from sqlalchemy.exc import IntegrityError
+
     row = UsageTracking(
         id=str(uuid.uuid4()),
         user_id=user_id,
@@ -254,8 +258,13 @@ def get_or_create_usage(user_id: int, db: Session) -> dict[str, Any]:
         period_end=end,
     )
     db.add(row)
-    db.commit()
-    db.refresh(row)
+    try:
+        db.commit()
+        db.refresh(row)
+    except IntegrityError:
+        # Concurrent first-request-of-period created the row first; reuse it.
+        db.rollback()
+        return get_or_create_usage(user_id, db)
     return {
         "id": row.id,
         "user_id": row.user_id,

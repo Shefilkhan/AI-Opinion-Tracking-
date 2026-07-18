@@ -120,7 +120,7 @@ export function ChangePasswordSection({ email }: ChangePasswordSectionProps) {
   function handleUpdateWithCurrent() {
     const nextErrors: Record<string, string> = {}
     if (!currentPassword) nextErrors.current = "Current password is required."
-    if (newPassword.length < 6) nextErrors.new = "New password must be at least 6 characters."
+    if (newPassword.length < 8) nextErrors.new = "New password must be at least 8 characters."
     if (newPassword !== confirmPassword) nextErrors.confirm = "Passwords do not match."
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
@@ -131,7 +131,7 @@ export function ChangePasswordSection({ email }: ChangePasswordSectionProps) {
     const nextErrors: Record<string, string> = {}
     if (!otpSent) nextErrors.otp = "Send a verification code first."
     if (otpCode.length !== 6) nextErrors.otp = "Enter the 6-digit code from your email."
-    if (newPassword.length < 6) nextErrors.new = "New password must be at least 6 characters."
+    if (newPassword.length < 8) nextErrors.new = "New password must be at least 8 characters."
     if (newPassword !== confirmPassword) nextErrors.confirm = "Passwords do not match."
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return

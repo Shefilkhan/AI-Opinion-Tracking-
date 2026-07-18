@@ -1,4 +1,4 @@
-import { getToken } from "@/lib/authStore"
+import { getToken, removeToken } from "@/lib/authStore"
 import { triggerUpgradeModal } from "@/contexts/UpgradeModalContext"
 
 /** In dev, use Vite proxy (same origin). Override with VITE_API_BASE_URL in .env */
@@ -134,6 +134,14 @@ export async function apiRequest<T>(
         limit?.message ?? "Plan limit exceeded",
         true
       )
+    }
+    if (response.status === 401 && auth) {
+      // Session expired or revoked server-side. Clear the stale token and
+      // signal the app to re-authenticate instead of silently degrading.
+      removeToken()
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("opinionpulse:session-expired"))
+      }
     }
     throw new ApiError(
       response.status,

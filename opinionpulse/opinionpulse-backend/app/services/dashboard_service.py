@@ -1,3 +1,10 @@
+# ============================================================================
+# DEPRECATED - legacy project-based module. NOT mounted / NOT imported by the
+# running app. It references models removed when OpinionPulse moved to the
+# search-based data model (Project, Keyword, Source, Alert, Report,
+# SentimentResult), so importing or mounting it raises ImportError. Kept for
+# historical reference only - do NOT re-enable. See docs/AUDIT.md (Legacy).
+# ============================================================================
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 

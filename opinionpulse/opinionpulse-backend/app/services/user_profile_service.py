@@ -12,6 +12,12 @@ from app.db.models import PulseChatMessage, SavedSearch, SearchHistory, User
 from app.schemas.account import AccountProfileResponse, AccountStatsResponse
 
 
+RESERVED_USERNAMES = {
+    "admin", "administrator", "opinionpulse", "support", "test", "user",
+    "root", "api", "system", "moderator", "mod", "help", "billing",
+}
+
+
 def validate_username(username: str) -> None:
     u = username.strip()
     if len(u) < 3 or len(u) > 30:
@@ -23,6 +29,11 @@ def validate_username(username: str) -> None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username may only contain letters, numbers, and underscores",
+        )
+    if u.lower() in RESERVED_USERNAMES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="That username is reserved",
         )
 
 

@@ -1,6 +1,5 @@
 import { apiRequest } from "@/api/client"
 import type { SearchFilters, SearchResponse } from "@/lib/api/types"
-import { enrichSearchResponse } from "@/lib/api/sentiment"
 
 export type { SearchFilters, SearchResponse }
 
@@ -20,9 +19,8 @@ export async function searchOpinions(
         sort_by: filters.sortBy,
       },
     })
-    if (data.demo_mode) {
-      return enrichSearchResponse(data)
-    }
+    // Backend always returns demo_mode:false; the old client-side re-scoring
+    // path was dead code that could mask a degraded backend, so it's removed.
     return data
   } catch (err) {
     console.error("❌ Search API failed:", err)

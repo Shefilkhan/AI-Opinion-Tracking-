@@ -30,7 +30,7 @@ from app.api.routes import (
     users,
 )
 from app.core.config import get_settings, reload_settings
-from app.core.startup_checks import log_env_check
+from app.core.startup_checks import log_env_check, verify_production_secrets
 from app.db import models  # noqa: F401 — register models with metadata
 from app.db.database import Base, SessionLocal, engine
 from app.db.schema_sync import (
@@ -69,6 +69,7 @@ def ensure_database_exists() -> None:
 async def lifespan(app: FastAPI):
     reload_settings()
     log_env_check()
+    verify_production_secrets()
     if settings.app_env == "development":
         ensure_database_exists()
         Base.metadata.create_all(bind=engine)

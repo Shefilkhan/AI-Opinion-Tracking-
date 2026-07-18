@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 import time
 from typing import Any, Callable, Optional, TypeVar
 
 from app.core.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
@@ -20,7 +23,7 @@ def cache_get(key: str) -> Optional[Any]:
     if time.time() > expires_at:
         del _store[key]
         return None
-    print(f"📦 Cache hit: {key}")
+    logger.debug("Cache hit: %s", key)
     return value
 
 
@@ -28,7 +31,7 @@ def cache_set(key: str, value: Any, ttl_seconds: Optional[int] = None) -> None:
     ttl = ttl_seconds if ttl_seconds is not None else get_settings().cache_duration_seconds
     _store[key] = (time.time() + ttl, value)
     size = len(value) if isinstance(value, list) else 1
-    print(f"💾 Cached: {key} ({size} results)")
+    logger.debug("Cached: %s (%s items)", key, size)
 
 
 def cached(key: str, fetcher: Callable[[], T], ttl_seconds: Optional[int] = None) -> T:
@@ -36,7 +39,11 @@ def cached(key: str, fetcher: Callable[[], T], ttl_seconds: Optional[int] = None
     if hit is not None:
         return hit
     value = fetcher()
-    cache_set(key, value, ttl_seconds)
+    # Do not cache empty/falsy results: a transient upstream failure returns []
+    # and caching it would suppress that source for the entire TTL. Skipping the
+    # cache means a recovered source reappears on the next request instead.
+    if value:
+        cache_set(key, value, ttl_seconds)
     return value
 
 

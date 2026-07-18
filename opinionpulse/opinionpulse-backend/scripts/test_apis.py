@@ -4,16 +4,17 @@
 
 from __future__ import annotations
 
-import io
 import sys
 import time
 from dataclasses import dataclass
 
-# Windows console: avoid emoji logging crashes from platform helpers
-if hasattr(sys.stdout, "buffer"):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-if hasattr(sys.stderr, "buffer"):
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+# Windows console: force UTF-8 so emoji in logs don't crash, without replacing
+# the stream objects (replacing them breaks flushing under a captured pipe).
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
 
 # Allow imports from app package
 sys.path.insert(0, ".")
@@ -101,6 +102,7 @@ def main() -> int:
         ("MEDIASTACK_API_KEY", bool(s.mediastack_api_key.strip())),
         ("YOUTUBE_API_KEY", bool(s.youtube_api_key.strip())),
         ("GROQ_API_KEY", bool(s.groq_api_key.strip())),
+        ("ANTHROPIC_API_KEY", bool(s.anthropic_api_key.strip())),
         ("MASTODON_ACCESS_TOKEN", bool(s.mastodon_access_token.strip())),
         ("AI_PROVIDER", s.ai_provider),
         ("GOOGLE_OAUTH", is_google_oauth_configured()),
@@ -161,6 +163,32 @@ def main() -> int:
         return f"response={text!r}"
 
     results.append(run("Groq AI", test_groq))
+
+    def test_anthropic() -> str:
+        if not s.anthropic_api_key.strip():
+            return "skipped (no key)"
+        from anthropic import Anthropic
+
+        client = Anthropic(api_key=s.anthropic_api_key.strip())
+        msg = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=10,
+            messages=[{"role": "user", "content": "Reply with exactly: OK"}],
+        )
+        text = (msg.content[0].text if msg.content else "").strip()
+        return f"response={text!r}"
+
+    results.append(run("Anthropic AI", test_anthropic))
+
+    def test_search_reddit() -> str:
+        # Exercises the real search_reddit() path (JSON with RSS fallback),
+        # verifying the fixed Reddit adapter end-to-end.
+        from app.services.platforms.reddit_public import search_reddit
+
+        rows = search_reddit(QUERY, "24h", 5)
+        return f"{len(rows)} results"
+
+    results.append(run("Search: Reddit adapter", test_search_reddit))
 
     def test_db() -> str:
         from sqlalchemy import text

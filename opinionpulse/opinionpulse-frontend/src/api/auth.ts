@@ -190,6 +190,9 @@ export async function logoutUser(): Promise<void> {
       method: "POST",
       auth: true,
     })
+  } catch {
+    // Best-effort server-side revoke; the local token is cleared regardless,
+    // so logout must never reject (that left the UI half-logged-out).
   } finally {
     removeToken()
   }
