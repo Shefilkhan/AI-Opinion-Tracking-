@@ -15,6 +15,8 @@ def classify_content_type(result: dict[str, Any]) -> str:
     content = result.get("content", "") or ""
 
     if platform == "youtube":
+        if result.get("content_type") == "comment" or result.get("is_comment"):
+            return "comment"
         if "shorts" in url.lower():
             return "reel"
         return "video"

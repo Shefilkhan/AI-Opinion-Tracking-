@@ -118,6 +118,70 @@ def search_youtube(query: str, time_range: str = "7d", max_results: int = 15) ->
     return cached(cache_key, fetch, ttl_seconds=NEWS_CACHE_TTL)
 
 
+def fetch_youtube_comments(
+    video_ids: list[str],
+    query: str,
+    *,
+    max_per_video: int = 3,
+    max_videos: int = 5,
+) -> list[dict]:
+    """Fetch top comment threads from YouTube videos."""
+    if not video_ids:
+        return []
+
+    out: list[dict] = []
+    for video_id in video_ids[:max_videos]:
+        try:
+            data = _get(
+                "commentThreads",
+                {
+                    "part": "snippet",
+                    "videoId": video_id,
+                    "order": "relevance",
+                    "maxResults": max_per_video,
+                    "textFormat": "plainText",
+                },
+            )
+            for item in data.get("items") or []:
+                snippet = item.get("snippet", {})
+                top = snippet.get("topLevelComment", {}).get("snippet", {})
+                text = (top.get("textDisplay") or top.get("textOriginal") or "").strip()
+                if not text:
+                    continue
+                author = top.get("authorDisplayName") or "YouTube User"
+                comment_id = item.get("id") or top.get("authorChannelId", {}).get("value", "")
+                posted = top.get("publishedAt") or snippet.get("publishedAt")
+                likes = int(top.get("likeCount") or 0)
+                row = build_result(
+                    id=f"yt_comment_{comment_id or video_id}_{len(out)}",
+                    platform="youtube",
+                    author=author,
+                    title=f"Comment on video {video_id}",
+                    content=text,
+                    source_url=f"https://www.youtube.com/watch?v={video_id}&lc={comment_id}",
+                    source_label=f"youtube.com · comment",
+                    query=query,
+                    publication="YouTube",
+                    posted_at=posted,
+                    engagement={
+                        "likes": likes,
+                        "shares": 0,
+                        "comments": 0,
+                        "views": 0,
+                    },
+                    sentiment_text=text,
+                )
+                if row:
+                    row["content_type"] = "comment"
+                    row["is_comment"] = True
+                    row["metadata"] = {"video_id": video_id, "type": "comment"}
+                    out.append(row)
+        except Exception as exc:
+            log_platform_error("YouTube", f"comments:{video_id}", exc)
+            continue
+    return out
+
+
 def get_trending_youtube(region_code: str = "US") -> list[dict]:
     cache_key = f"youtube_trending_{region_code}"
 
