@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import Mention
 from app.services.dashboard_debates_service import get_live_debates, get_most_discussed
-from app.services.dashboard_live_service import get_dashboard_overview
+from app.services.trending_snapshot_service import get_todays_trending
 
 logger = logging.getLogger(__name__)
 
@@ -208,10 +208,9 @@ def fetch_aggregated_topics(
             }
 
     try:
-        overview = get_dashboard_overview(db=db)
-        for t in overview.get("trending_topics") or []:
-            name = (t.get("name") or "").strip()
-            query = (t.get("query") or name).replace("#", "").strip()
+        for s in get_todays_trending(db, 15):
+            name = (s.get("title") or "").strip()
+            query = (s.get("topic") or name).replace("#", "").strip()
             if not name:
                 continue
             key = _slug(query or name)
@@ -219,16 +218,16 @@ def fetch_aggregated_topics(
                 continue
             merged[key] = {
                 "id": _topic_id(name, query),
-                "name": name,
+                "name": name[:40] + ("…" if len(name) > 40 else ""),
                 "search_query": query or name.lower(),
-                "mention_count": _parse_mentions(t.get("mentions", "0")),
-                "sentiment_positive_pct": 55 if t.get("sentiment") == "positive" else 45,
-                "sentiment_negative_pct": 55 if t.get("sentiment") == "negative" else 35,
-                "direction": t.get("trend", "up"),
+                "mention_count": int(s.get("engagement_score") or 0),
+                "sentiment_positive_pct": 55 if s.get("sentiment") == "positive" else 45,
+                "sentiment_negative_pct": 55 if s.get("sentiment") == "negative" else 35,
+                "direction": "up",
                 "is_heated_debate": False,
-                "platforms": ["reddit"],
+                "platforms": [s.get("platform") or "news"],
                 "last_updated": datetime.now(timezone.utc).isoformat(),
-                "engagement_score": _parse_mentions(t.get("mentions", "0")),
+                "engagement_score": int(s.get("engagement_score") or 0),
             }
     except Exception as exc:
         logger.error("topics-table trending merge failed: %s", exc)

@@ -17,7 +17,16 @@ from app.services.sentiment_analysis import calculate_sentiment_summary
 logger = logging.getLogger(__name__)
 
 CACHE_TTL = 300
-FETCH_TIMEOUT = 6.0
+FETCH_TIMEOUT = 8.0
+# Dashboard widgets only need a few fast sources — not all 13 platforms per topic.
+DASHBOARD_SOURCE_ALLOWLIST = [
+    "reddit",
+    "newsapi",
+    "guardian",
+    "gnews",
+    "currents",
+    "hackernews",
+]
 
 DEBATE_TOPICS = [
     "AI regulation",
@@ -108,9 +117,17 @@ def _most_discussed_queries() -> list[str]:
 
 
 async def _build_live_debates() -> list[dict[str, Any]]:
-    topics = _debate_topics()
+    topics = _debate_topics()[:3]
     topic_results = await asyncio.gather(
-        *[search_all_platforms(t, "24h", fetch_timeout=FETCH_TIMEOUT) for t in topics]
+        *[
+            search_all_platforms(
+                t,
+                "24h",
+                fetch_timeout=FETCH_TIMEOUT,
+                source_allowlist=DASHBOARD_SOURCE_ALLOWLIST,
+            )
+            for t in topics
+        ]
     )
 
     debates: list[dict[str, Any]] = []
@@ -168,9 +185,17 @@ async def _build_live_debates() -> list[dict[str, Any]]:
 
 
 async def _build_most_discussed() -> list[dict[str, Any]]:
-    queries = _most_discussed_queries()
+    queries = _most_discussed_queries()[:5]
     query_results = await asyncio.gather(
-        *[search_all_platforms(q, "7d", fetch_timeout=FETCH_TIMEOUT) for q in queries]
+        *[
+            search_all_platforms(
+                q,
+                "7d",
+                fetch_timeout=FETCH_TIMEOUT,
+                source_allowlist=DASHBOARD_SOURCE_ALLOWLIST,
+            )
+            for q in queries
+        ]
     )
 
     discussed: list[dict[str, Any]] = []
@@ -268,11 +293,21 @@ def _cached_list(key: str, builder) -> list[dict[str, Any]]:
 
 
 def get_live_debates() -> list[dict[str, Any]]:
-    return _cached_list("dashboard_debates", _build_live_debates)
+    hit = cache_get("dashboard_debates")
+    if hit is not None:
+        _refresh_cache_async("dashboard_debates", _build_live_debates)
+        return hit
+    _refresh_cache_async("dashboard_debates", _build_live_debates)
+    return []
 
 
 def get_most_discussed() -> list[dict[str, Any]]:
-    return _cached_list("dashboard_most_discussed", _build_most_discussed)
+    hit = cache_get("dashboard_most_discussed")
+    if hit is not None:
+        _refresh_cache_async("dashboard_most_discussed", _build_most_discussed)
+        return hit
+    _refresh_cache_async("dashboard_most_discussed", _build_most_discussed)
+    return []
 
 
 async def _fetch_both_parallel() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -288,6 +323,20 @@ async def _fetch_both_parallel() -> tuple[list[dict[str, Any]], list[dict[str, A
     if isinstance(results[1], Exception):
         logger.error("Most discussed fetch failed: %s", results[1])
     return debates, most
+
+
+def get_dashboard_extras_fast() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Return cached debates/most-discussed immediately; warm cache in background on miss."""
+    d_hit = cache_get("dashboard_debates")
+    m_hit = cache_get("dashboard_most_discussed")
+    if d_hit is not None and m_hit is not None:
+        _refresh_cache_async("dashboard_debates", _build_live_debates)
+        _refresh_cache_async("dashboard_most_discussed", _build_most_discussed)
+        return d_hit, m_hit
+
+    _refresh_cache_async("dashboard_debates", _build_live_debates)
+    _refresh_cache_async("dashboard_most_discussed", _build_most_discussed)
+    return d_hit or [], m_hit or []
 
 
 def get_dashboard_extras() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:

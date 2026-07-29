@@ -42,7 +42,7 @@ const mainNav: NavItem[] = [
   { label: "Compare", href: "/compare", icon: Activity },
   { label: "Ask Pulse AI", href: "/chat", icon: MessageCircle, badge: "AI" },
   { label: "Reports", href: "/reports", icon: FileText },
-  { label: "Alerts", href: "/alerts", icon: Bell },
+  { label: "Brand Monitor", href: "/alerts", icon: Bell },
 ]
 
 function NavLinkItem({

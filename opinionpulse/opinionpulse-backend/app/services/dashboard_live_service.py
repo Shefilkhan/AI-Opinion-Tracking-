@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import threading
+from collections import Counter
 from datetime import datetime, timezone
 from typing import Any
 
@@ -12,22 +14,25 @@ from sqlalchemy.orm import Session
 
 from app.db.database import SessionLocal
 from app.db.models import SearchHistory
+from app.services.cache_utils import cache_get, cache_set
+from app.services.dashboard_debates_service import get_dashboard_extras_fast
 from app.services.keywords_utils import extract_trending_topics
 from app.services.platforms import (
     get_all_trending_news_async,
     get_trending_reddit,
     get_trending_youtube,
 )
-from app.services.dashboard_debates_service import get_dashboard_extras
 from app.services.search_service import platforms_live_status
 from app.services.sentiment_analysis import calculate_sentiment_summary
 from app.services.trending_snapshot_service import (
-    collect_trending_snapshots,
     get_todays_trending,
     get_yesterday_comparison,
 )
 
 logger = logging.getLogger(__name__)
+
+OVERVIEW_CACHE_KEY = "dashboard_overview"
+OVERVIEW_CACHE_TTL = 120
 
 
 def _time_ago(iso: str) -> str:
@@ -42,6 +47,16 @@ def _time_ago(iso: str) -> str:
         return f"{hours // 24} days ago"
     except Exception:
         return "Recently"
+
+
+def _trending_sentiment(raw: str | None) -> str:
+    """Map stored sentiment labels to dashboard API literals."""
+    value = (raw or "neutral").lower()
+    if value == "positive":
+        return "positive"
+    if value == "negative":
+        return "negative"
+    return "mixed"
 
 
 def _debate_from_row(row: dict[str, Any]) -> dict[str, Any]:
@@ -78,6 +93,93 @@ async def _gather_trending() -> tuple[list[dict], list[dict], list[dict]]:
     return reddit, news, youtube
 
 
+async def _gather_trending_bounded(timeout: float = 12.0) -> tuple[list[dict], list[dict], list[dict]]:
+    try:
+        return await asyncio.wait_for(_gather_trending(), timeout=timeout)
+    except asyncio.TimeoutError:
+        logger.warning("Dashboard trending gather timed out after %.0fs", timeout)
+        return [], [], []
+
+
+def _schedule_trending_snapshot_refresh() -> None:
+    """Warm trending snapshots in the background — never block HTTP requests."""
+
+    def _run() -> None:
+        try:
+            from app.services.trending_snapshot_service import collect_trending_snapshots
+
+            asyncio.run(collect_trending_snapshots())
+        except Exception as exc:
+            logger.warning("Background trending snapshot refresh failed: %s", exc)
+
+    threading.Thread(target=_run, daemon=True).start()
+
+
+def _platform_pulse_from_snapshots(
+    snapshots: list[dict[str, Any]], live: dict[str, bool]
+) -> list[dict[str, Any]]:
+    counts = Counter((s.get("platform") or "news").lower() for s in snapshots)
+    news_count = sum(
+        counts.get(k, 0)
+        for k in ("newsapi", "guardian", "gnews", "currents", "mediastack", "news")
+    )
+    news_live = any(
+        live.get(k) for k in ("newsapi", "guardian", "mediastack", "currents", "gnews")
+    )
+    return [
+        {
+            "platform": "reddit",
+            "label": "Reddit",
+            "mentions": f"{counts.get('reddit', 0)} trending posts",
+            "positive_pct": 61,
+            "live": True,
+        },
+        {
+            "platform": "devto",
+            "label": "Dev.to",
+            "mentions": "Tech articles",
+            "positive_pct": 65,
+            "live": True,
+        },
+        {
+            "platform": "hackernews",
+            "label": "Hacker News",
+            "mentions": "Tech discussions",
+            "positive_pct": 58,
+            "live": True,
+        },
+        {
+            "platform": "youtube",
+            "label": "YouTube",
+            "mentions": f"{counts.get('youtube', 0)} videos" if counts.get("youtube") else (
+                "Add YOUTUBE_API_KEY" if not live.get("youtube") else "Live"
+            ),
+            "positive_pct": 70,
+            "live": live.get("youtube", False),
+        },
+        {
+            "platform": "news",
+            "label": "Global News",
+            "mentions": f"{news_count} headlines" if news_count else (
+                "Add news API keys" if not news_live else "Live"
+            ),
+            "positive_pct": 52,
+            "live": news_live,
+        },
+    ]
+
+
+def _refresh_overview_cache_async() -> None:
+    def _run() -> None:
+        try:
+            payload = _build_dashboard_overview()
+            cache_set(OVERVIEW_CACHE_KEY, payload, OVERVIEW_CACHE_TTL)
+        except Exception as exc:
+            logger.error("Background dashboard overview refresh failed: %s", exc)
+
+    threading.Thread(target=_run, daemon=True).start()
+
+
 def _search_stats_today(db: Session) -> int:
     today = datetime.now(timezone.utc).date()
     return (
@@ -88,33 +190,36 @@ def _search_stats_today(db: Session) -> int:
     )
 
 
-def get_dashboard_overview(db: Session | None = None) -> dict[str, Any]:
+def _build_dashboard_overview(db: Session | None = None) -> dict[str, Any]:
     own_session = db is None
     if own_session:
         db = SessionLocal()
     snapshots: list[dict[str, Any]] = []
     trending_comparison: dict[str, int] = {"today": 0, "yesterday": 0, "delta": 0}
+    searches_today = 0
     try:
         searches_today = _search_stats_today(db)
         snapshots = get_todays_trending(db, 20)
         if not snapshots:
-            try:
-                asyncio.run(collect_trending_snapshots())
-                snapshots = get_todays_trending(db, 20)
-            except Exception as exc:
-                logger.warning("Could not seed trending snapshots: %s", exc)
+            _schedule_trending_snapshot_refresh()
         trending_comparison = get_yesterday_comparison(db)
     finally:
         if own_session and db:
             db.close()
 
     live = platforms_live_status()
+    reddit_data: list[dict] = []
+    news_data: list[dict] = []
+    youtube_data: list[dict] = []
 
-    try:
-        reddit_data, news_data, youtube_data = asyncio.run(_gather_trending())
-    except Exception as exc:
-        logger.error("Dashboard gather failed: %s", exc)
-        reddit_data, news_data, youtube_data = [], [], []
+    # Only hit live APIs when snapshots are empty (cold start). Even then, cap wait time.
+    if not snapshots:
+        try:
+            reddit_data, news_data, youtube_data = asyncio.run(
+                _gather_trending_bounded(timeout=12.0)
+            )
+        except Exception as exc:
+            logger.error("Dashboard gather failed: %s", exc)
 
     if snapshots:
         snapshot_rows = [
@@ -136,7 +241,7 @@ def get_dashboard_overview(db: Session | None = None) -> dict[str, Any]:
             {
                 "name": s["title"][:40],
                 "mentions": str(s["engagement_score"]),
-                "sentiment": s["sentiment"],
+                "sentiment": _trending_sentiment(s.get("sentiment")),
                 "trend": "up" if trending_comparison.get("delta", 0) >= 0 else "down",
                 "query": s["topic"],
             }
@@ -165,66 +270,65 @@ def get_dashboard_overview(db: Session | None = None) -> dict[str, Any]:
     else:
         summary = {"positive": 50, "negative": 30, "neutral": 20}
 
-    yt_views = sum(
-        (r.get("engagement") or {}).get("views", 0) for r in youtube_data
-    )
-    reddit_summary = (
-        calculate_sentiment_summary(reddit_data) if reddit_data else {"positive": 61}
-    )
-    news_summary = (
-        calculate_sentiment_summary(news_data) if news_data else {"positive": 52}
-    )
-    yt_summary = (
-        calculate_sentiment_summary(youtube_data) if youtube_data else {"positive": 70}
-    )
-
     news_live = any(
         live.get(k) for k in ("newsapi", "guardian", "mediastack", "currents", "gnews")
     )
-    platform_pulse = [
-        {
-            "platform": "reddit",
-            "label": "Reddit",
-            "mentions": f"{len(reddit_data)} hot posts" if reddit_data else "Live (no key)",
-            "positive_pct": reddit_summary.get("positive", 61),
-            "live": True,
-        },
-        {
-            "platform": "devto",
-            "label": "Dev.to",
-            "mentions": "Tech articles",
-            "positive_pct": 65,
-            "live": True,
-        },
-        {
-            "platform": "hackernews",
-            "label": "Hacker News",
-            "mentions": "Tech discussions",
-            "positive_pct": 58,
-            "live": True,
-        },
-        {
-            "platform": "youtube",
-            "label": "YouTube",
-            "mentions": f"{yt_views:,} views" if yt_views else ("Add YOUTUBE_API_KEY" if not live.get("youtube") else "Live"),
-            "positive_pct": yt_summary.get("positive", 70),
-            "live": live.get("youtube", False),
-        },
-        {
-            "platform": "news",
-            "label": "Global News",
-            "mentions": f"{len(news_data)} headlines" if news_data else ("Add news API keys" if not news_live else "Live"),
-            "positive_pct": news_summary.get("positive", 52),
-            "live": news_live,
-        },
-    ]
+    if snapshots:
+        platform_pulse = _platform_pulse_from_snapshots(snapshots, live)
+    else:
+        yt_views = sum(
+            (r.get("engagement") or {}).get("views", 0) for r in youtube_data
+        )
+        reddit_summary = (
+            calculate_sentiment_summary(reddit_data) if reddit_data else {"positive": 61}
+        )
+        news_summary = (
+            calculate_sentiment_summary(news_data) if news_data else {"positive": 52}
+        )
+        yt_summary = (
+            calculate_sentiment_summary(youtube_data) if youtube_data else {"positive": 70}
+        )
+        platform_pulse = [
+            {
+                "platform": "reddit",
+                "label": "Reddit",
+                "mentions": f"{len(reddit_data)} hot posts" if reddit_data else "Live (no key)",
+                "positive_pct": reddit_summary.get("positive", 61),
+                "live": True,
+            },
+            {
+                "platform": "devto",
+                "label": "Dev.to",
+                "mentions": "Tech articles",
+                "positive_pct": 65,
+                "live": True,
+            },
+            {
+                "platform": "hackernews",
+                "label": "Hacker News",
+                "mentions": "Tech discussions",
+                "positive_pct": 58,
+                "live": True,
+            },
+            {
+                "platform": "youtube",
+                "label": "YouTube",
+                "mentions": f"{yt_views:,} views" if yt_views else ("Add YOUTUBE_API_KEY" if not live.get("youtube") else "Live"),
+                "positive_pct": yt_summary.get("positive", 70),
+                "live": live.get("youtube", False),
+            },
+            {
+                "platform": "news",
+                "label": "Global News",
+                "mentions": f"{len(news_data)} headlines" if news_data else ("Add news API keys" if not news_live else "Live"),
+                "positive_pct": news_summary.get("positive", 52),
+                "live": news_live,
+            },
+        ]
 
-    try:
-        live_debates, most_discussed = get_dashboard_extras()
-    except Exception as exc:
-        logger.error("Dashboard extras failed: %s", exc)
-        live_debates, most_discussed = [], []
+    live_debates, most_discussed = get_dashboard_extras_fast()
 
+    has_data = bool(snapshots or reddit_data or news_data or youtube_data)
     return {
         "stats": {
             "searches_today": {
@@ -261,9 +365,22 @@ def get_dashboard_overview(db: Session | None = None) -> dict[str, Any]:
         "live_debates": live_debates,
         "most_discussed": most_discussed,
         "platform_pulse": platform_pulse,
-        "demo_mode": not any(
-            [reddit_data, news_data, youtube_data]
-        ),
+        "demo_mode": not has_data,
         "is_live": live,
         "last_updated": datetime.now(timezone.utc).isoformat(),
     }
+
+
+def get_dashboard_overview(db: Session | None = None) -> dict[str, Any]:
+    """Fast dashboard payload: DB snapshots + cache; live APIs only on cold start."""
+    if db is not None:
+        return _build_dashboard_overview(db=db)
+
+    hit = cache_get(OVERVIEW_CACHE_KEY)
+    if hit is not None:
+        _refresh_overview_cache_async()
+        return hit
+
+    payload = _build_dashboard_overview()
+    cache_set(OVERVIEW_CACHE_KEY, payload, OVERVIEW_CACHE_TTL)
+    return payload
