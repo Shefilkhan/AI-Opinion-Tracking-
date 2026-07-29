@@ -79,6 +79,30 @@ class PulseChatDataUsed(BaseModel):
     platforms: List[str] = Field(default_factory=list)
 
 
+class PulseChatReference(BaseModel):
+    id: int
+    citation_label: str
+    title: str
+    platform: str
+    author: str = "Unknown"
+    source_url: Optional[str] = None
+    source_label: Optional[str] = None
+    key_takeaway: str = ""
+    supporting_quote: str = ""
+    sentiment: str = "neutral"
+    posted_at: Optional[str] = None
+    engagement: dict = Field(default_factory=dict)
+
+
+class PulseChatCitedSource(BaseModel):
+    number: int
+    platform: str
+    title: str
+    url: str
+    author: str = ""
+    sentiment: Optional[str] = None
+
+
 class PulseChatMessageResponse(BaseModel):
     conversation_id: str
     message: str
@@ -88,6 +112,9 @@ class PulseChatMessageResponse(BaseModel):
     has_real_data: bool = False
     response_format: Optional[str] = None
     structured: Optional[dict[str, Any]] = None
+    references: List[PulseChatReference] = Field(default_factory=list)
+    cited_sources: List[PulseChatCitedSource] = Field(default_factory=list)
+    sources_fetched: int = 0
 
 
 class PulseConversationSummary(BaseModel):

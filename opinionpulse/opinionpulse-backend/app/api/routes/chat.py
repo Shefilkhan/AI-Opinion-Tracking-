@@ -11,9 +11,11 @@ from app.api.deps import get_current_user
 from app.db.database import get_db
 from app.db.models import User
 from app.schemas.chat import (
+    PulseChatCitedSource,
     PulseChatDataUsed,
     PulseChatMessageRequest,
     PulseChatMessageResponse,
+    PulseChatReference,
     PulseConversationListResponse,
     PulseConversationMessagesResponse,
     PulseConversationSummary,
@@ -78,6 +80,9 @@ async def send_pulse_chat_message(
                 "has_real_data": result.get("has_real_data", False),
                 "structured": result.get("structured"),
                 "response_format": result.get("response_format"),
+                "references": result.get("references", []),
+                "cited_sources": result.get("cited_sources", []),
+                "sources_fetched": result.get("sources_fetched", 0),
             },
         )
     except Exception as exc:
@@ -100,6 +105,17 @@ async def send_pulse_chat_message(
         has_real_data=result.get("has_real_data", False),
         response_format=result.get("response_format"),
         structured=result.get("structured"),
+        references=[
+            PulseChatReference(**ref)
+            for ref in result.get("references", [])
+            if isinstance(ref, dict)
+        ],
+        cited_sources=[
+            PulseChatCitedSource(**ref)
+            for ref in result.get("cited_sources", [])
+            if isinstance(ref, dict)
+        ],
+        sources_fetched=result.get("sources_fetched", 0),
     )
 
 

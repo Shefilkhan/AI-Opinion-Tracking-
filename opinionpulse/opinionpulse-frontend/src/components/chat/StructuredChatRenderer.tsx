@@ -12,7 +12,8 @@ import {
   YAxis,
 } from "recharts"
 import { Check } from "lucide-react"
-import type { PulseChatStructured } from "@/api/chat"
+import type { PulseChatReference, PulseChatStructured } from "@/api/chat"
+import { ResearchBriefRenderer } from "@/components/chat/ResearchBriefRenderer"
 import { cn } from "@/lib/utils"
 
 const MARKDOWN_CLASS =
@@ -37,6 +38,10 @@ const MARKDOWN_CLASS =
 type StructuredChatRendererProps = {
   content: string
   structured?: PulseChatStructured | null
+  references?: PulseChatReference[]
+  onCitationClick?: (refId: number) => void
+  showInlineReferences?: boolean
+  dark?: boolean
 }
 
 function ThemeBreakdown({ items }: { items: { label: string; pct: number; detail?: string }[] }) {
@@ -178,9 +183,29 @@ function markdownComponents() {
   }
 }
 
-export function StructuredChatRenderer({ content, structured }: StructuredChatRendererProps) {
+export function StructuredChatRenderer({
+  content,
+  structured,
+  references = [],
+  onCitationClick,
+  showInlineReferences = false,
+  dark = false,
+}: StructuredChatRendererProps) {
+  const showResearch = structured?.type === "research_brief"
   const showThemeFirst = structured?.type === "theme_breakdown"
   const showComparisonAfter = structured?.type === "comparison_chart"
+
+  if (showResearch && structured) {
+    return (
+      <ResearchBriefRenderer
+        structured={structured}
+        references={references}
+        onCitationClick={onCitationClick}
+        showInlineReferences={showInlineReferences}
+        dark={dark}
+      />
+    )
+  }
 
   return (
     <div>

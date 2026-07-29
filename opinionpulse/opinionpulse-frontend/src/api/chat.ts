@@ -1,12 +1,49 @@
 import { apiRequest } from "@/api/client"
 
+export type PulseChatCitedSource = {
+  number: number
+  platform: string
+  title: string
+  url: string
+  author?: string
+  sentiment?: string | null
+}
+
+export type PulseChatReference = {
+  id: number
+  citation_label: string
+  title: string
+  platform: string
+  author: string
+  source_url?: string | null
+  source_label?: string | null
+  key_takeaway?: string
+  supporting_quote?: string
+  sentiment?: string
+  posted_at?: string | null
+  engagement?: {
+    likes?: number
+    comments?: number
+    shares?: number
+    views?: number
+  }
+}
+
 export type PulseChatStructured = {
-  type: "theme_breakdown" | "comparison_chart"
+  type: "theme_breakdown" | "comparison_chart" | "research_brief"
   items?: { label: string; pct: number; detail?: string }[]
   a_label?: string
   b_label?: string
   dimensions?: { name: string; a: number; b: number }[]
   leaders?: { a?: string[]; b?: string[] }
+  title?: string
+  overview?: string
+  steps?: string[]
+  aspects?: {
+    aspect: string
+    summary: string
+    evidence_ids?: number[]
+  }[]
 }
 
 export type PulseChatDataUsed = {
@@ -25,6 +62,9 @@ export type PulseChatResponse = {
   has_real_data: boolean
   response_format?: string | null
   structured?: PulseChatStructured | null
+  references?: PulseChatReference[]
+  cited_sources?: PulseChatCitedSource[]
+  sources_fetched?: number
 }
 
 export type PulseConversation = {
@@ -43,6 +83,9 @@ export type PulseStoredMessage = {
     has_real_data?: boolean
     structured?: PulseChatStructured | null
     response_format?: string | null
+    references?: PulseChatReference[]
+    cited_sources?: PulseChatCitedSource[]
+    sources_fetched?: number
   }
   created_at: string
 }

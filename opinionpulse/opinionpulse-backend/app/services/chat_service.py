@@ -11,6 +11,19 @@ from typing import Any
 
 from app.core.config import get_settings
 from app.services.cache_utils import get_cached, set_cached
+from app.services.chat_research_service import (
+    RESEARCH_FORMAT_HINT,
+    build_references,
+    build_research_context_for_llm,
+    build_research_steps,
+    format_research_markdown,
+    validate_research_structured,
+)
+from app.services.chat_cited_service import (
+    build_cited_system_prompt,
+    extract_cited_sources,
+    generate_followup_suggestions,
+)
 from app.services.platforms.wikipedia import get_wikipedia_summary
 from app.services.search_service import search_all_platforms
 
@@ -447,7 +460,15 @@ def extract_structured_payload(response_text: str) -> dict[str, Any] | None:
     return None
 
 
-def _response_format_hint(message: str) -> str:
+def _should_use_research_mode(question_kind: str, fetched_results: list[dict[str, Any]]) -> bool:
+    if len(fetched_results) < 3:
+        return False
+    return question_kind in ("general", "sentiment", "trend")
+
+
+def _response_format_hint(message: str, use_research: bool = False) -> str:
+    if use_research:
+        return RESEARCH_FORMAT_HINT
     kind = classify_question(message)
     if kind == "factual":
         return (
@@ -474,6 +495,8 @@ def _response_format_hint(message: str) -> str:
 
 
 def _max_tokens_for_kind(kind: str) -> int:
+    if kind in ("research", "cited"):
+        return 1200
     if kind in ("compare", "pros_cons", "sentiment"):
         return 1200
     if kind == "trend":
@@ -507,7 +530,7 @@ def clean_response_text(response: str, response_format: str | None = None) -> st
         body,
         flags=re.IGNORECASE,
     ).strip()
-    limit = 2800 if response_format in ("compare", "pros_cons", "sentiment") else 650
+    limit = 2800 if response_format in ("compare", "pros_cons", "sentiment", "research", "cited") else 650
     return _trim_response_body(body, max_chars=limit)
 
 
@@ -576,7 +599,15 @@ Top signals:
 Use only these numbers. Be brief."""
 
 
-def _call_groq(messages: list[dict[str, str]], system_prompt: str, max_tokens: int = 400) -> str:
+def _call_groq(
+    messages: list[dict[str, str]],
+    system_prompt: str,
+    max_tokens: int = 400,
+    temperature: float = 0.35,
+    top_p: float = 0.9,
+    frequency_penalty: float = 0.0,
+    presence_penalty: float = 0.0,
+) -> str:
     client = get_groq_client()
     if client is None:
         raise RuntimeError("GROQ_API_KEY not configured")
@@ -585,7 +616,10 @@ def _call_groq(messages: list[dict[str, str]], system_prompt: str, max_tokens: i
         model=GROQ_MODEL,
         messages=formatted_messages,
         max_tokens=max_tokens,
-        temperature=0.35,
+        temperature=temperature,
+        top_p=top_p,
+        frequency_penalty=frequency_penalty,
+        presence_penalty=presence_penalty,
         stream=False,
     )
     return response.choices[0].message.content or ""
@@ -608,13 +642,26 @@ async def call_ai_provider(
     messages: list[dict[str, str]],
     system_prompt: str,
     max_tokens: int = 400,
+    temperature: float = 0.35,
+    top_p: float = 0.9,
+    frequency_penalty: float = 0.0,
+    presence_penalty: float = 0.0,
 ) -> str:
     """Call Groq first, fall back to Anthropic if available."""
 
     if get_groq_client():
         try:
             result = await asyncio.wait_for(
-                asyncio.to_thread(_call_groq, messages, system_prompt, max_tokens),
+                asyncio.to_thread(
+                    _call_groq,
+                    messages,
+                    system_prompt,
+                    max_tokens,
+                    temperature,
+                    top_p,
+                    frequency_penalty,
+                    presence_penalty,
+                ),
                 timeout=AI_TIMEOUT_SECONDS,
             )
             logger.info("Groq response received")
@@ -650,6 +697,11 @@ async def process_chat_message(
     sentiment_summary: dict[str, Any] = {}
     wiki_summary: dict | None = None
     search_query: str | None = None
+    references: list[dict[str, Any]] = []
+    cited_sources: list[dict[str, Any]] = []
+    use_research = False
+    use_cited_mode = False
+    cited_live_results: list[dict[str, Any]] = []
 
     if should_fetch_data(message):
         compare_queries = extract_comparison_queries(message)
@@ -707,11 +759,29 @@ async def process_chat_message(
                     blocks.append(_build_context_data(q, results, sentiment, wiki))
 
             sentiment_summary = _sentiment_summary(fetched_results)
-            context_data = "\n".join(blocks)
-            if classify_question(message) == "factual":
-                snippets = _score_snippets_from_results(fetched_results)
-                if snippets:
-                    context_data += f"\n\n{snippets}"
+            question_kind = classify_question(message)
+            references = build_references(fetched_results, limit=10)
+            cited_live_results = fetched_results[:15]
+            use_cited_mode = len(cited_live_results) >= 3
+            use_research = (
+                not use_cited_mode
+                and _should_use_research_mode(question_kind, fetched_results)
+                and bool(references)
+            )
+
+            if use_research:
+                context_data = build_research_context_for_llm(
+                    search_query or extract_search_query(message),
+                    references,
+                    sentiment_summary,
+                    wiki_summary,
+                )
+            else:
+                context_data = "\n".join(blocks)
+                if question_kind == "factual":
+                    snippets = _score_snippets_from_results(fetched_results)
+                    if snippets:
+                        context_data += f"\n\n{snippets}"
 
     messages_for_ai: list[dict[str, str]] = []
     for msg in conversation_history[-8:]:
@@ -720,28 +790,80 @@ async def process_chat_message(
                 {"role": msg["role"], "content": str(msg["content"])[:800]}
             )
 
-    format_hint = _response_format_hint(message)
     question_kind = classify_question(message)
+    if use_cited_mode:
+        question_kind = "cited"
+    elif use_research:
+        question_kind = "research"
+    format_hint = _response_format_hint(message, use_research=use_research)
     max_tokens = _max_tokens_for_kind(question_kind)
-    current_content = f"{format_hint}\n\nQuestion: {message}"
-    if context_data:
-        current_content = f"{context_data}\n\n{format_hint}\n\nQuestion: {message}"
+    temperature = 0.1 if use_cited_mode else 0.35
+    frequency_penalty = 0.3 if use_cited_mode else 0.0
+    presence_penalty = 0.1 if use_cited_mode else 0.0
 
-    messages_for_ai.append({"role": "user", "content": current_content})
+    if use_cited_mode:
+        system_prompt = build_cited_system_prompt(
+            cited_live_results,
+            search_query or extract_search_query(message) or message,
+        )
+        messages_for_ai.append({"role": "user", "content": message})
+    else:
+        system_prompt = SYSTEM_PROMPT
+        current_content = f"{format_hint}\n\nQuestion: {message}"
+        if context_data:
+            current_content = f"{context_data}\n\n{format_hint}\n\nQuestion: {message}"
+        messages_for_ai.append({"role": "user", "content": current_content})
 
     try:
         ai_response = await call_ai_provider(
-            messages_for_ai, SYSTEM_PROMPT, max_tokens=max_tokens
+            messages_for_ai,
+            system_prompt,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty,
         )
-        suggestions = extract_suggestions(ai_response)
-        structured = extract_structured_payload(ai_response)
-        clean_response = clean_response_text(ai_response, response_format=question_kind)
+        if use_cited_mode:
+            cited_sources = extract_cited_sources(ai_response, cited_live_results)
+            suggestions = await generate_followup_suggestions(
+                search_query or message, ai_response, cited_live_results
+            )
+            clean_response = clean_response_text(ai_response, response_format="cited")
+            structured = None
+        else:
+            suggestions = extract_suggestions(ai_response)
+            structured = extract_structured_payload(ai_response)
+            clean_response = clean_response_text(ai_response, response_format=question_kind)
+
+        if use_research and references:
+            topic = search_query or extract_search_query(message)
+            if structured and structured.get("type") == "research_brief":
+                structured = validate_research_structured(structured, len(references))
+                if not structured.get("steps"):
+                    structured["steps"] = build_research_steps(
+                        topic, len(fetched_results), len(references)
+                    )
+                clean_response = format_research_markdown(structured)
+            else:
+                structured = {
+                    "type": "research_brief",
+                    "title": f"{topic} — Live Opinion Overview",
+                    "overview": clean_response,
+                    "steps": build_research_steps(
+                        topic, len(fetched_results), len(references)
+                    ),
+                    "aspects": [],
+                }
+                clean_response = format_research_markdown(structured)
 
         return {
             "message": clean_response,
             "suggestions": suggestions,
             "response_format": question_kind,
             "structured": structured,
+            "references": references if use_research else [],
+            "cited_sources": cited_sources if use_cited_mode else [],
+            "sources_fetched": len(cited_live_results) if use_cited_mode else len(fetched_results),
             "data_used": {
                 "query": search_query,
                 "results_count": len(fetched_results),
@@ -784,6 +906,9 @@ async def process_chat_message(
         return {
             "message": friendly_msg,
             "suggestions": [],
+            "references": [],
+            "cited_sources": [],
+            "sources_fetched": len(fetched_results),
             "data_used": {
                 "query": search_query,
                 "results_count": len(fetched_results),
