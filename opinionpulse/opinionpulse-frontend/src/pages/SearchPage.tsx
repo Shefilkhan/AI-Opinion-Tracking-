@@ -37,6 +37,7 @@ const DEFAULT_FILTERS: SearchFilters = {
   timeRange: "24h",
   sentiment: "all",
   sortBy: "recent",
+  language: "all",
 }
 
 const QUICK_SEARCHES = [
@@ -77,11 +78,7 @@ export function SearchPage() {
       setError(null)
       setSearchParams({ q: trimmed })
       try {
-        const res = await searchOpinions(trimmed, {
-          ...f,
-          sentiment: "all",
-          sortBy: "recent",
-        })
+        const res = await searchOpinions(trimmed, f)
         if (requestId !== requestIdRef.current) return
         setBaseData(res)
         setData(applyClientFilters(res, f))
@@ -125,7 +122,7 @@ export function SearchPage() {
       setData(applyClientFilters(baseData, filters))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.platform, filters.timeRange, filters.sentiment, filters.sortBy])
+  }, [filters.platform, filters.timeRange, filters.sentiment, filters.sortBy, filters.language])
 
   function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault()
@@ -321,6 +318,24 @@ export function SearchPage() {
               <div className="grid w-full grid-cols-1 gap-6 xl:grid-cols-12 xl:gap-8">
                 <div className="flex flex-col gap-6 xl:col-span-8 xl:gap-8">
                   <SourcesStatusBar data={data} />
+
+                  {data.search_metadata &&
+                    (data.search_metadata.spam_filtered > 0 ||
+                      data.search_metadata.non_english_filtered > 0 ||
+                      data.search_metadata.brand_noise_filtered > 0 ||
+                      data.search_metadata.youtube_comments_included > 0) && (
+                      <InlineNotice variant="info">
+                        Filter stats:{" "}
+                        {data.search_metadata.spam_filtered > 0 &&
+                          `${data.search_metadata.spam_filtered} spam removed`}
+                        {data.search_metadata.brand_noise_filtered > 0 &&
+                          `${data.search_metadata.spam_filtered > 0 ? " · " : ""}${data.search_metadata.brand_noise_filtered} brand noise removed`}
+                        {data.search_metadata.non_english_filtered > 0 &&
+                          `${(data.search_metadata.spam_filtered > 0 || data.search_metadata.brand_noise_filtered > 0) ? " · " : ""}${data.search_metadata.non_english_filtered} non-English removed`}
+                        {data.search_metadata.youtube_comments_included > 0 &&
+                          `${(data.search_metadata.spam_filtered > 0 || data.search_metadata.brand_noise_filtered > 0 || data.search_metadata.non_english_filtered > 0) ? " · " : ""}${data.search_metadata.youtube_comments_included} YouTube comments included`}
+                      </InlineNotice>
+                    )}
                   
                   {data.sentiment_summary && data.sentiment_summary.negative > 30 && (
                     <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-5 flex items-center justify-between shadow-sm">

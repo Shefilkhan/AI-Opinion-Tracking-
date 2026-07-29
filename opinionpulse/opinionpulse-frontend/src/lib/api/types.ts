@@ -26,6 +26,7 @@ export type SearchFilters = {
   timeRange: string
   sentiment: string
   sortBy: string
+  language: string
 }
 
 export type SentimentDetail = {
@@ -141,4 +142,10 @@ export type SearchResponse = {
     sources_failed: number
   }
   relevance_mode?: string
+  search_metadata?: {
+    spam_filtered: number
+    non_english_filtered: number
+    brand_noise_filtered: number
+    youtube_comments_included: number
+  }
 }

@@ -17,6 +17,7 @@ export async function searchOpinions(
         time_range: filters.timeRange,
         sentiment: filters.sentiment,
         sort_by: filters.sortBy,
+        language: filters.language,
       },
     })
     // Backend always returns demo_mode:false; the old client-side re-scoring

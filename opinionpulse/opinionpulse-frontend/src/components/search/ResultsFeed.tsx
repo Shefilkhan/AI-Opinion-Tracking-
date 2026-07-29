@@ -116,6 +116,11 @@ function ResultItem({ r }: { r: SearchResultItem }) {
                   {CONTENT_ICONS[r.content_type] ?? "📝"} {r.content_type}
                 </span>
               )}
+              {r.platform === "youtube" && (
+                <span className="inline-flex items-center rounded bg-red-500/10 px-1.5 py-0.5 text-[10px] font-medium text-red-600">
+                  {r.content_type === "comment" ? "💬 Comment" : "▶️ Video"}
+                </span>
+              )}
               <span className="text-xs text-muted-foreground">{r.author}</span>
               <span className="text-xs text-muted-foreground">·</span>
               <span className="text-xs text-muted-foreground">

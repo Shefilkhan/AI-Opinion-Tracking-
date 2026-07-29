@@ -72,6 +72,8 @@ export function needsServerRefetch(
 ): boolean {
   if (!prev) return true
   return (
-    prev.platform !== next.platform || prev.timeRange !== next.timeRange
+    prev.platform !== next.platform ||
+    prev.timeRange !== next.timeRange ||
+    prev.language !== next.language
   )
 }

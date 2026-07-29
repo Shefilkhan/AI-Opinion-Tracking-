@@ -37,6 +37,9 @@ export function SourcesStatusBar({ data }: SourcesStatusBarProps) {
   const configured = data.apis_configured ?? data.platforms_live ?? {}
   const health = data.source_health ?? {}
   const searched = new Set(data.platforms_searched ?? [])
+  const resultPlatforms = new Set(
+    (data.results ?? []).map((r) => r.platform?.toLowerCase()).filter(Boolean)
+  )
   const freshness = data.data_freshness?.fetched_at
 
   const entries = Object.keys(SOURCE_LABELS).filter(
@@ -52,7 +55,8 @@ export function SourcesStatusBar({ data }: SourcesStatusBarProps) {
         {entries.map((key) => {
           const hasKey = configured[key] !== false
           const h = health[key]
-          const gotResults = searched.has(key) || (h?.count ?? 0) > 0
+          const gotResults =
+            resultPlatforms.has(key) || searched.has(key) || (h?.count ?? 0) > 0
           const label = SOURCE_LABELS[key]
           const variant =
             STATUS_VARIANT[h?.status ?? ""] ??

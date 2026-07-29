@@ -118,6 +118,17 @@ export function SearchFiltersBar({ filters, onChange }: SearchFiltersBarProps) {
           ]}
         />
       </FilterRow>
+      <FilterRow label="Language">
+        <SegmentedControl
+          aria-label="Filter by language"
+          value={filters.language}
+          onChange={(language) => onChange({ ...filters, language })}
+          options={[
+            { value: "all", label: "All languages" },
+            { value: "english", label: "English only" },
+          ]}
+        />
+      </FilterRow>
     </div>
   )
 }
