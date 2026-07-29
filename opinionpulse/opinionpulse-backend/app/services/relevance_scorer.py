@@ -7,6 +7,23 @@ from typing import Any
 
 from dateutil import parser as dateparser
 
+from app.services.source_quality import _term_in_text
+
+
+def _query_in_text(query: str, text: str) -> bool:
+    """True when all significant query terms appear in text."""
+    q = query.strip()
+    if not q or not text:
+        return False
+    q_lower = q.lower()
+    text_lower = text.lower()
+    if q_lower in text_lower:
+        return True
+    words = [w for w in q_lower.split() if len(w) > 2]
+    if not words:
+        return q_lower in text_lower
+    return all(_term_in_text(w, text_lower) for w in words)
+
 
 def score_result_relevance(result: dict[str, Any], original_query: str) -> float:
     """
@@ -14,19 +31,22 @@ def score_result_relevance(result: dict[str, Any], original_query: str) -> float
     Returns 0.0 to 1.0 — filter out results below 0.25.
     """
     score = 0.0
-    query_words = set(original_query.lower().split())
+    query_words = [w for w in original_query.lower().split() if len(w) > 2]
     text = (
         (result.get("title") or "") + " " + (result.get("content") or "")
     ).lower()
 
-    words_found = sum(1 for w in query_words if w in text)
-    term_score = words_found / max(len(query_words), 1)
+    if query_words:
+        words_found = sum(1 for w in query_words if _term_in_text(w, text))
+        term_score = words_found / len(query_words)
+    else:
+        term_score = 1.0 if _query_in_text(original_query, text) else 0.0
     score += term_score * 0.5
 
     title = (result.get("title") or "").lower()
-    if original_query.lower() in title:
+    if _query_in_text(original_query, title):
         score += 0.3
-    elif any(w in title for w in query_words if len(w) > 3):
+    elif any(_term_in_text(w, title) for w in query_words if len(w) > 3):
         score += 0.15
 
     eng = result.get("engagement") or {}

@@ -158,18 +158,29 @@ def filter_by_time_range(
     *,
     fallback_to_all: bool = False,
 ) -> list[dict[str, Any]]:
-    """Keep rows within the requested window."""
+    """Keep rows within the requested window, applied per platform."""
     if not results:
         return results
     cutoff = time_range_cutoff(time_range)
-    matched = [
-        row
-        for row in results
-        if (dt := parse_posted_at(row.get("posted_at"))) and dt >= cutoff
-    ]
-    if matched:
-        return matched
-    return results if fallback_to_all else []
+
+    by_platform: dict[str, list[dict[str, Any]]] = {}
+    for row in results:
+        platform = (row.get("platform") or "unknown").lower()
+        by_platform.setdefault(platform, []).append(row)
+
+    filtered: list[dict[str, Any]] = []
+    for plat_results in by_platform.values():
+        matched = [
+            row
+            for row in plat_results
+            if (dt := parse_posted_at(row.get("posted_at"))) and dt >= cutoff
+        ]
+        if matched:
+            filtered.extend(matched)
+        elif fallback_to_all:
+            filtered.extend(plat_results)
+
+    return filtered
 
 
 def make_search_cache_key(

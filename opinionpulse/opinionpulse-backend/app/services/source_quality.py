@@ -49,13 +49,37 @@ def query_terms(query: str) -> list[str]:
     return [t for t in query.lower().split() if len(t) > 2]
 
 
+def _term_variants(term: str) -> list[str]:
+    """Return term plus common singular/plural variants."""
+    t = term.lower().strip()
+    if not t:
+        return []
+    variants = {t}
+    if t.endswith("ies") and len(t) > 4:
+        variants.add(t[:-3] + "y")
+    elif t.endswith("es") and len(t) > 3:
+        variants.add(t[:-2])
+        variants.add(t[:-1])
+    elif t.endswith("s") and len(t) > 3 and not t.endswith("ss"):
+        variants.add(t[:-1])
+    elif not t.endswith("s"):
+        variants.add(f"{t}s")
+        if t.endswith("y") and len(t) > 2:
+            variants.add(f"{t[:-1]}ies")
+    return list(variants)
+
+
 def _term_in_text(term: str, text: str) -> bool:
-    """Match whole words for short terms (e.g. ai, btc) to reduce noise."""
+    """Match whole words for short terms; handle singular/plural variants."""
     if not term or not text:
         return False
-    if len(term) <= 4:
-        return bool(re.search(rf"\b{re.escape(term)}\b", text, re.IGNORECASE))
-    return term.lower() in text.lower()
+    for variant in _term_variants(term):
+        if len(variant) <= 4:
+            if re.search(rf"\b{re.escape(variant)}\b", text, re.IGNORECASE):
+                return True
+        elif variant.lower() in text.lower():
+            return True
+    return False
 
 
 def query_term_coverage(query: str, text: str) -> float:
@@ -124,8 +148,14 @@ def matches_search_query(query: str, result: dict[str, Any]) -> bool:
             return False
         return title_cov >= 0.34 or q_lower in combined_lower
 
-    # Single-term queries: must appear as a whole word in title or body.
-    return _term_in_text(terms[0], combined_lower)
+    # Single-term queries: whole word in title/body, or in URL for social posts.
+    if _term_in_text(terms[0], combined_lower):
+        return True
+    if not is_news_result(result):
+        url = (result.get("source_url") or result.get("url") or "").lower()
+        if url and _term_in_text(terms[0], url):
+            return True
+    return False
 
 
 def strip_urls(text: str) -> str:
@@ -218,9 +248,9 @@ def relevance_score(query: str, result: dict[str, Any]) -> int:
         score += 3
 
     for term in terms:
-        if term in title:
+        if _term_in_text(term, title):
             score += 3
-        elif term in content:
+        elif _term_in_text(term, content):
             score += 2
 
     if not terms and q_lower in combined:
