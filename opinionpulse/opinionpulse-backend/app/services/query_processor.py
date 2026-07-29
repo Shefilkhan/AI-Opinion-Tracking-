@@ -84,17 +84,20 @@ class QueryProcessor:
         }
 
     def _clean(self, query: str) -> str:
+        q = query.strip()
         q = re.sub(
             r"^(what|how|why|when|where|who|is|are|does|do)\s+",
             "",
-            query.lower().strip(),
+            q,
+            flags=re.IGNORECASE,
         )
         q = re.sub(
             r"^(people think about|opinion on|sentiment about|views on)\s+",
             "",
             q,
+            flags=re.IGNORECASE,
         )
-        return q.strip().title()
+        return q.strip()
 
     def _detect_intent(self, query: str) -> str:
         q = query.lower()
@@ -184,15 +187,12 @@ class QueryProcessor:
         return query
 
     def _mastodon_query(self, query: str, expansions: list) -> str:
-        del expansions
         tag = query.replace(" ", "").lower()
-        return f"#{tag}"
+        return f"{query} #{tag}"
 
     def _news_query(self, query: str, disambiguation: Optional[str]) -> str:
         if disambiguation:
             return f'"{query}" OR "{disambiguation}"'
-        if len(query.split()) == 1:
-            return f'"{query}"'
         return query
 
     def _so_query(self, query: str, intent: str) -> str:

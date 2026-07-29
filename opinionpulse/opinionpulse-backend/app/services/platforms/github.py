@@ -63,6 +63,24 @@ def search_github(query: str, time_range: str = "24h", limit: int = 15) -> list[
                 timeout=TIMEOUT,
             )
 
+            if resp.status_code == 401:
+                logger.warning("GitHub auth failed (401), retrying without token")
+                unauth_headers = {
+                    "Accept": "application/vnd.github+json",
+                    "User-Agent": "OpinionPulse/1.0",
+                }
+                resp = requests.get(
+                    f"{GITHUB_API_BASE}/search/issues",
+                    params={
+                        "q": search_q,
+                        "sort": "updated",
+                        "order": "desc",
+                        "per_page": limit,
+                    },
+                    headers=unauth_headers,
+                    timeout=TIMEOUT,
+                )
+
             if resp.status_code == 403:
                 print("⚠️ GitHub rate limit exceeded")
                 return []
