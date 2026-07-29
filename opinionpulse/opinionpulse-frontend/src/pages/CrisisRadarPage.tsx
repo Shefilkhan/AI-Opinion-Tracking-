@@ -195,10 +195,10 @@ export function CrisisRadarPage() {
                         </span>
                         <div className="min-w-0 flex-1">
                           <span className="block truncate font-medium text-[var(--dash-text)]">
-                            {p.keyword}
+                            {p.name || p.keyword}
                           </span>
                           <span className="text-xs text-[var(--dash-text-faint)]">
-                            {p.mention_count_30m} mentions · {p.negative_pct_30m}% neg (30m)
+                            {p.spike_label ?? `${p.mention_count_30m} mentions · ${p.negative_pct_30m}% neg`}
                           </span>
                         </div>
                         <CrisisQuadrantBadge quadrant={p.quadrant} />
@@ -228,6 +228,30 @@ export function CrisisRadarPage() {
                           <p className="mt-1 text-sm text-[var(--dash-text-mid)]">
                             {selectedPoint.status_explanation}
                           </p>
+                          {selectedPoint.spike_label && (
+                            <p
+                              className={cn(
+                                "mt-2 inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold",
+                                selectedPoint.spike_severity === "critical" &&
+                                  "bg-red-500/10 text-red-600",
+                                selectedPoint.spike_severity === "elevated" &&
+                                  "bg-orange-500/10 text-orange-600",
+                                selectedPoint.spike_severity === "watch" &&
+                                  "bg-amber-500/10 text-amber-700",
+                                (!selectedPoint.spike_severity ||
+                                  selectedPoint.spike_severity === "normal") &&
+                                  "bg-muted text-muted-foreground"
+                              )}
+                            >
+                              <Zap className="size-3.5" />
+                              {selectedPoint.spike_label}
+                              {selectedPoint.baseline_negative_30m > 0 && (
+                                <span className="font-normal opacity-80">
+                                  · baseline {selectedPoint.baseline_negative_30m} neg / 30m
+                                </span>
+                              )}
+                            </p>
+                          )}
                         </div>
                         <CrisisQuadrantBadge quadrant={selectedPoint.quadrant} />
                       </div>

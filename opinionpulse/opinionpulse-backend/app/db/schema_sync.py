@@ -329,3 +329,29 @@ def ensure_chat_messages_schema(engine: Engine) -> None:
                 """
             )
         )
+
+
+def ensure_alert_preferences_schema(engine: Engine) -> None:
+    """Create user_alert_preferences table if missing."""
+    inspector = inspect(engine)
+    if "user_alert_preferences" in inspector.get_table_names():
+        return
+
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                CREATE TABLE user_alert_preferences (
+                    user_id INT NOT NULL PRIMARY KEY,
+                    email_crisis TINYINT(1) NOT NULL DEFAULT 1,
+                    email_weekly_report TINYINT(1) NOT NULL DEFAULT 0,
+                    slack_webhook_url VARCHAR(512) NULL,
+                    slack_crisis TINYINT(1) NOT NULL DEFAULT 0,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        ON UPDATE CURRENT_TIMESTAMP,
+                    CONSTRAINT fk_alert_prefs_user
+                        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+                """
+            )
+        )

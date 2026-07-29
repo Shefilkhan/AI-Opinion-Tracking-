@@ -107,6 +107,9 @@ class User(Base):
     notifications: Mapped[list["UserNotification"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    alert_preferences: Mapped[Optional["UserAlertPreferences"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan", uselist=False
+    )
 
 
 class Plan(Base):
@@ -454,3 +457,25 @@ class UserNotification(Base):
     )
 
     user: Mapped["User"] = relationship(back_populates="notifications")
+
+
+class UserAlertPreferences(Base):
+    """Email / Slack alert channel preferences for brand monitoring."""
+
+    __tablename__ = "user_alert_preferences"
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    email_crisis: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    email_weekly_report: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    slack_webhook_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    slack_crisis: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    user: Mapped["User"] = relationship(back_populates="alert_preferences")

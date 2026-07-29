@@ -5,6 +5,7 @@ export type CrisisQuadrant = "quiet" | "noise" | "watch" | "crisis"
 export type RadarPoint = {
   watch_id: string
   keyword: string
+  name?: string | null
   enabled: boolean
   volume_score: number
   velocity_score: number
@@ -15,6 +16,11 @@ export type RadarPoint = {
   negative_count_30m: number
   negative_pct_30m: number
   baseline_negative_30m: number
+  baseline_mentions_30m?: number
+  negative_spike_multiplier?: number
+  volume_spike_multiplier?: number
+  spike_label?: string
+  spike_severity?: string
   last_scanned_at: string | null
   in_crisis: boolean
 }

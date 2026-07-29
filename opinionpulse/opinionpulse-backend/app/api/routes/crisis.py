@@ -79,7 +79,10 @@ def get_crisis_radar(
 ):
     """Crisis Radar matrix data for all of the user's brand watches."""
     watches = _alert_rows_for_user(db, current_user.id)
-    points = [radar_point_from_bucket(w, latest_bucket_for_watch(db, w)) for w in watches]
+    points = [
+        radar_point_from_bucket(w, latest_bucket_for_watch(db, w), db)
+        for w in watches
+    ]
     return CrisisRadarResponse(
         points=points,
         legend=RADAR_LEGEND,
@@ -96,7 +99,7 @@ async def get_crisis_detail(
 ):
     watch = _get_user_watch(watch_id, current_user, db)
     bucket = latest_bucket_for_watch(db, watch)
-    point = radar_point_from_bucket(watch, bucket)
+    point = radar_point_from_bucket(watch, bucket, db)
 
     latest_event = (
         db.query(CrisisEvent)

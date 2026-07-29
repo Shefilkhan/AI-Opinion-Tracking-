@@ -15,6 +15,7 @@ from app.api.routes import (
     ai,
     auth,
     billing,
+    brand_watches,
     chat,
     crisis,
     dashboard,
@@ -34,6 +35,7 @@ from app.core.startup_checks import log_env_check, verify_production_secrets
 from app.db import models  # noqa: F401 — register models with metadata
 from app.db.database import Base, SessionLocal, engine
 from app.db.schema_sync import (
+    ensure_alert_preferences_schema,
     ensure_chat_messages_schema,
     ensure_mentions_schema,
     ensure_plans_schema,
@@ -78,6 +80,7 @@ async def lifespan(app: FastAPI):
     ensure_mentions_schema(engine)
     ensure_trending_snapshots_schema(engine)
     ensure_chat_messages_schema(engine)
+    ensure_alert_preferences_schema(engine)
     with SessionLocal() as db:
         seed_default_plans(db)
         load_plans(db)
@@ -138,6 +141,7 @@ app.include_router(chat.router)
 app.include_router(users.router)
 app.include_router(settings_routes.router)
 app.include_router(personal_alerts.router)
+app.include_router(brand_watches.router)
 app.include_router(notifications.router)
 app.include_router(crisis.router)
 app.include_router(market.router)

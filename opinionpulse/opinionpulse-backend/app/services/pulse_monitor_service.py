@@ -8,10 +8,20 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 
 from app.db.models import CrisisEvent, PulseBucket, SavedSearch, User
+from app.services.brand_watch_service import (
+    build_search_terms,
+    fetch_bundle_results,
+    parse_watch_meta,
+    spike_summary,
+    watch_display_name,
+)
+from app.services.alert_preferences_service import should_email_crisis, should_slack_crisis
 from app.services.crisis_narrative_service import cluster_narratives
 from app.services.crisis_timeline_service import build_spread_timeline
 from app.services.email_service import send_crisis_alert_email
 from app.services.notification_service import create_user_notification
+from app.services.slack_service import send_slack_crisis_alert
+from app.core.config import get_settings
 from app.services.pulse_metrics import (
     QUADRANT_EXPLANATIONS,
     QUADRANT_LABELS,
@@ -132,15 +142,21 @@ async def scan_brand_watch(
     bucket_start = floor_to_bucket(now, BUCKET_MINUTES)
     window_start = now - timedelta(minutes=BUCKET_MINUTES)
     query = watch.query.strip()
+    meta = parse_watch_meta(watch)
+    terms = build_search_terms(meta, query)
+    display_name = watch_display_name(watch, meta)
 
-    search_payload = await run_search(
-        query=query,
-        platform="all",
-        time_range="24h",
-        sentiment="all",
-        sort_by="recent",
-    )
-    results = search_payload.get("results") or []
+    if len(terms) > 1:
+        results = await fetch_bundle_results(terms, time_range="24h")
+    else:
+        search_payload = await run_search(
+            query=query,
+            platform="all",
+            time_range="24h",
+            sentiment="all",
+            sort_by="recent",
+        )
+        results = search_payload.get("results") or []
     window_results = filter_results_in_window(results, start=window_start, end=now)
     counts = bucket_counts(window_results)
 
@@ -154,6 +170,15 @@ async def scan_brand_watch(
         history,
         current_total=counts["total"],
         current_negative=counts["negative"],
+    )
+    avg_mentions = (
+        sum(b[1] for b in history) / len(history) if history else float(counts["total"] or 1)
+    )
+    spike = spike_summary(
+        current_negative=counts["negative"],
+        baseline_negative=baseline_neg,
+        current_mentions=counts["total"],
+        baseline_mentions=avg_mentions,
     )
 
     _upsert_bucket(
@@ -214,7 +239,7 @@ async def scan_brand_watch(
                 user_id=watch.user_id,
                 type="crisis_detected",
                 title="Crisis detected",
-                message=f'Negative sentiment spiked for "{query}". Review it on Crisis Radar.',
+                message=f'{spike["spike_label"]} for "{display_name}". Review Crisis Radar.',
                 href="/crisis",
             )
             db.commit()
@@ -224,20 +249,35 @@ async def scan_brand_watch(
                 user_id=watch.user_id,
                 type="watch_detected",
                 title="Sentiment watch",
-                message=f'"{query}" is trending negative. Keep an eye on it in Crisis Radar.',
+                message=f'"{display_name}" is trending negative. {spike["spike_label"]}',
                 href="/crisis",
             )
             db.commit()
 
-        if should_alert and user and user.email:
-            alert_sent = send_crisis_alert_email(
-                to_email=user.email,
-                keyword=query,
-                volume_score=volume,
-                velocity_score=velocity,
-                summary=summary or "",
-                narratives=narratives,
-            )
+        if should_alert and user:
+            settings = get_settings()
+            if user.email and should_email_crisis(db, user):
+                alert_sent = send_crisis_alert_email(
+                    to_email=user.email,
+                    keyword=display_name,
+                    volume_score=volume,
+                    velocity_score=velocity,
+                    summary=summary or spike["spike_label"],
+                    narratives=narratives,
+                )
+            slack_ok, webhook = should_slack_crisis(db, user)
+            if slack_ok and webhook:
+                slack_sent = send_slack_crisis_alert(
+                    webhook,
+                    watch_name=display_name,
+                    keyword=query,
+                    volume_score=volume,
+                    velocity_score=velocity,
+                    summary=summary or "",
+                    spike_label=spike["spike_label"],
+                    frontend_url=settings.frontend_url,
+                )
+                alert_sent = alert_sent or slack_sent
             event.alert_sent = alert_sent
             db.commit()
 
@@ -270,6 +310,8 @@ async def scan_brand_watch(
         "negative_count_30m": counts["negative"],
         "negative_pct_30m": neg_pct,
         "baseline_negative_30m": baseline_neg,
+        "baseline_mentions_30m": round(avg_mentions, 2),
+        **spike,
         "last_scanned_at": now.isoformat(),
         "in_crisis": quadrant == "crisis",
         "event_id": event_id,
@@ -287,11 +329,16 @@ def latest_bucket_for_watch(db: Session, watch: SavedSearch) -> PulseBucket | No
     )
 
 
-def radar_point_from_bucket(watch: SavedSearch, bucket: PulseBucket | None) -> dict:
+def radar_point_from_bucket(
+    watch: SavedSearch,
+    bucket: PulseBucket | None,
+    db: Session | None = None,
+) -> dict:
     if bucket is None:
         return {
             "watch_id": watch.id,
             "keyword": watch.query,
+            "name": watch_display_name(watch, parse_watch_meta(watch)),
             "enabled": watch.alert_enabled,
             "volume_score": 0.0,
             "velocity_score": 0.0,
@@ -302,6 +349,11 @@ def radar_point_from_bucket(watch: SavedSearch, bucket: PulseBucket | None) -> d
             "negative_count_30m": 0,
             "negative_pct_30m": 0.0,
             "baseline_negative_30m": 0.0,
+            "baseline_mentions_30m": 0.0,
+            "negative_spike_multiplier": 0.0,
+            "volume_spike_multiplier": 0.0,
+            "spike_label": "No data yet",
+            "spike_severity": "normal",
             "last_scanned_at": None,
             "in_crisis": False,
         }
@@ -311,9 +363,31 @@ def radar_point_from_bucket(watch: SavedSearch, bucket: PulseBucket | None) -> d
         if bucket.mention_count
         else 0.0
     )
+
+    baseline_neg = 0.5
+    baseline_men = 1.0
+    if db is not None:
+        history = _historical_buckets(
+            db,
+            user_id=watch.user_id,
+            saved_search_id=watch.id,
+            before=bucket.bucket_start,
+        )
+        if history:
+            baseline_neg = sum(b[2] for b in history) / len(history)
+            baseline_men = sum(b[1] for b in history) / len(history)
+
+    spike = spike_summary(
+        current_negative=bucket.negative_count,
+        baseline_negative=baseline_neg,
+        current_mentions=bucket.mention_count,
+        baseline_mentions=baseline_men,
+    )
+
     return {
         "watch_id": watch.id,
         "keyword": watch.query,
+        "name": watch_display_name(watch, parse_watch_meta(watch)),
         "enabled": watch.alert_enabled,
         "volume_score": bucket.volume_score,
         "velocity_score": bucket.velocity_score,
@@ -323,7 +397,9 @@ def radar_point_from_bucket(watch: SavedSearch, bucket: PulseBucket | None) -> d
         "mention_count_30m": bucket.mention_count,
         "negative_count_30m": bucket.negative_count,
         "negative_pct_30m": neg_pct,
-        "baseline_negative_30m": 0.0,
+        "baseline_negative_30m": round(baseline_neg, 2),
+        "baseline_mentions_30m": round(baseline_men, 2),
+        **spike,
         "last_scanned_at": bucket.bucket_start.isoformat(),
         "in_crisis": bucket.quadrant == "crisis",
     }

@@ -36,6 +36,7 @@ class TimelineNode(BaseModel):
 class RadarPoint(BaseModel):
     watch_id: str
     keyword: str
+    name: Optional[str] = None
     enabled: bool
     volume_score: float = Field(description="0–100: how many mentions in the last 30 minutes")
     velocity_score: float = Field(description="0–100: how fast negativity is accelerating")
@@ -46,6 +47,11 @@ class RadarPoint(BaseModel):
     negative_count_30m: int
     negative_pct_30m: float
     baseline_negative_30m: float
+    baseline_mentions_30m: float = 0.0
+    negative_spike_multiplier: float = 0.0
+    volume_spike_multiplier: float = 0.0
+    spike_label: str = "Within normal range"
+    spike_severity: str = "normal"
     last_scanned_at: Optional[str] = None
     in_crisis: bool = False
 

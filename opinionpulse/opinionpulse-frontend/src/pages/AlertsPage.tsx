@@ -1,14 +1,29 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { useQueryClient } from "@tanstack/react-query"
-import { Bell, Loader2, Plus, Radar, RefreshCw, Trash2 } from "lucide-react"
 import {
-  createPersonalAlert,
-  deletePersonalAlert,
-  listPersonalAlerts,
-  updatePersonalAlert,
-  type PersonalAlert,
-} from "@/api/alerts"
+  Bell,
+  Download,
+  FileText,
+  Loader2,
+  Plus,
+  Radar,
+  RefreshCw,
+  Shield,
+  Trash2,
+  Zap,
+} from "lucide-react"
+import {
+  createBrandWatch,
+  deleteBrandWatch,
+  fetchResponseBrief,
+  downloadWeeklyReport,
+  listBrandWatches,
+  updateBrandWatch,
+  type BrandWatch,
+  type ResponseBrief,
+} from "@/api/brandWatches"
+import { useCrisisRadar } from "@/hooks/useCrisisRadar"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { InlineNotice } from "@/components/layout/InlineNotice"
@@ -18,128 +33,118 @@ import { Toggle } from "@/components/ui/toggle"
 import { btnPrimary, proCard, inputSurface } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
-// ─── Local-only fallback (used when backend API is not available) ──────────
-const LS_KEY = "opinionpulse_alerts"
-
-function lsLoad(): PersonalAlert[] {
-  try {
-    const raw = localStorage.getItem(LS_KEY)
-    return raw ? (JSON.parse(raw) as PersonalAlert[]) : []
-  } catch {
-    return []
-  }
-}
-
-function lsSave(rules: PersonalAlert[]) {
-  localStorage.setItem(LS_KEY, JSON.stringify(rules))
-}
-
 export function AlertsPage() {
   const queryClient = useQueryClient()
-  const [alerts, setAlerts] = useState<PersonalAlert[]>([])
+  const { data: radar } = useCrisisRadar()
+  const [watches, setWatches] = useState<BrandWatch[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [useBackend, setUseBackend] = useState(true)
-  const [keyword, setKeyword] = useState("")
-  const [threshold, setThreshold] = useState("70")
-  const [frequency, setFrequency] = useState("daily")
   const [error, setError] = useState<string | null>(null)
 
-  // Load from backend, fallback to localStorage
-  useEffect(() => {
-    async function load() {
-      setLoading(true)
-      setError(null)
-      try {
-        const data = await listPersonalAlerts()
-        setAlerts(data)
-        setUseBackend(true)
-        // Sync backend data to localStorage as backup
-        lsSave(data)
-      } catch {
-        // Backend unavailable — use local data
-        setUseBackend(false)
-        setAlerts(lsLoad())
-      } finally {
-        setLoading(false)
-      }
+  const [name, setName] = useState("")
+  const [brand, setBrand] = useState("")
+  const [product, setProduct] = useState("")
+  const [ceo, setCeo] = useState("")
+  const [aliases, setAliases] = useState("")
+  const [threshold, setThreshold] = useState("70")
+  const [frequency, setFrequency] = useState("instant")
+
+  const [briefWatchId, setBriefWatchId] = useState<string | null>(null)
+  const [brief, setBrief] = useState<ResponseBrief | null>(null)
+  const [briefLoading, setBriefLoading] = useState(false)
+
+  async function loadWatches() {
+    setLoading(true)
+    setError(null)
+    try {
+      setWatches(await listBrandWatches())
+    } catch {
+      setError("Could not load brand watches.")
+      setWatches([])
+    } finally {
+      setLoading(false)
     }
-    void load()
+  }
+
+  useEffect(() => {
+    void loadWatches()
   }, [])
 
-  async function addAlert() {
-    if (!keyword.trim()) return
+  const spikeByWatch = new Map(
+    (radar?.points ?? []).map((p) => [p.watch_id, p])
+  )
+
+  async function addWatch() {
+    if (!name.trim() || !brand.trim()) return
     setSaving(true)
     setError(null)
     try {
-      if (useBackend) {
-        const created = await createPersonalAlert({
-          keyword: keyword.trim(),
-          threshold: parseInt(threshold, 10),
-          frequency,
-        })
-        const next = [created, ...alerts]
-        setAlerts(next)
-        lsSave(next)
-        void queryClient.invalidateQueries({ queryKey: ["notifications"] })
-      } else {
-        const next: PersonalAlert[] = [
-          {
-            id: crypto.randomUUID(),
-            keyword: keyword.trim(),
-            threshold: parseInt(threshold, 10),
-            frequency,
-            enabled: true,
-          },
-          ...alerts,
-        ]
-        setAlerts(next)
-        lsSave(next)
-      }
-      setKeyword("")
+      const created = await createBrandWatch({
+        name: name.trim(),
+        brand: brand.trim(),
+        product: product.trim() || undefined,
+        ceo: ceo.trim() || undefined,
+        aliases: aliases
+          .split(",")
+          .map((a) => a.trim())
+          .filter(Boolean),
+        threshold: parseInt(threshold, 10),
+        frequency,
+      })
+      setWatches((prev) => [created, ...prev])
+      setName("")
+      setBrand("")
+      setProduct("")
+      setCeo("")
+      setAliases("")
+      void queryClient.invalidateQueries({ queryKey: ["crisis-radar"] })
+      void queryClient.invalidateQueries({ queryKey: ["notifications"] })
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create alert")
+      setError(err instanceof Error ? err.message : "Failed to create watch")
     } finally {
       setSaving(false)
     }
   }
 
-  async function toggleAlert(id: string, enabled: boolean) {
-    const prev = alerts
-    setAlerts((a) => a.map((x) => (x.id === id ? { ...x, enabled } : x)))
+  async function toggleWatch(id: string, enabled: boolean) {
+    const prev = watches
+    setWatches((w) => w.map((x) => (x.id === id ? { ...x, enabled } : x)))
     try {
-      if (useBackend) {
-        await updatePersonalAlert(id, { enabled })
-        lsSave(alerts.map((x) => (x.id === id ? { ...x, enabled } : x)))
-        void queryClient.invalidateQueries({ queryKey: ["notifications"] })
-      } else {
-        lsSave(prev.map((x) => (x.id === id ? { ...x, enabled } : x)))
-      }
+      await updateBrandWatch(id, { enabled })
+      void queryClient.invalidateQueries({ queryKey: ["crisis-radar"] })
     } catch {
-      // Revert on error
-      setAlerts(prev)
+      setWatches(prev)
     }
   }
 
-  async function removeAlert(id: string) {
-    const prev = alerts
-    setAlerts((a) => a.filter((x) => x.id !== id))
-    lsSave(prev.filter((x) => x.id !== id))
+  async function removeWatch(id: string) {
+    const prev = watches
+    setWatches((w) => w.filter((x) => x.id !== id))
     try {
-      if (useBackend) {
-        await deletePersonalAlert(id)
-        void queryClient.invalidateQueries({ queryKey: ["notifications"] })
-      }
+      await deleteBrandWatch(id)
+      void queryClient.invalidateQueries({ queryKey: ["crisis-radar"] })
     } catch {
-      // Revert on error
-      setAlerts(prev)
+      setWatches(prev)
+    }
+  }
+
+  async function loadBrief(watchId: string) {
+    setBriefWatchId(watchId)
+    setBriefLoading(true)
+    setBrief(null)
+    try {
+      setBrief(await fetchResponseBrief(watchId))
+    } catch {
+      setBrief(null)
+    } finally {
+      setBriefLoading(false)
     }
   }
 
   return (
     <DashboardLayout
-      title="Alerts"
-      subtitle="Get notified when sentiment spikes on keywords you care about"
+      title="Brand Monitor"
+      subtitle="Tell me when people talk about you — and whether it's getting worse"
     >
       <Link
         to="/crisis"
@@ -150,23 +155,20 @@ export function AlertsPage() {
       >
         <Radar className="size-5 shrink-0 text-red-500" />
         <div>
-          <p className="text-sm font-semibold text-[var(--dash-text)]">
-            Enabled alerts appear on Crisis Radar
-          </p>
+          <p className="text-sm font-semibold text-[var(--dash-text)]">Crisis Radar</p>
           <p className="text-xs text-[var(--dash-text-mid)]">
-            Track volume vs velocity and get early warnings before stories hit mainstream news.
+            Baseline vs spike · volume × velocity quadrant · act before stories spread
           </p>
         </div>
         <span className="ml-auto text-xs font-medium text-[var(--dash-accent)]">Open →</span>
       </Link>
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_1fr] lg:items-start lg:gap-8">
-        <PageSection title="New alert" className="mb-0">
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,24rem)_1fr] lg:items-start lg:gap-8">
+        <PageSection title="New watchlist" className="mb-0">
           <div className={cn(proCard, "p-5")}>
-            {!useBackend && (
-              <InlineNotice variant="warning" className="mb-4">
-                Running in offline mode — alerts saved locally only.
-              </InlineNotice>
-            )}
+            <p className="mb-4 text-xs text-muted-foreground">
+              Bundle brand, product, CEO, and misspellings into one monitor.
+            </p>
             {error && (
               <InlineNotice variant="warning" className="mb-4">
                 {error}
@@ -175,12 +177,37 @@ export function AlertsPage() {
             <div className="space-y-3">
               <input
                 type="text"
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") void addAlert()
-                }}
-                placeholder="Keyword e.g. Bitcoin"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Watch name e.g. Acme Corp"
+                className={cn(inputSurface, "h-11 w-full")}
+              />
+              <input
+                type="text"
+                value={brand}
+                onChange={(e) => setBrand(e.target.value)}
+                placeholder="Brand name *"
+                className={cn(inputSurface, "h-11 w-full")}
+              />
+              <input
+                type="text"
+                value={product}
+                onChange={(e) => setProduct(e.target.value)}
+                placeholder="Product (optional)"
+                className={cn(inputSurface, "h-11 w-full")}
+              />
+              <input
+                type="text"
+                value={ceo}
+                onChange={(e) => setCeo(e.target.value)}
+                placeholder="CEO / founder (optional)"
+                className={cn(inputSurface, "h-11 w-full")}
+              />
+              <input
+                type="text"
+                value={aliases}
+                onChange={(e) => setAliases(e.target.value)}
+                placeholder="Misspellings & aliases, comma-separated"
                 className={cn(inputSurface, "h-11 w-full")}
               />
               <div className="flex flex-wrap gap-3">
@@ -196,39 +223,41 @@ export function AlertsPage() {
                   />
                 </label>
                 <label className="text-xs text-muted-foreground">
-                  Frequency
+                  Alerts
                   <select
                     value={frequency}
                     onChange={(e) => setFrequency(e.target.value)}
                     className={cn(inputSurface, "mt-1 block h-10")}
                   >
-                    <option value="instant">Instant</option>
-                    <option value="daily">Daily</option>
+                    <option value="instant">Instant (crisis)</option>
+                    <option value="daily">Daily digest</option>
                   </select>
                 </label>
               </div>
               <Button
                 type="button"
                 className={btnPrimary}
-                onClick={() => void addAlert()}
-                disabled={saving || !keyword.trim()}
+                onClick={() => void addWatch()}
+                disabled={saving || !name.trim() || !brand.trim()}
               >
-                {saving ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Plus className="size-4" />
-                )}
-                {saving ? "Adding…" : "Add alert"}
+                {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+                {saving ? "Creating…" : "Create watchlist"}
               </Button>
+              <p className="text-[11px] text-muted-foreground">
+                Configure email & Slack in{" "}
+                <Link to="/settings" className="text-primary hover:underline">
+                  Settings → Notifications
+                </Link>
+              </p>
             </div>
           </div>
         </PageSection>
 
         <PageSection
-          title="Your rules"
+          title="Your watchlists"
           description={
-            alerts.length > 0
-              ? `${alerts.length} alert${alerts.length === 1 ? "" : "s"} configured`
+            watches.length > 0
+              ? `${watches.length} bundle${watches.length === 1 ? "" : "s"} monitored`
               : undefined
           }
           className="mb-0"
@@ -236,54 +265,155 @@ export function AlertsPage() {
           {loading ? (
             <div className={cn(proCard, "flex items-center justify-center gap-3 p-8")}>
               <RefreshCw className="size-4 animate-spin text-primary" />
-              <span className="text-sm text-muted-foreground">Loading alerts…</span>
+              <span className="text-sm text-muted-foreground">Loading…</span>
             </div>
-          ) : alerts.length === 0 ? (
+          ) : watches.length === 0 ? (
             <div className={cn(proCard, "border-dashed")}>
               <EmptyState
-                icon={Bell}
-                title="Set up your first alert"
-                description="Monitor keywords when negative sentiment crosses your threshold."
+                icon={Shield}
+                title="Monitor your reputation"
+                description="Add a watchlist to track brand mentions, spikes, and crisis signals."
               />
             </div>
           ) : (
-            <ul className="space-y-2">
-              {alerts.map((a) => (
-                <li
-                  key={a.id}
-                  className={cn(
-                    proCard,
-                    "flex items-center justify-between gap-3 px-4 py-3.5"
-                  )}
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-foreground">{a.keyword}</p>
-                    <p className="text-xs text-muted-foreground">
-                      &gt; {a.threshold}% negative · {a.frequency}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-3">
-                    <Toggle
-                      id={`alert-${a.id}`}
-                      label="Enabled"
-                      checked={a.enabled}
-                      onCheckedChange={(v) => void toggleAlert(a.id, v)}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => void removeAlert(a.id)}
-                      className="rounded p-1 text-muted-foreground transition-colors hover:text-destructive"
-                      aria-label={`Delete alert for ${a.keyword}`}
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </div>
-                </li>
-              ))}
+            <ul className="space-y-3">
+              {watches.map((w) => {
+                const spike = spikeByWatch.get(w.id)
+                return (
+                  <li key={w.id} className={cn(proCard, "p-4")}>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-foreground">{w.name}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {w.terms.length} terms · &gt; {w.threshold}% negative · {w.frequency}
+                        </p>
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          {w.terms.slice(0, 4).join(" · ")}
+                          {w.terms.length > 4 ? ` +${w.terms.length - 4} more` : ""}
+                        </p>
+                        {spike && (
+                          <div
+                            className={cn(
+                              "mt-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium",
+                              spike.spike_severity === "critical" && "bg-red-500/10 text-red-600",
+                              spike.spike_severity === "elevated" && "bg-orange-500/10 text-orange-600",
+                              spike.spike_severity === "watch" && "bg-amber-500/10 text-amber-700",
+                              (!spike.spike_severity || spike.spike_severity === "normal") &&
+                                "bg-muted text-muted-foreground"
+                            )}
+                          >
+                            <Zap className="size-3" />
+                            {spike.spike_label ?? "Within normal range"}
+                          </div>
+                        )}
+                      </div>
+                      <Toggle
+                        id={`watch-${w.id}`}
+                        label="Active"
+                        checked={w.enabled}
+                        onCheckedChange={(v) => void toggleWatch(w.id, v)}
+                      />
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-2 border-t border-border pt-3">
+                      <button
+                        type="button"
+                        onClick={() => void loadBrief(w.id)}
+                        className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium hover:bg-muted"
+                      >
+                        <FileText className="size-3.5" />
+                        Response brief
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void downloadWeeklyReport(w.id)}
+                        className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium hover:bg-muted"
+                      >
+                        <Download className="size-3.5" />
+                        Weekly report
+                      </button>
+                      <Link
+                        to={`/crisis?watch=${encodeURIComponent(w.brand)}`}
+                        className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium hover:bg-muted"
+                      >
+                        <Radar className="size-3.5" />
+                        Crisis Radar
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => void removeWatch(w.id)}
+                        className="ml-auto rounded p-1.5 text-muted-foreground hover:text-destructive"
+                        aria-label={`Delete ${w.name}`}
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </div>
+                  </li>
+                )
+              })}
             </ul>
           )}
         </PageSection>
       </div>
+
+      {briefWatchId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className={cn(proCard, "max-h-[85vh] w-full max-w-lg overflow-y-auto p-6")}>
+            <div className="mb-4 flex items-start justify-between gap-2">
+              <div>
+                <h3 className="text-lg font-semibold">Response brief</h3>
+                <p className="text-xs text-muted-foreground">
+                  3 talking points + 2 risks from live sources only
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setBriefWatchId(null)
+                  setBrief(null)
+                }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                ✕
+              </button>
+            </div>
+            {briefLoading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="size-6 animate-spin text-primary" />
+              </div>
+            ) : brief ? (
+              <div className="space-y-4 text-sm">
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Talking points
+                  </p>
+                  <ol className="list-decimal space-y-2 pl-4">
+                    {brief.talking_points.map((t) => (
+                      <li key={t}>{t}</li>
+                    ))}
+                  </ol>
+                </div>
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-red-600">
+                    Risks
+                  </p>
+                  <ul className="list-disc space-y-2 pl-4">
+                    {brief.risks.map((r) => (
+                      <li key={r}>{r}</li>
+                    ))}
+                  </ul>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Based on {brief.source_count} live posts
+                  {brief.ai_generated ? " · AI summarized" : " · fallback template"}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Could not generate brief.</p>
+            )}
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   )
 }
