@@ -10,6 +10,7 @@ class SearchRequest(BaseModel):
     time_range: str = "24h"
     sentiment: str = "all"
     sort_by: str = "recent"
+    language: str = "all"
 
 
 class EngagementStats(BaseModel):
@@ -130,6 +131,13 @@ class QueryMeta(BaseModel):
     expansions: list[str] = Field(default_factory=list)
 
 
+class SearchMetadata(BaseModel):
+    spam_filtered: int = 0
+    non_english_filtered: int = 0
+    brand_noise_filtered: int = 0
+    youtube_comments_included: int = 0
+
+
 class SearchResponse(BaseModel):
     query: str
     total_results: int
@@ -157,6 +165,7 @@ class SearchResponse(BaseModel):
     data_freshness: Optional[DataFreshness] = None
     relevance_mode: Optional[str] = None
     query_meta: Optional[QueryMeta] = None
+    search_metadata: Optional[SearchMetadata] = None
 
 
 class SearchHistoryItem(BaseModel):

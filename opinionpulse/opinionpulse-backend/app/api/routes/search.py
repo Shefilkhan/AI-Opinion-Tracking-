@@ -69,6 +69,7 @@ async def search_opinions(
         sentiment=body.sentiment,
         sort_by=body.sort_by,
         source_allowlist=allowed_sources,
+        language=body.language,
     )
     try:
         search_service.record_search_history(
