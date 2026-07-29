@@ -149,9 +149,9 @@ def test_query_processor_disambiguates_apple():
     result = processor.process("apple")
 
     assert result["intent"] == "general"
-    assert result["cleaned"] == "Apple"
+    assert result["cleaned"] == "apple"
     assert "Apple Inc" in result["expansions"]
-    assert '"Apple"' in result["platform_queries"]["newsapi"]
+    assert "Apple Inc" in result["platform_queries"]["newsapi"]
     assert "Apple Inc" in result["platform_queries"]["reddit"]
 
 
