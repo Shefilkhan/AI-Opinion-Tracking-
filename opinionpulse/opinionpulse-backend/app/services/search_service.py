@@ -11,6 +11,7 @@ from dateutil.parser import parse
 from app.core.config import get_settings
 from app.db.database import SessionLocal
 from app.db.models import SearchHistory, Mention
+from app.services.brand_disambiguator import BrandDisambiguator
 from app.services.keywords_utils import extract_keywords_from_results
 from app.services.platforms import (
     get_wikipedia_summary,
@@ -35,6 +36,7 @@ from app.services.platforms.query_helpers import (
     sort_results_by_posted_at,
     time_range_cutoff,
 )
+from app.services.platforms.youtube_platform import fetch_youtube_comments
 from app.services.search_constants import SENTIMENT_TREND_24H
 from app.services.source_quality import (
     engagement_total,
@@ -59,6 +61,8 @@ from app.services.sentiment_analysis import (
 logger = logging.getLogger(__name__)
 
 _query_processor = QueryProcessor()
+_brand_disambiguator = BrandDisambiguator()
+_fetch_semaphore = asyncio.Semaphore(5)
 
 NEWS_SOURCES = ("newsapi", "guardian", "mediastack", "currents", "gnews")
 TECH_SOURCES = ("devto", "hackernews", "github", "stackoverflow")
@@ -147,13 +151,39 @@ def _fetcher_for(name: str) -> Callable[..., list[dict]] | None:
 
 
 async def _fetch_source(
-    name: str, query: str, time_range: str
+    name: str,
+    query: str,
+    time_range: str,
+    *,
+    fallback_query: str | None = None,
+    raw_query: str | None = None,
 ) -> tuple[str, list[dict[str, Any]], str | None]:
     fn = _fetcher_for(name)
     if not fn:
         return name, [], "unknown source"
+
+    async def _call(q: str, tr: str) -> list[dict[str, Any]]:
+        async with _fetch_semaphore:
+            return await asyncio.to_thread(fn, q, tr)
+
     try:
-        results = await asyncio.to_thread(fn, query, time_range)
+        results = await _call(query, time_range)
+
+        if not results and fallback_query and fallback_query != query:
+            results = await _call(fallback_query, time_range)
+
+        if not results and raw_query and raw_query not in (query, fallback_query):
+            results = await _call(raw_query, time_range)
+
+        if (
+            not results
+            and name in NEWS_SOURCES
+            and time_range == "24h"
+        ):
+            results = await _call(query, "7d")
+            if not results and fallback_query:
+                results = await _call(fallback_query, "7d")
+
         return name, results, None
     except ValueError as exc:
         return name, [], str(exc)
@@ -162,12 +192,51 @@ async def _fetch_source(
         return name, [], str(exc)
 
 
+def _ensure_diverse_results(
+    results: list[dict[str, Any]],
+    *,
+    min_per_platform: int = 2,
+    per_platform: int = 4,
+) -> list[dict[str, Any]]:
+    """Cap per-platform representation while preserving minimum diversity."""
+    if not results:
+        return results
+
+    by_platform: dict[str, list[dict[str, Any]]] = {}
+    for row in results:
+        platform = (row.get("platform") or "unknown").lower()
+        by_platform.setdefault(platform, []).append(row)
+
+    selected: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
+
+    for platform, items in by_platform.items():
+        take = max(min_per_platform, min(per_platform, len(items)))
+        for item in items[:take]:
+            item_id = item.get("id") or normalize_url(item.get("source_url") or "")
+            if item_id in seen_ids:
+                continue
+            seen_ids.add(item_id)
+            selected.append(item)
+
+    if len(selected) < len(results):
+        for row in results:
+            item_id = row.get("id") or normalize_url(row.get("source_url") or "")
+            if item_id in seen_ids:
+                continue
+            seen_ids.add(item_id)
+            selected.append(row)
+
+    return selected
+
+
 def _empty_response(
     query: str,
     configured: dict[str, bool],
     wiki_summary: dict | None,
     errors: list[str],
     platform_filter: str,
+    search_metadata: dict[str, int] | None = None,
 ) -> dict[str, Any]:
     logger.warning("⚠️ No live results for '%s' — returning empty list (no mock data)", query)
     return {
@@ -187,6 +256,12 @@ def _empty_response(
         "last_updated": datetime.now(timezone.utc).isoformat(),
         "wiki_summary": wiki_summary,
         "errors": errors or None,
+        "search_metadata": search_metadata or {
+            "spam_filtered": 0,
+            "non_english_filtered": 0,
+            "brand_noise_filtered": 0,
+            "youtube_comments_included": 0,
+        },
     }
 
 
@@ -299,6 +374,7 @@ async def run_search(
     sentiment: str,
     sort_by: str,
     source_allowlist: list[str] | None = None,
+    language: str = "all",
 ) -> dict[str, Any]:
     configured = apis_configured()
     sources = _resolve_sources(platform, configured)
@@ -308,12 +384,21 @@ async def run_search(
     processed = _query_processor.process(query)
     search_query = processed["cleaned"]
     platform_queries = processed["platform_queries"]
+    raw_query = query.strip()
+
+    brand_config = _brand_disambiguator.get_brand_config(search_query)
+    brand_precise = (
+        _brand_disambiguator.build_precise_query(search_query)
+        if brand_config
+        else None
+    )
 
     logger.info(
-        '🔍 Searching for: "%s" (cleaned="%s", intent=%s) sources=%s',
+        '🔍 Searching for: "%s" (cleaned="%s", intent=%s, brand=%s) sources=%s',
         query,
         search_query,
         processed["intent"],
+        bool(brand_config),
         sources,
     )
 
@@ -322,6 +407,8 @@ async def run_search(
             name,
             platform_queries.get(name, search_query),
             time_range,
+            fallback_query=brand_precise if name in NEWS_SOURCES else None,
+            raw_query=raw_query,
         )
         for name in sources
     ]
@@ -332,6 +419,12 @@ async def run_search(
     errors: list[str] = []
     source_health: dict[str, dict[str, Any]] = {}
     fetched_at = datetime.now(timezone.utc).isoformat()
+    search_metadata = {
+        "spam_filtered": 0,
+        "non_english_filtered": 0,
+        "brand_noise_filtered": 0,
+        "youtube_comments_included": 0,
+    }
 
     for name, results, err in settled:
         source_health[name] = _source_status(name, results, err)
@@ -346,19 +439,71 @@ async def run_search(
                     combined.append(normalized)
             platforms_searched.append(name)
 
+
+    if "youtube" in platforms_searched and configured.get("youtube"):
+        video_ids = [
+            (r.get("metadata") or {}).get("video_id")
+            or (r.get("source_url") or "").split("v=")[-1].split("&")[0]
+            for r in combined
+            if r.get("platform") == "youtube" and not r.get("is_comment")
+        ]
+        video_ids = [vid for vid in video_ids if vid and len(vid) >= 8][:5]
+        if video_ids:
+            try:
+                comments = await asyncio.to_thread(
+                    fetch_youtube_comments, video_ids, search_query
+                )
+                for comment in comments:
+                    normalized = normalize_result(comment, search_query)
+                    if normalized:
+                        combined.append(normalized)
+                search_metadata["youtube_comments_included"] = len(comments)
+            except Exception as exc:
+                logger.warning("YouTube comments fetch failed: %s", exc)
+
     combined = validate_live_results(combined, search_query)
+
+    before_spam = len(combined)
     combined = filter_spam_results(combined)
+    search_metadata["spam_filtered"] = before_spam - len(combined)
+
+    if language == "english":
+        english_results = []
+        for row in combined:
+            text = f"{row.get('title') or ''} {row.get('content') or ''}"
+            if _brand_disambiguator.is_english(text):
+                english_results.append(row)
+        search_metadata["non_english_filtered"] = len(combined) - len(english_results)
+        combined = english_results
+
+    if brand_config:
+        brand_filtered = []
+        for row in combined:
+            if _brand_disambiguator.should_exclude_result(row, search_query):
+                search_metadata["brand_noise_filtered"] += 1
+                continue
+            if _brand_disambiguator.is_spam(row, search_query):
+                search_metadata["spam_filtered"] += 1
+                continue
+            brand_filtered.append(row)
+        combined = brand_filtered
+
     combined = filter_by_relevance(combined, search_query)
-    combined = filter_by_time_range(combined, time_range, fallback_to_all=False)
+    combined = filter_by_time_range(combined, time_range, fallback_to_all=True)
     combined = deduplicate_results(combined)
     combined = _merge_historical(combined, search_query, time_range)
     combined = deduplicate_results(combined)
-    combined = filter_and_rank_results(combined, search_query, min_score=0.25)
+
+    min_rank_score = 0.15 if len(combined) < 8 else 0.25
+    combined = filter_and_rank_results(combined, search_query, min_score=min_rank_score)
+    combined = _ensure_diverse_results(combined, min_per_platform=2, per_platform=4)
 
     wiki_summary = await asyncio.to_thread(get_wikipedia_summary, search_query)
 
     if not combined:
-        empty = _empty_response(query, configured, wiki_summary, errors, platform)
+        empty = _empty_response(
+            query, configured, wiki_summary, errors, platform, search_metadata
+        )
         empty["source_health"] = source_health
         empty["data_freshness"] = {"fetched_at": fetched_at, "relevance_mode": "strict"}
         empty["relevance_mode"] = "strict"
@@ -402,10 +547,8 @@ async def run_search(
         if k["word"].lower() not in _junk_topics
     )
 
-    # Archive to Database
     try:
         with SessionLocal() as db:
-            # Avoid duplicate URLs per query
             existing_urls = {
                 u[0] for u in db.query(Mention.source_url)
                 .filter(Mention.search_query == query, Mention.source_url.isnot(None))
@@ -464,6 +607,7 @@ async def run_search(
         "wiki_summary": wiki_summary,
         "errors": errors if errors else None,
         "source_health": source_health,
+        "search_metadata": search_metadata,
         "data_freshness": {
             "fetched_at": fetched_at,
             "sources_used": len(platforms_searched),
