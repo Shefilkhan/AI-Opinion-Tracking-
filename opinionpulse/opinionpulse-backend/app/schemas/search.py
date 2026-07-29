@@ -57,7 +57,7 @@ class SearchResultItem(BaseModel):
     is_demo: bool = False
     content_type: Optional[str] = None
     sentiment_detail: Optional[SentimentDetail] = None
-    relevance_score: Optional[int] = None
+    relevance_score: Optional[float] = None
     engagement_available: bool = True
 
     @model_validator(mode="after")
@@ -123,6 +123,13 @@ class RiskAssessment(BaseModel):
     risk_factors: list[str] = Field(default_factory=list)
 
 
+class QueryMeta(BaseModel):
+    original: str
+    cleaned: str
+    intent: str
+    expansions: list[str] = Field(default_factory=list)
+
+
 class SearchResponse(BaseModel):
     query: str
     total_results: int
@@ -149,6 +156,7 @@ class SearchResponse(BaseModel):
     source_health: Optional[dict[str, SourceHealthItem]] = None
     data_freshness: Optional[DataFreshness] = None
     relevance_mode: Optional[str] = None
+    query_meta: Optional[QueryMeta] = None
 
 
 class SearchHistoryItem(BaseModel):

@@ -110,8 +110,25 @@ STOPWORDS = frozenset(
         "like",
         "get",
         "got",
+        "https",
+        "http",
+        "www",
+        "com",
+        "org",
+        "net",
+        "html",
+        "href",
+        "link",
+        "click",
+        "watch",
+        "live",
+        "signal",
+        "chart",
     }
 )
+
+_URL_TOKEN_RE = re.compile(r"https?://\S+|www\.\S+", re.IGNORECASE)
+_HASHTAG_TOKEN_RE = re.compile(r"#(\w+)", re.UNICODE)
 
 
 def extract_keywords_from_results(
@@ -119,11 +136,17 @@ def extract_keywords_from_results(
 ) -> list[dict[str, int]]:
     counter: Counter[str] = Counter()
     for row in results:
-        text = f"{row.get('title', '')} {row.get('content', '')}".lower()
+        raw = f"{row.get('title', '')} {row.get('content', '')}".lower()
+        text = _URL_TOKEN_RE.sub(" ", raw)
+        text = re.sub(r"#\w+", " ", text)
         words = re.findall(r"[a-z]{4,}", text)
         for w in words:
             if w not in STOPWORDS:
                 counter[w] += 1
+        for tag in _HASHTAG_TOKEN_RE.findall(raw):
+            tag_lower = tag.lower()
+            if len(tag_lower) >= 4 and tag_lower not in STOPWORDS:
+                counter[tag_lower] += 1
     return [{"word": w, "count": c} for w, c in counter.most_common(limit)]
 
 

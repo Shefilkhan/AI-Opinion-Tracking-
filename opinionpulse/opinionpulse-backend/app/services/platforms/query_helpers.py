@@ -67,19 +67,31 @@ def quoted_phrase_query(query: str) -> str:
     return q
 
 
+def filter_relevant_results(
+    results: list[dict],
+    query: str,
+    *,
+    fallback_to_all: bool = False,
+) -> list[dict]:
+    """Keep rows whose title/content genuinely match the search topic."""
+    if not results or not query.strip():
+        return results
+    from app.services.source_quality import matches_search_query
+
+    matched = [row for row in results if matches_search_query(query, row)]
+    if matched:
+        return matched
+    return results if fallback_to_all else []
+
+
 def filter_headline_results(
     results: list[dict],
     query: str,
     *,
     fallback_to_all: bool = False,
 ) -> list[dict]:
-    """Keep rows whose title contains the query terms."""
-    if not results or not query.strip():
-        return results
-    matched = [row for row in results if title_matches_query(row.get("title") or "", query)]
-    if matched:
-        return matched
-    return results if fallback_to_all else []
+    """Keep rows whose title/content match the query (strict by default)."""
+    return filter_relevant_results(results, query, fallback_to_all=fallback_to_all)
 
 
 def coerce_posted_at_iso(value: Any) -> str | None:

@@ -15,7 +15,9 @@ from app.services.platforms.platform_common import (
 )
 from app.services.platforms.query_helpers import (
     filter_by_time_range,
+    filter_relevant_results,
     make_search_cache_key,
+    quoted_phrase_query,
     sort_results_by_posted_at,
 )
 
@@ -85,7 +87,7 @@ def search_bluesky(query: str, time_range: str = "24h", limit: int = 15) -> list
 
             resp = requests.get(
                 f"{base_url}/app.bsky.feed.searchPosts",
-                params={"q": query, "limit": limit, "sort": "latest"},
+                params={"q": quoted_phrase_query(query), "limit": limit, "sort": "latest"},
                 headers=headers,
                 timeout=TIMEOUT,
             )
@@ -131,7 +133,10 @@ def search_bluesky(query: str, time_range: str = "24h", limit: int = 15) -> list
                 if row:
                     out.append(row)
 
-            out = filter_by_time_range(out, time_range, fallback_to_all=False)
+            out = filter_relevant_results(
+                filter_by_time_range(out, time_range, fallback_to_all=False),
+                query,
+            )
             out = sort_results_by_posted_at(out)
             log_platform_success("Bluesky", query, len(out))
             return out

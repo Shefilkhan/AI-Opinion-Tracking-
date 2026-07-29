@@ -78,7 +78,7 @@ def search_mediastack(query: str, time_range: str = "24h") -> list[dict]:
                 )
                 if row:
                     out.append(row)
-            out = filter_headline_results(out, query, fallback_to_all=True)
+            out = filter_headline_results(out, query, fallback_to_all=False)
             out = filter_by_time_range(out, time_range, fallback_to_all=False)
             out = sort_results_by_posted_at(out)
             log_platform_success("Mediastack", query, len(out))

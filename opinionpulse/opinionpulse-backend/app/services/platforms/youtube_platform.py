@@ -13,7 +13,12 @@ from app.services.platforms.platform_common import (
     log_platform_error,
     log_platform_success,
 )
-from app.services.platforms.query_helpers import iso_datetime_days_ago, sort_results_by_posted_at
+from app.services.platforms.query_helpers import (
+    filter_relevant_results,
+    iso_datetime_days_ago,
+    quoted_phrase_query,
+    sort_results_by_posted_at,
+)
 
 TIMEOUT = 15
 API_BASE = "https://www.googleapis.com/youtube/v3"
@@ -44,9 +49,9 @@ def search_youtube(query: str, time_range: str = "7d", max_results: int = 15) ->
                 "search",
                 {
                     "part": "snippet",
-                    "q": query,
+                    "q": quoted_phrase_query(query),
                     "type": "video",
-                    "order": "date",
+                    "order": "relevance",
                     "maxResults": max_results,
                     "publishedAfter": published_after,
                     "relevanceLanguage": "en",
@@ -102,6 +107,7 @@ def search_youtube(query: str, time_range: str = "7d", max_results: int = 15) ->
                 )
                 if row:
                     out.append(row)
+            out = filter_relevant_results(out, query)
             out = sort_results_by_posted_at(out)
             log_platform_success("YouTube", query, len(out))
             return out

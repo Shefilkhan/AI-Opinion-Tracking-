@@ -1,4 +1,4 @@
-import type { AgeAnalysis, SearchResultItem, TopicRiskAssessment, UsageContextItem } from "@/lib/api/types"
+import type { AgeAnalysis, SearchResultItem, TopicRiskAssessment } from "@/lib/api/types"
 import { proCard, sectionTitle } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
@@ -161,57 +161,6 @@ function AgeGroupChart({ ageData }: { ageData: AgeAnalysis }) {
   )
 }
 
-function UsageTable({
-  usageContext,
-  dominantGroup,
-}: {
-  usageContext: UsageContextItem[]
-  dominantGroup: string
-}) {
-  return (
-    <div className="space-y-2">
-      <p className="text-xs font-medium text-muted-foreground">Daily Social Media Usage</p>
-      <div className="overflow-hidden rounded-lg border border-border">
-        <table className="w-full text-xs">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="px-3 py-2 text-left font-medium">Age Group</th>
-              <th className="px-3 py-2 text-left font-medium">Daily Usage</th>
-              <th className="px-3 py-2 text-left font-medium">Risk Level</th>
-            </tr>
-          </thead>
-          <tbody>
-            {usageContext.map((row) => {
-              const isDominant = row.age_group === dominantGroup
-              return (
-                <tr
-                  key={row.age_group}
-                  className={cn(
-                    "border-t border-border",
-                    isDominant && "bg-purple-50/60"
-                  )}
-                >
-                  <td className="px-3 py-2 font-medium capitalize">
-                    {row.age_group}
-                    {isDominant && (
-                      <span className="ml-1 text-[10px] text-purple-600">(dominant)</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2">{row.avg_daily_hours} hrs/day</td>
-                  <td className="px-3 py-2 capitalize">
-                    {row.usage_risk}
-                    {row.usage_risk === "high" && " ⚠️"}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
 function RiskFactorsList({ factors }: { factors: string[] }) {
   if (factors.length === 0) {
     return (
@@ -239,7 +188,6 @@ function RiskFactorsList({ factors }: { factors: string[] }) {
 type RiskAnalysisPanelProps = {
   riskData: TopicRiskAssessment
   ageData: AgeAnalysis
-  usageContext: UsageContextItem[]
   results: SearchResultItem[]
   query: string
 }
@@ -247,7 +195,6 @@ type RiskAnalysisPanelProps = {
 export function RiskAnalysisPanel({
   riskData,
   ageData,
-  usageContext,
   results,
   query,
 }: RiskAnalysisPanelProps) {
@@ -262,7 +209,6 @@ export function RiskAnalysisPanel({
         <RiskMeter risk={riskData} />
         <SentimentIntensityBar results={results} />
         <AgeGroupChart ageData={ageData} />
-        <UsageTable usageContext={usageContext} dominantGroup={ageData.dominant_group} />
         <RiskFactorsList factors={riskData.risk_factors} />
       </div>
     </div>

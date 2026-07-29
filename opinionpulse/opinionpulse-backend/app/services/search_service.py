@@ -39,11 +39,15 @@ from app.services.search_constants import SENTIMENT_TREND_24H
 from app.services.source_quality import (
     engagement_total,
     filter_by_relevance,
+    filter_spam_results,
+    matches_search_query,
     normalize_url,
     validate_live_results,
 )
 from app.services.age_classifier import classify_age_groups, get_all_usage_context
 from app.services.content_classifier import classify_content_type
+from app.services.query_processor import QueryProcessor
+from app.services.relevance_scorer import filter_and_rank_results
 from app.services.risk_assessor import assess_risk_level
 from app.services.sentiment_analysis import (
     analyze_sentiment_intensity,
@@ -53,6 +57,8 @@ from app.services.sentiment_analysis import (
 )
 
 logger = logging.getLogger(__name__)
+
+_query_processor = QueryProcessor()
 
 NEWS_SOURCES = ("newsapi", "guardian", "mediastack", "currents", "gnews")
 TECH_SOURCES = ("devto", "hackernews", "github", "stackoverflow")
@@ -204,6 +210,7 @@ def _sort_combined(results: list[dict[str, Any]], sort_by: str) -> list[dict[str
             results,
             key=lambda r: (
                 engagement_total(r) if r.get("engagement_available", True) else 0,
+                r.get("relevance_score", 0),
                 parse_posted_at(r.get("posted_at")) or time_range_cutoff("30d"),
             ),
             reverse=True,
@@ -217,11 +224,19 @@ def _sort_combined(results: list[dict[str, Any]], sort_by: str) -> list[dict[str
                 + (r.get("engagement") or {}).get("views", 0) // 100
                 if r.get("engagement_available", True)
                 else 0,
+                r.get("relevance_score", 0),
                 parse_posted_at(r.get("posted_at")) or time_range_cutoff("30d"),
             ),
             reverse=True,
         )
-    return sort_results_by_posted_at(results)
+    return sorted(
+        results,
+        key=lambda r: (
+            r.get("relevance_score", 0),
+            parse_posted_at(r.get("posted_at")) or time_range_cutoff("30d"),
+        ),
+        reverse=True,
+    )
 
 
 def _merge_historical(
@@ -269,7 +284,7 @@ def _merge_historical(
                     },
                     query,
                 )
-                if row:
+                if row and matches_search_query(query, row):
                     combined.append(row)
                     live_urls.add(normalize_url(url))
     except Exception as e:
@@ -290,9 +305,26 @@ async def run_search(
     if source_allowlist is not None:
         sources = [s for s in sources if s in source_allowlist]
 
-    logger.info('🔍 Searching for: "%s" sources=%s', query, sources)
+    processed = _query_processor.process(query)
+    search_query = processed["cleaned"]
+    platform_queries = processed["platform_queries"]
 
-    tasks = [_fetch_source(name, query, time_range) for name in sources]
+    logger.info(
+        '🔍 Searching for: "%s" (cleaned="%s", intent=%s) sources=%s',
+        query,
+        search_query,
+        processed["intent"],
+        sources,
+    )
+
+    tasks = [
+        _fetch_source(
+            name,
+            platform_queries.get(name, search_query),
+            time_range,
+        )
+        for name in sources
+    ]
     settled = await asyncio.gather(*tasks)
 
     combined: list[dict[str, Any]] = []
@@ -309,25 +341,33 @@ async def run_search(
             errors.append(f"{name}: {err}")
         if results:
             for row in results:
-                normalized = normalize_result(row, query)
+                normalized = normalize_result(row, search_query)
                 if normalized:
                     combined.append(normalized)
             platforms_searched.append(name)
 
-    combined = validate_live_results(combined, query)
-    combined = filter_by_relevance(combined, query)
+    combined = validate_live_results(combined, search_query)
+    combined = filter_spam_results(combined)
+    combined = filter_by_relevance(combined, search_query)
     combined = filter_by_time_range(combined, time_range, fallback_to_all=False)
     combined = deduplicate_results(combined)
-    combined = _merge_historical(combined, query, time_range)
+    combined = _merge_historical(combined, search_query, time_range)
     combined = deduplicate_results(combined)
+    combined = filter_and_rank_results(combined, search_query, min_score=0.25)
 
-    wiki_summary = await asyncio.to_thread(get_wikipedia_summary, query)
+    wiki_summary = await asyncio.to_thread(get_wikipedia_summary, search_query)
 
     if not combined:
         empty = _empty_response(query, configured, wiki_summary, errors, platform)
         empty["source_health"] = source_health
         empty["data_freshness"] = {"fetched_at": fetched_at, "relevance_mode": "strict"}
         empty["relevance_mode"] = "strict"
+        empty["query_meta"] = {
+            "original": processed["original"],
+            "cleaned": processed["cleaned"],
+            "intent": processed["intent"],
+            "expansions": processed["expansions"],
+        }
         return empty
 
     if sentiment != "all":
@@ -347,15 +387,20 @@ async def run_search(
     summary = calculate_sentiment_summary(combined)
     age_analysis = classify_age_groups(combined)
     intensity_scores = [r.get("sentiment_detail", {}) for r in combined]
-    risk_assessment = assess_risk_level(query, summary, age_analysis, intensity_scores)
+    risk_assessment = assess_risk_level(search_query, summary, age_analysis, intensity_scores)
     usage_context = get_all_usage_context()
     forecast = calculate_sentiment_forecast(combined)
     sentiment_trend = calculate_sentiment_trend_from_results(combined)
     if not sentiment_trend:
         sentiment_trend = SENTIMENT_TREND_24H
     keywords = extract_keywords_from_results(combined)
-    related = [f"#{w.title()}" for w in query.split()[:4] if len(w) > 2]
-    related.extend([f"#{k['word'].title()}" for k in keywords[:3]])
+    _junk_topics = {"https", "http", "www", "com", "link", "live", "signal", "chart"}
+    related = [f"#{w.title()}" for w in search_query.split()[:4] if len(w) > 2]
+    related.extend(
+        f"#{k['word'].title()}"
+        for k in keywords[:5]
+        if k["word"].lower() not in _junk_topics
+    )
 
     # Archive to Database
     try:
@@ -427,6 +472,12 @@ async def run_search(
             ),
         },
         "relevance_mode": "strict",
+        "query_meta": {
+            "original": processed["original"],
+            "cleaned": processed["cleaned"],
+            "intent": processed["intent"],
+            "expansions": processed["expansions"],
+        },
     }
 
 
@@ -436,15 +487,24 @@ async def search_all_platforms(
     platform: str = "all",
     fetch_timeout: float = 6.0,
     limit: int | None = None,
+    source_allowlist: list[str] | None = None,
 ) -> list[dict[str, Any]]:
-    """Search all enabled platforms for a topic; used by dashboard widgets."""
-    data = await run_search(
-        query=query,
-        platform=platform,
-        time_range=time_range,
-        sentiment="all",
-        sort_by="recent",
-    )
+    """Search enabled platforms for a topic; used by dashboard widgets."""
+    try:
+        data = await asyncio.wait_for(
+            run_search(
+                query=query,
+                platform=platform,
+                time_range=time_range,
+                sentiment="all",
+                sort_by="recent",
+                source_allowlist=source_allowlist,
+            ),
+            timeout=fetch_timeout,
+        )
+    except asyncio.TimeoutError:
+        logger.warning('Dashboard search timed out for "%s" after %.0fs', query, fetch_timeout)
+        return []
     results = data.get("results") or []
     if limit is not None:
         return results[:limit]

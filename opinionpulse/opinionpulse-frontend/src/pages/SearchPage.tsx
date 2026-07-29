@@ -356,11 +356,10 @@ export function SearchPage() {
                     data={data}
                     timeLabel={TIME_LABELS[filters.timeRange] ?? "Last 24 hours"}
                   />
-                  {data.risk_assessment && data.age_analysis && data.usage_context && (
+                  {data.risk_assessment && data.age_analysis && (
                     <RiskAnalysisPanel
                       riskData={data.risk_assessment}
                       ageData={data.age_analysis}
-                      usageContext={data.usage_context}
                       results={data.results}
                       query={data.query}
                     />

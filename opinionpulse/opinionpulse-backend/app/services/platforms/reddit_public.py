@@ -16,7 +16,9 @@ from app.services.cache_utils import cached
 from app.services.platforms.platform_common import build_result, log_platform_error, log_platform_success
 from app.services.platforms.query_helpers import (
     filter_by_time_range,
+    filter_relevant_results,
     make_search_cache_key,
+    quoted_phrase_query,
     sort_results_by_posted_at,
 )
 
@@ -83,7 +85,10 @@ def _fetch_reddit_rss(query: str, time_range: str, t: str, limit: int) -> list[d
             )
             if row:
                 results.append(row)
-        return filter_by_time_range(results, time_range, fallback_to_all=False)
+        return filter_relevant_results(
+            filter_by_time_range(results, time_range, fallback_to_all=False),
+            query,
+        )
     except Exception as exc:
         log_platform_error("Reddit RSS fallback", query, exc)
         return []
@@ -98,7 +103,7 @@ def search_reddit(query: str, time_range: str = "24h", limit: int = 20) -> list[
         try:
             url = (
                 "https://www.reddit.com/search.json"
-                f"?q={requests.utils.quote(query)}&sort=new&t={t}&limit={limit}"
+                f"?q={requests.utils.quote(quoted_phrase_query(query))}&sort=new&t={t}&limit={limit}"
             )
             resp = requests.get(url, headers=_headers(), timeout=TIMEOUT)
             if resp.status_code in (403, 429):
@@ -160,7 +165,10 @@ def search_reddit(query: str, time_range: str = "24h", limit: int = 20) -> list[
                 )
                 if row:
                     results.append(row)
-            results = filter_by_time_range(results, time_range, fallback_to_all=False)
+            results = filter_relevant_results(
+                filter_by_time_range(results, time_range, fallback_to_all=False),
+                query,
+            )
             results = sort_results_by_posted_at(results)
             log_platform_success("Reddit", query, len(results))
             return results
