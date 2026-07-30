@@ -588,27 +588,119 @@ body {
 
 /* Pulse AI full-page chat — dark shell while app theme may stay light */
 .pulse-chat-dark {
-  --foreground: #e8e8e8;
-  --muted-foreground: #a3a3a3;
-  --card-foreground: #e8e8e8;
-  --accent-foreground: #e8e8e8;
-  color: #e8e8e8;
+  --foreground: #f0f0f0;
+  --muted-foreground: #b3b3b3;
+  --card-foreground: #f0f0f0;
+  --accent-foreground: #f0f0f0;
+  --border: rgba(255, 255, 255, 0.12);
+  --muted: #2a2a2a;
+  --card: #161616;
+  --primary: #7eb8ff;
+  color: #f0f0f0;
 }
 
-.pulse-chat-dark .text-foreground {
+.pulse-chat-dark .text-foreground,
+.pulse-chat-dark .chat-message-body,
+.pulse-chat-dark .chat-message-body p,
+.pulse-chat-dark .chat-message-body li,
+.pulse-chat-dark .chat-message-body span,
+.pulse-chat-dark .chat-message-body strong,
+.pulse-chat-dark .chat-message-body h1,
+.pulse-chat-dark .chat-message-body h2,
+.pulse-chat-dark .chat-message-body h3,
+.pulse-chat-dark .chat-message-body h4 {
+  color: #f0f0f0 !important;
+}
+
+.pulse-chat-dark .text-muted-foreground,
+.pulse-chat-dark .chat-message-body blockquote {
+  color: #b3b3b3 !important;
+}
+
+.pulse-chat-dark .chat-message-body table {
+  width: 100%;
+  margin: 0.75rem 0;
+  border-collapse: collapse;
+  border: 1px solid #333;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.pulse-chat-dark .chat-message-body thead {
+  background: #1a1a1a;
+}
+
+.pulse-chat-dark .chat-message-body th {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #999 !important;
+  border-bottom: 1px solid #333;
+}
+
+.pulse-chat-dark .chat-message-body td {
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  color: #e8e8e8 !important;
+  border-bottom: 1px solid #333;
+  vertical-align: top;
+}
+
+.pulse-chat-dark .chat-message-body tr:last-child td {
+  border-bottom: none;
+}
+
+.pulse-chat-dark .chat-theme-card {
+  border: 1px solid #333;
+  background: #161616;
+  color: #f0f0f0;
+}
+
+.pulse-chat-dark .chat-theme-card .theme-label {
+  color: #ffffff !important;
+}
+
+.pulse-chat-dark .chat-theme-card .theme-pct {
+  color: #cccccc !important;
+}
+
+.pulse-chat-dark .chat-theme-card .theme-detail {
+  color: #b3b3b3 !important;
+}
+
+.pulse-chat-dark .chat-theme-card .theme-heading {
+  color: #999999 !important;
+}
+
+.pulse-chat-dark .chat-theme-card .theme-track {
+  background: #2a2a2a;
+}
+
+.pulse-chat-dark .chat-theme-card .theme-fill {
+  background: #7eb8ff;
+}
+
+.pulse-chat-dark .pulse-chat-card,
+.pulse-chat-dark .pulse-chat-card .chat-message-body {
+  color: #f0f0f0;
+}
+
+.pulse-chat-dark .pulse-chat-card .text-foreground,
+.pulse-chat-dark .pulse-chat-card .text-muted-foreground,
+.pulse-chat-dark .pulse-chat-card [class*="text-foreground"],
+.pulse-chat-dark .pulse-chat-card [class*="text-muted-foreground"] {
   color: #e8e8e8 !important;
 }
 
-.pulse-chat-dark .text-muted-foreground {
-  color: #a3a3a3 !important;
+.pulse-chat-dark .pulse-chat-card table th {
+  color: #999 !important;
 }
 
-.pulse-chat-dark [class*="text-foreground"] {
-  color: #e8e8e8;
-}
-
-.pulse-chat-dark [class*="text-muted-foreground"] {
-  color: #a3a3a3;
+.pulse-chat-dark .pulse-chat-card table td {
+  color: #e8e8e8 !important;
 }
 
 /* ── Hero category showcase ───────────────────────── */

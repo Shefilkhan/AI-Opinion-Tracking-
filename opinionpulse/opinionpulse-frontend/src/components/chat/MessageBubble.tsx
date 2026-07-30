@@ -196,6 +196,7 @@ export function MessageBubble({
   if (researchDoc) {
     return (
       <div className="group py-4">
+        <div className="chat-message-body">
         <StructuredChatRenderer
           content={message.content}
           structured={message.structured}
@@ -204,6 +205,7 @@ export function MessageBubble({
           showInlineReferences={showInlineReferences}
           dark
         />
+        </div>
 
         <div className="mt-4 flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
           <button
@@ -232,7 +234,7 @@ export function MessageBubble({
   if (variant === "research" && !isUser) {
     return (
       <div className="group py-3">
-        <div className="rounded-lg border border-[#2a2a2a] bg-[#161616] px-4 py-3 text-sm text-white [&_*]:max-w-none">
+        <div className="pulse-chat-card chat-message-body rounded-lg border border-[#2a2a2a] bg-[#161616] px-4 py-3 text-sm text-white">
           {!message.isError && message.hasRealData && (
             <div className="mb-2 flex items-center gap-1 text-xs font-medium text-[#7eb8ff]">
               <span className="inline-block size-1.5 rounded-full bg-emerald-500" />

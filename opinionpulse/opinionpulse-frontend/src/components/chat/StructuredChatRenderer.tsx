@@ -74,13 +74,13 @@ function ThemeBreakdown({
     <div
       className={cn(
         "mb-4 space-y-2 rounded-xl border p-3",
-        dark ? "border-[#333] bg-[#161616]" : "border-border bg-muted/30"
+        dark ? "chat-theme-card border-[#333] bg-[#161616]" : "border-border bg-muted/30"
       )}
     >
       <p
         className={cn(
-          "text-xs font-semibold uppercase tracking-wide",
-          dark ? "text-[#999]" : "text-muted-foreground"
+          "theme-heading text-xs font-semibold uppercase tracking-wide",
+          dark ? "!text-[#999]" : "text-muted-foreground"
         )}
       >
         Discussion themes
@@ -88,24 +88,42 @@ function ThemeBreakdown({
       {items.map((item) => (
         <div key={item.label}>
           <div className="mb-1 flex items-center justify-between gap-2 text-xs">
-            <span className={cn("font-medium", dark ? "text-white" : "text-foreground")}>
+            <span
+              className={cn(
+                "theme-label font-medium",
+                dark ? "!text-white" : "text-foreground"
+              )}
+            >
               {item.label}
             </span>
-            <span className={cn("tabular-nums", dark ? "text-[#aaa]" : "text-muted-foreground")}>
+            <span
+              className={cn(
+                "theme-pct tabular-nums",
+                dark ? "!text-[#ccc]" : "text-muted-foreground"
+              )}
+            >
               {item.pct}%
             </span>
           </div>
-          <div className={cn("h-2 overflow-hidden rounded-full", dark ? "bg-[#2a2a2a]" : "bg-muted")}>
+          <div
+            className={cn(
+              "theme-track h-2 overflow-hidden rounded-full",
+              dark ? "bg-[#2a2a2a]" : "bg-muted"
+            )}
+          >
             <div
-              className="h-full rounded-full bg-primary transition-all"
+              className={cn(
+                "theme-fill h-full rounded-full transition-all",
+                dark ? "bg-[#7eb8ff]" : "bg-primary"
+              )}
               style={{ width: `${Math.min(100, Math.max(0, item.pct))}%` }}
             />
           </div>
           {item.detail && (
             <p
               className={cn(
-                "mt-1 text-[11px] leading-snug",
-                dark ? "text-[#aaa]" : "text-muted-foreground"
+                "theme-detail mt-1 text-[11px] leading-snug",
+                dark ? "!text-[#b3b3b3]" : "text-muted-foreground"
               )}
             >
               {item.detail}
@@ -122,11 +140,13 @@ function ComparisonChart({
   bLabel,
   dimensions,
   leaders,
+  dark = false,
 }: {
   aLabel: string
   bLabel: string
   dimensions: { name: string; a: number; b: number }[]
   leaders?: { a?: string[]; b?: string[] }
+  dark?: boolean
 }) {
   const chartData = dimensions.map((d) => ({
     name: d.name,
@@ -135,35 +155,50 @@ function ComparisonChart({
   }))
 
   return (
-    <div className="mb-4 rounded-xl border border-border bg-muted/20 p-3">
-      <p className="mb-1 text-sm font-semibold text-foreground">
+    <div
+      className={cn(
+        "mb-4 rounded-xl border p-3",
+        dark ? "border-[#333] bg-[#161616]" : "border-border bg-muted/20"
+      )}
+    >
+      <p className={cn("mb-1 text-sm font-semibold", dark ? "!text-white" : "text-foreground")}>
         {aLabel} vs {bLabel}
       </p>
-      <p className="mb-3 text-[11px] text-muted-foreground">
+      <p className={cn("mb-3 text-[11px]", dark ? "!text-[#b3b3b3]" : "text-muted-foreground")}>
         Qualitative comparison (1 = weaker · 5 = stronger). Scores are illustrative.
       </p>
       <div className="h-[220px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 8, top: 4, bottom: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" opacity={0.4} />
-            <XAxis type="number" domain={[0, 6]} tick={{ fontSize: 10 }} />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              horizontal={false}
+              stroke={dark ? "#333" : "var(--border)"}
+              opacity={0.4}
+            />
+            <XAxis
+              type="number"
+              domain={[0, 6]}
+              tick={{ fontSize: 10, fill: dark ? "#aaa" : "#666" }}
+            />
             <YAxis
               type="category"
               dataKey="name"
               width={108}
-              tick={{ fontSize: 10 }}
+              tick={{ fontSize: 10, fill: dark ? "#ddd" : "#666" }}
             />
             <Tooltip
               contentStyle={{
-                background: "var(--card)",
-                border: "1px solid var(--border)",
+                background: dark ? "#1a1a1a" : "var(--card)",
+                border: dark ? "1px solid #333" : "1px solid var(--border)",
                 borderRadius: 8,
                 fontSize: 12,
+                color: dark ? "#f0f0f0" : undefined,
               }}
             />
-            <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Bar dataKey={aLabel} fill="#2f3a2f" radius={[0, 4, 4, 0]} barSize={10} />
-            <Bar dataKey={bLabel} fill="#16a34a" radius={[0, 4, 4, 0]} barSize={10} />
+            <Legend wrapperStyle={{ fontSize: 11, color: dark ? "#ccc" : undefined }} />
+            <Bar dataKey={aLabel} fill={dark ? "#7eb8ff" : "#2f3a2f"} radius={[0, 4, 4, 0]} barSize={10} />
+            <Bar dataKey={bLabel} fill={dark ? "#16a34a" : "#16a34a"} radius={[0, 4, 4, 0]} barSize={10} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -171,11 +206,19 @@ function ComparisonChart({
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           {leaders.a?.length ? (
             <div>
-              <p className="mb-1.5 text-xs font-semibold text-foreground">{aLabel} leads in</p>
+              <p className={cn("mb-1.5 text-xs font-semibold", dark ? "!text-white" : "text-foreground")}>
+                {aLabel} leads in
+              </p>
               <ul className="space-y-1">
                 {leaders.a.map((item) => (
-                  <li key={item} className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                    <Check className="mt-0.5 size-3 shrink-0 text-emerald-600" />
+                  <li
+                    key={item}
+                    className={cn(
+                      "flex items-start gap-1.5 text-xs",
+                      dark ? "!text-[#ccc]" : "text-muted-foreground"
+                    )}
+                  >
+                    <Check className="mt-0.5 size-3 shrink-0 text-emerald-400" />
                     {item}
                   </li>
                 ))}
@@ -184,11 +227,19 @@ function ComparisonChart({
           ) : null}
           {leaders.b?.length ? (
             <div>
-              <p className="mb-1.5 text-xs font-semibold text-foreground">{bLabel} leads in</p>
+              <p className={cn("mb-1.5 text-xs font-semibold", dark ? "!text-white" : "text-foreground")}>
+                {bLabel} leads in
+              </p>
               <ul className="space-y-1">
                 {leaders.b.map((item) => (
-                  <li key={item} className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                    <Check className="mt-0.5 size-3 shrink-0 text-emerald-600" />
+                  <li
+                    key={item}
+                    className={cn(
+                      "flex items-start gap-1.5 text-xs",
+                      dark ? "!text-[#ccc]" : "text-muted-foreground"
+                    )}
+                  >
+                    <Check className="mt-0.5 size-3 shrink-0 text-emerald-400" />
                     {item}
                   </li>
                 ))}
@@ -259,7 +310,7 @@ export function StructuredChatRenderer({
   }
 
   return (
-    <div>
+    <div className={cn(dark && "chat-message-body")}>
       {showThemeFirst && structured.items?.length ? (
         <ThemeBreakdown items={structured.items} dark={dark} />
       ) : null}
@@ -279,6 +330,7 @@ export function StructuredChatRenderer({
           bLabel={structured.b_label}
           dimensions={structured.dimensions}
           leaders={structured.leaders}
+          dark={dark}
         />
       ) : null}
     </div>
