@@ -1,14 +1,4 @@
 import { useCallback, useEffect, useState } from "react"
-import { Link } from "react-router-dom"
-import {
-  ArrowLeft,
-  MessageCircle,
-  PanelLeft,
-  Plus,
-  Sparkles,
-  Trash2,
-  X,
-} from "lucide-react"
 import {
   deleteChatConversation,
   getChatConversation,
@@ -16,22 +6,11 @@ import {
   type PulseConversation,
   type PulseStoredMessage,
 } from "@/api/chat"
-import { ChatWindow } from "@/components/chat/ChatWindow"
-import type { ChatMessageItem } from "@/components/chat/MessageBubble"
-import { EmptyState } from "@/components/layout/EmptyState"
-import { cn } from "@/lib/utils"
-
-function formatTimeAgo(iso: string) {
-  const date = new Date(iso)
-  const diff = Date.now() - date.getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return "just now"
-  if (mins < 60) return `${mins}m ago`
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours}h ago`
-  const days = Math.floor(hours / 24)
-  return `${days}d ago`
-}
+import { ChatMain, generateConversationId } from "@/components/chat/ChatMain"
+import { ChatSidebar } from "@/components/chat/ChatSidebar"
+import type { ChatMessageItem } from "@/components/chat/types"
+import { useAuth } from "@/contexts/AuthContext"
+import { getUserInitials } from "@/lib/chat-message-utils"
 
 function storedToChatMessages(rows: PulseStoredMessage[]): ChatMessageItem[] {
   return rows.map((row, i) => ({
@@ -47,164 +26,20 @@ function storedToChatMessages(rows: PulseStoredMessage[]): ChatMessageItem[] {
     structured: row.metadata?.structured ?? null,
     responseFormat: row.metadata?.response_format ?? null,
     references: row.metadata?.references ?? [],
+    citedSources: row.metadata?.cited_sources ?? [],
+    sourcesFetched: row.metadata?.sources_fetched,
   }))
 }
 
-function generateConversationId() {
-  return `conv_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-}
-
-type ChatHistorySidebarProps = {
-  conversations: PulseConversation[]
-  activeConvId: string
-  searchQuery: string
-  loadingList: boolean
-  overlay?: boolean
-  onSearchChange: (value: string) => void
-  onNewChat: () => void
-  onSelectConversation: (id: string) => void
-  onDeleteConversation: (id: string) => void
-  onClose?: () => void
-}
-
-function ChatHistorySidebar({
-  conversations,
-  activeConvId,
-  searchQuery,
-  loadingList,
-  overlay = false,
-  onSearchChange,
-  onNewChat,
-  onSelectConversation,
-  onDeleteConversation,
-  onClose,
-}: ChatHistorySidebarProps) {
-  const filtered = conversations.filter((conv) =>
-    (conv.first_message || "").toLowerCase().includes(searchQuery.toLowerCase())
-  )
-
-  return (
-    <div className="flex h-full flex-col bg-[#0d0d0d]">
-      <div className="border-b border-[#222] px-3 py-3">
-        <div className="mb-2.5 flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
-            <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-[#2563eb] text-white">
-              <Sparkles size={12} />
-            </div>
-            <span className="truncate font-serif-display text-sm font-medium text-white">
-              Pulse AI
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={onNewChat}
-              className="flex shrink-0 items-center gap-1 rounded-md bg-[#2563eb] px-2 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#1d4ed8]"
-            >
-              <Plus size={12} />
-              New
-            </button>
-            {overlay && onClose && (
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-md p-1.5 text-[#666] hover:bg-[#222] hover:text-white"
-                aria-label="Close history"
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
-        </div>
-        <input
-          type="search"
-          placeholder="Search conversations..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full rounded-lg border border-[#2a2a2a] bg-[#141414] px-2.5 py-1.5 text-sm text-white placeholder:text-[#555] focus:border-[#444] focus:outline-none"
-        />
-      </div>
-
-      <div className="flex-1 overflow-y-auto py-1.5">
-        {loadingList ? (
-          <p className="px-3 py-6 text-center text-sm text-[#666]">Loading...</p>
-        ) : filtered.length === 0 ? (
-          <EmptyState
-            compact
-            icon={MessageCircle}
-            title="No conversations yet"
-            description="Start by asking Pulse AI anything"
-            className="px-3 [&_h3]:text-[#ccc] [&_p]:text-[#666]"
-          />
-        ) : (
-          filtered.map((conv) => {
-            const active = activeConvId === conv.conversation_id
-            return (
-              <div
-                key={conv.conversation_id}
-                role="button"
-                tabIndex={0}
-                onClick={() => onSelectConversation(conv.conversation_id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") onSelectConversation(conv.conversation_id)
-                }}
-                className={cn(
-                  "group mx-1.5 flex cursor-pointer items-start gap-2 rounded-lg px-2.5 py-2.5 transition-colors",
-                  active
-                    ? "bg-[#1a1a1a] text-white ring-1 ring-[#333]"
-                    : "text-[#aaa] hover:bg-[#141414] hover:text-white"
-                )}
-              >
-                <MessageCircle
-                  size={13}
-                  className={cn("mt-0.5 shrink-0", active ? "text-[#7eb8ff]" : "text-[#555]")}
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">
-                    {conv.first_message || "New conversation"}
-                  </p>
-                  <p className="mt-0.5 text-[11px] text-[#666]">
-                    {conv.message_count} messages · {formatTimeAgo(conv.started_at)}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onDeleteConversation(conv.conversation_id)
-                  }}
-                  className="rounded p-1 text-[#555] opacity-0 transition-all group-hover:opacity-100 hover:text-red-400"
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            )
-          })
-        )}
-      </div>
-
-      <div className="border-t border-[#222] px-3 py-3">
-        <Link
-          to="/dashboard"
-          className="flex items-center gap-2 text-sm text-[#666] transition-colors hover:text-white"
-        >
-          <ArrowLeft size={14} />
-          Back to Dashboard
-        </Link>
-      </div>
-    </div>
-  )
-}
-
 export function ChatPage() {
+  const { user } = useAuth()
   const [conversations, setConversations] = useState<PulseConversation[]>([])
   const [activeConvId, setActiveConvId] = useState(generateConversationId)
   const [chatSessionKey, setChatSessionKey] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
   const [loadedMessages, setLoadedMessages] = useState<ChatMessageItem[] | null>(null)
   const [loadingList, setLoadingList] = useState(true)
-  const [focusMode, setFocusMode] = useState(false)
-  const [historyOpen, setHistoryOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const refreshConversations = useCallback(async () => {
     try {
@@ -230,14 +65,14 @@ export function ChatPage() {
     }
     setActiveConvId(conversationId)
     setChatSessionKey((k) => k + 1)
-    if (focusMode) setHistoryOpen(false)
-  }, [focusMode])
+    setSidebarOpen(false)
+  }, [])
 
   function startNewChat() {
     setActiveConvId(generateConversationId())
     setLoadedMessages(null)
     setChatSessionKey((k) => k + 1)
-    if (focusMode) setHistoryOpen(false)
+    setSidebarOpen(false)
   }
 
   async function handleDelete(conversationId: string) {
@@ -252,28 +87,18 @@ export function ChatPage() {
     }
   }
 
-  function enterFocusMode() {
-    setFocusMode(true)
-    setHistoryOpen(false)
-  }
-
-  function exitFocusMode() {
-    setFocusMode(false)
-    setHistoryOpen(false)
-  }
-
-  function toggleHistory() {
-    setHistoryOpen((open) => !open)
-  }
-
-  const showInlineSidebar = !focusMode
-  const showOverlaySidebar = historyOpen
+  const userName = user?.full_name || user?.name || "User"
+  const userInitials = getUserInitials(userName)
+  const planName = user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "Member"
 
   const sidebarProps = {
     conversations,
-    activeConvId,
+    activeId: activeConvId,
     searchQuery,
     loadingList,
+    userName,
+    userInitials,
+    planName,
     onSearchChange: setSearchQuery,
     onNewChat: startNewChat,
     onSelectConversation: (id: string) => void loadConversation(id),
@@ -281,53 +106,38 @@ export function ChatPage() {
   }
 
   return (
-    <div className="relative flex h-screen w-full overflow-hidden bg-[#0a0a0a] text-white pulse-chat-dark">
-      {showInlineSidebar && (
-        <div className="hidden w-52 shrink-0 flex-col border-r border-[#222] md:flex lg:w-56">
-          <ChatHistorySidebar {...sidebarProps} />
-        </div>
-      )}
+    <div className="chat-page grid h-screen overflow-hidden bg-[var(--chat-bg)] [grid-template-columns:260px_1fr] max-md:[grid-template-columns:1fr]">
+      {/* Desktop sidebar */}
+      <div className="hidden h-full min-h-0 border-r border-[var(--chat-border)] md:block">
+        <ChatSidebar {...sidebarProps} />
+      </div>
 
-      {showOverlaySidebar && (
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
         <>
           <button
             type="button"
-            aria-label="Close chat history"
-            className="absolute inset-0 z-40 bg-black/60"
-            onClick={() => setHistoryOpen(false)}
+            aria-label="Close sidebar"
+            className="fixed inset-0 z-40 bg-black/60 md:hidden"
+            onClick={() => setSidebarOpen(false)}
           />
-          <div
-            className={cn(
-              "absolute inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col border-r border-[#222] shadow-2xl shadow-black/50",
-              focusMode ? "flex" : "flex md:hidden"
-            )}
-          >
-            <ChatHistorySidebar
-              {...sidebarProps}
-              overlay
-              onClose={() => setHistoryOpen(false)}
-            />
+          <div className="fixed inset-y-0 left-0 z-50 w-[min(280px,85vw)] md:hidden">
+            <ChatSidebar {...sidebarProps} overlay onClose={() => setSidebarOpen(false)} />
           </div>
         </>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <ChatWindow
-          mode="full"
-          conversationId={activeConvId}
-          initialMessages={loadedMessages}
-          focusMode={focusMode}
-          onEnterFocusMode={enterFocusMode}
-          onExitFocusMode={exitFocusMode}
-          onToggleHistory={toggleHistory}
-          historyOpen={historyOpen}
-          onConversationChange={(id) => {
-            setActiveConvId(id)
-            void refreshConversations()
-          }}
-          key={chatSessionKey}
-        />
-      </div>
+      <ChatMain
+        key={chatSessionKey}
+        conversationId={activeConvId}
+        initialMessages={loadedMessages}
+        onConversationChange={(id) => {
+          setActiveConvId(id)
+          void refreshConversations()
+        }}
+        onToggleSidebar={() => setSidebarOpen((o) => !o)}
+        sidebarOpen={sidebarOpen}
+      />
     </div>
   )
 }

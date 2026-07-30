@@ -38,8 +38,8 @@ export function ComparePage() {
 
     try {
       const [resA, resB] = await Promise.all([
-        searchOpinions(qA, { platform: "all", timeRange: "24h", sentiment: "all", sortBy: "recent" }),
-        searchOpinions(qB, { platform: "all", timeRange: "24h", sentiment: "all", sortBy: "recent" })
+        searchOpinions(qA, { platform: "all", timeRange: "24h", sentiment: "all", sortBy: "recent", language: "all" }),
+        searchOpinions(qB, { platform: "all", timeRange: "24h", sentiment: "all", sortBy: "recent", language: "all" })
       ])
       setDataA(resA)
       setDataB(resB)

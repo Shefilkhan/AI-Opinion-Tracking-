@@ -1,30 +1,12 @@
 import { useState } from "react"
 import { Copy, Sparkles } from "lucide-react"
-import type {
-  PulseChatCitedSource,
-  PulseChatDataUsed,
-  PulseChatReference,
-  PulseChatStructured,
-} from "@/api/chat"
+import type { PulseChatCitedSource } from "@/api/chat"
 import { SuggestionsBar } from "@/components/chat/SuggestionsBar"
 import { StructuredChatRenderer } from "@/components/chat/StructuredChatRenderer"
+import type { ChatMessageItem } from "@/components/chat/types"
 import { cn } from "@/lib/utils"
 
-export type ChatMessageItem = {
-  id: string
-  role: "user" | "assistant"
-  content: string
-  timestamp: Date
-  suggestions?: string[]
-  dataUsed?: PulseChatDataUsed
-  hasRealData?: boolean
-  isError?: boolean
-  structured?: PulseChatStructured | null
-  responseFormat?: string | null
-  references?: PulseChatReference[]
-  citedSources?: PulseChatCitedSource[]
-  sourcesFetched?: number
-}
+export type { ChatMessageItem } from "@/components/chat/types"
 
 type MessageBubbleProps = {
   message: ChatMessageItem
