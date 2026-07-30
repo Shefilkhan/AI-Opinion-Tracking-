@@ -73,21 +73,21 @@ function ThemeBreakdown({
   return (
     <div
       className={cn(
-        "mb-4 space-y-2 rounded-xl border p-3",
+        "mb-4 space-y-3 rounded-xl border p-4",
         dark ? "chat-theme-card border-[#333] bg-[#161616]" : "border-border bg-muted/30"
       )}
     >
       <p
         className={cn(
-          "theme-heading text-xs font-semibold uppercase tracking-wide",
-          dark ? "!text-[#999]" : "text-muted-foreground"
+          "theme-heading text-[11px] font-semibold uppercase tracking-widest",
+          dark ? "!text-[#888]" : "text-muted-foreground"
         )}
       >
         Discussion themes
       </p>
       {items.map((item) => (
         <div key={item.label}>
-          <div className="mb-1 flex items-center justify-between gap-2 text-xs">
+          <div className="mb-1.5 flex items-center justify-between gap-2 text-xs">
             <span
               className={cn(
                 "theme-label font-medium",
@@ -98,8 +98,8 @@ function ThemeBreakdown({
             </span>
             <span
               className={cn(
-                "theme-pct tabular-nums",
-                dark ? "!text-[#ccc]" : "text-muted-foreground"
+                "theme-pct tabular-nums font-medium",
+                dark ? "!text-[#7eb8ff]" : "text-muted-foreground"
               )}
             >
               {item.pct}%
@@ -107,13 +107,13 @@ function ThemeBreakdown({
           </div>
           <div
             className={cn(
-              "theme-track h-2 overflow-hidden rounded-full",
+              "theme-track h-1.5 overflow-hidden rounded-full",
               dark ? "bg-[#2a2a2a]" : "bg-muted"
             )}
           >
             <div
               className={cn(
-                "theme-fill h-full rounded-full transition-all",
+                "theme-fill h-full rounded-full transition-all duration-700 ease-out",
                 dark ? "bg-[#7eb8ff]" : "bg-primary"
               )}
               style={{ width: `${Math.min(100, Math.max(0, item.pct))}%` }}
@@ -123,7 +123,7 @@ function ThemeBreakdown({
             <p
               className={cn(
                 "theme-detail mt-1 text-[11px] leading-snug",
-                dark ? "!text-[#b3b3b3]" : "text-muted-foreground"
+                dark ? "!text-[#999]" : "text-muted-foreground"
               )}
             >
               {item.detail}

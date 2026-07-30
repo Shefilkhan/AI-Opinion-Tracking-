@@ -2,12 +2,10 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import {
   ArrowUp,
   ExternalLink,
-  Filter,
   Loader2,
   Maximize2,
   Minimize2,
   PanelLeft,
-  Plus,
   RefreshCw,
   Send,
   Sparkles,
@@ -83,6 +81,8 @@ export function ChatWindow({
     initialConvId || generateConversationId()
   )
   const [sourcesCount, setSourcesCount] = useState<number | null>(null)
+  const [dataPanel, setDataPanel] = useState<PulseChatDataUsed | null>(null)
+  const [referencesOpen, setReferencesOpen] = useState(true)
   const [referencesPanel, setReferencesPanel] = useState<{
     query: string
     references: PulseChatReference[]
@@ -116,6 +116,15 @@ export function ChatWindow({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages, isLoading])
+
+  useEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    el.style.height = "auto"
+    el.style.height = `${Math.min(el.scrollHeight, 128)}px`
+  }, [input])
+
+  const isEmptyChat = messages.length <= 1 && messages[0]?.id === "welcome"
 
   const sendMessage = useCallback(
     async (text = input) => {
@@ -165,6 +174,7 @@ export function ChatWindow({
             dataUsed: data.data_used,
             highlightId: null,
           })
+          setReferencesOpen(true)
         }
 
         if (data.has_real_data && data.data_used) {
@@ -210,6 +220,7 @@ export function ChatWindow({
     onConversationChange?.(newId)
     setDataPanel(null)
     setReferencesPanel(null)
+    setReferencesOpen(true)
     setSourcesCount(null)
   }
 
@@ -291,6 +302,33 @@ export function ChatWindow({
         </div>
 
         <div className="flex items-center gap-1">
+          {isResearchLayout && !focusMode && onEnterFocusMode && (
+            <button
+              type="button"
+              onClick={onEnterFocusMode}
+              title="Enter focus mode"
+              className="hidden items-center gap-1.5 rounded-[var(--radius-md)] px-2 py-1.5 text-xs text-[#aaa] transition-colors hover:bg-[#222] hover:text-white sm:inline-flex"
+            >
+              <Maximize2 size={14} />
+              Focus
+            </button>
+          )}
+          {isResearchLayout && onToggleHistory && (
+            <button
+              type="button"
+              onClick={onToggleHistory}
+              title={historyOpen ? "Hide chat history" : "Show chat history"}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-[var(--radius-md)] px-2 py-1.5 text-xs transition-colors md:hidden",
+                historyOpen
+                  ? "bg-[#222] text-white"
+                  : "text-[#aaa] hover:bg-[#222] hover:text-white"
+              )}
+            >
+              <PanelLeft size={14} />
+              History
+            </button>
+          )}
           {isResearchLayout && focusMode && onToggleHistory && (
             <button
               type="button"
@@ -377,18 +415,30 @@ export function ChatWindow({
         </div>
       )}
 
-      <div className="flex min-h-0 flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 overflow-hidden relative">
         <div className="flex-1 overflow-y-auto">
           <div
             className={cn(
               "mx-auto w-full px-4 py-5 sm:px-8",
               isResearchLayout
-                ? focusMode
-                  ? "max-w-4xl space-y-5"
-                  : "max-w-3xl"
+                ? cn("max-w-3xl space-y-5", focusMode && "max-w-4xl")
                 : "max-w-3xl space-y-5"
             )}
           >
+            {isEmptyChat && isResearchLayout && (
+              <div className="chat-empty-hero mb-2 pt-6 text-center sm:pt-10">
+                <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl border border-[#333] bg-[#161616] shadow-lg shadow-black/30">
+                  <Sparkles size={24} className="text-[#7eb8ff]" />
+                </div>
+                <h1 className="font-serif-display text-2xl font-semibold text-white sm:text-3xl">
+                  What does the world think?
+                </h1>
+                <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[#999]">
+                  Pulse AI searches live sources across Reddit, news, YouTube, and more — then
+                  cites them in every answer.
+                </p>
+              </div>
+            )}
             {messages.map((message) => (
               <MessageBubble
                 key={message.id}
@@ -406,46 +456,67 @@ export function ChatWindow({
             )}
             <div ref={messagesEndRef} />
           </div>
+          {isResearchLayout && referencesPanel && referencesPanel.references.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setReferencesOpen(true)}
+              className="fixed bottom-24 right-4 z-20 inline-flex items-center gap-1.5 rounded-full border border-[#333] bg-[#161616] px-3 py-2 text-xs font-medium text-white shadow-lg shadow-black/40 lg:hidden"
+            >
+              <ExternalLink size={12} className="text-[#7eb8ff]" />
+              {referencesPanel.references.length} sources
+            </button>
+          )}
         </div>
 
-        {isResearchLayout && referencesPanel && referencesPanel.references.length > 0 && (
-          <ReferencesPanel
-            query={referencesPanel.query}
-            references={referencesPanel.references}
-            dataUsed={referencesPanel.dataUsed}
-            highlightId={referencesPanel.highlightId}
-            onHighlight={(refId) =>
-              setReferencesPanel((prev) => (prev ? { ...prev, highlightId: refId } : prev))
-            }
-          />
+        {isResearchLayout && referencesPanel && referencesPanel.references.length > 0 && referencesOpen && (
+          <>
+            <button
+              type="button"
+              aria-label="Close references"
+              className="absolute inset-0 z-30 bg-black/50 lg:hidden"
+              onClick={() => setReferencesOpen(false)}
+            />
+            <div className="absolute inset-y-0 right-0 z-40 flex w-full max-w-md flex-col lg:relative lg:z-auto lg:max-w-[420px] lg:shrink-0 xl:max-w-[480px]">
+              <ReferencesPanel
+                query={referencesPanel.query}
+                references={referencesPanel.references}
+                dataUsed={referencesPanel.dataUsed}
+                highlightId={referencesPanel.highlightId}
+                onClose={() => setReferencesOpen(false)}
+                onHighlight={(refId) =>
+                  setReferencesPanel((prev) => (prev ? { ...prev, highlightId: refId } : prev))
+                }
+              />
+            </div>
+          </>
         )}
       </div>
 
-      {messages.length <= 1 && !isLoading && (
+      {isEmptyChat && !isLoading && (
         <div className={cn("px-4 pb-3", isResearchLayout && "bg-[#0a0a0a]")}>
           <div className="mx-auto w-full max-w-3xl">
             <p
               className={cn(
-                "mb-2 text-xs font-medium",
-                isResearchLayout ? "text-[#a3a3a3]" : "text-muted-foreground"
+                "mb-2.5 text-center text-xs font-medium uppercase tracking-wide",
+                isResearchLayout ? "text-[#666]" : "text-muted-foreground"
               )}
             >
-              Try asking:
+              Try asking
             </p>
-            <div className="flex flex-wrap gap-1.5">
-              {STARTER_SUGGESTIONS.slice(0, 4).map((s) => (
+            <div className="flex flex-wrap justify-center gap-2">
+              {STARTER_SUGGESTIONS.map((s) => (
                 <button
                   key={s}
                   type="button"
                   onClick={() => void sendMessage(s)}
                   className={cn(
-                    "rounded-full border px-2.5 py-1.5 text-xs transition-colors",
+                    "rounded-full border px-3 py-2 text-xs transition-all duration-150",
                     isResearchLayout
-                      ? "border-[#333] bg-[#161616] text-[#ccc] hover:border-[#555] hover:text-white"
+                      ? "border-[#333] bg-[#161616] text-[#ccc] hover:border-[#7eb8ff]/40 hover:bg-[#1a1a1a] hover:text-white"
                       : "border-border bg-card text-foreground hover:border-primary/30 hover:bg-accent"
                   )}
                 >
-                  {s.length > 40 ? `${s.slice(0, 40)}...` : s}
+                  {s.length > 42 ? `${s.slice(0, 42)}…` : s}
                 </button>
               ))}
             </div>
@@ -466,60 +537,39 @@ export function ChatWindow({
           )}
         >
           {isResearchLayout ? (
-            <div className="rounded-2xl border border-[#2a2a2a] bg-[#141414] p-2 shadow-lg shadow-black/40">
+            <div className="chat-input-shell rounded-2xl border border-[#2a2a2a] bg-[#141414] p-2 shadow-lg shadow-black/40">
               <textarea
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask a follow up..."
+                placeholder={isEmptyChat ? "Ask about any topic…" : "Ask a follow up…"}
                 rows={1}
                 maxLength={500}
-                className="max-h-32 min-h-10 w-full resize-none bg-transparent px-3 py-2 text-sm text-white placeholder:text-[#888] focus:outline-none"
+                className="max-h-32 min-h-10 w-full resize-none bg-transparent px-3 py-2.5 text-sm leading-relaxed text-white placeholder:text-[#666] focus:outline-none"
               />
-              <div className="flex items-center justify-between gap-2 px-1 pt-1">
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    className="rounded-lg p-2 text-[#aaa] hover:bg-[#222] hover:text-white"
-                  >
-                    <Plus size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded-lg px-2 py-1.5 text-xs text-[#ccc] hover:bg-[#222] hover:text-white"
-                  >
+              <div className="flex items-center justify-between gap-2 px-1 pt-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-medium text-emerald-400">
+                    <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" />
                     Live sources
-                  </button>
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs text-[#ccc] hover:bg-[#222] hover:text-white"
-                  >
-                    <Sparkles size={12} />
-                    Deep
-                  </button>
+                  </span>
+                  {input.length > 0 && (
+                    <span className="text-[10px] tabular-nums text-[#555]">{input.length}/500</span>
+                  )}
                 </div>
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs text-[#ccc] hover:bg-[#222] hover:text-white"
-                  >
-                    <Filter size={12} />
-                    Filter
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void sendMessage()}
-                    disabled={!input.trim() || isLoading}
-                    className="flex size-9 items-center justify-center rounded-full bg-[#2563eb] text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    {isLoading ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <ArrowUp size={16} />
-                    )}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => void sendMessage()}
+                  disabled={!input.trim() || isLoading}
+                  className="flex size-9 items-center justify-center rounded-full bg-[#2563eb] text-white shadow-md shadow-blue-500/20 transition-all hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+                >
+                  {isLoading ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <ArrowUp size={16} />
+                  )}
+                </button>
               </div>
             </div>
           ) : (
@@ -560,30 +610,12 @@ export function ChatWindow({
 
           <p
             className={cn(
-              "mt-2 text-center text-xs",
-              isResearchLayout ? "text-[#999]" : "text-muted-foreground"
+              "mt-2 text-center text-[11px]",
+              isResearchLayout ? "text-[#555]" : "text-muted-foreground"
             )}
           >
             Pulse AI reads live data · Not financial advice
           </p>
-          {mode === "full" && !focusMode && onEnterFocusMode && (
-            <button
-              type="button"
-              onClick={onEnterFocusMode}
-              className={cn(
-                "mt-2 w-full text-center text-xs hover:underline",
-                isResearchLayout ? "text-[#7eb8ff]" : "text-primary"
-              )}
-            >
-              Open full screen →
-            </button>
-          )}
-          {mode === "full" && focusMode && (
-            <p className="mt-2 text-center text-[11px] text-[#999]">
-              Full screen · Use <span className="text-[#ccc]">History</span> in the header to
-              open past chats
-            </p>
-          )}
         </div>
       </div>
     </div>

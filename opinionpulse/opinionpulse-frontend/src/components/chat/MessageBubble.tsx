@@ -176,6 +176,7 @@ export function MessageBubble({
   const suggestions = message.suggestions ?? []
   const researchDoc = variant === "research" && isResearchMessage(message)
   const hasCitedSources = (message.citedSources?.length ?? 0) > 0
+  const isWelcome = message.id === "welcome"
 
   function copyMessage() {
     void navigator.clipboard.writeText(message.content)
@@ -185,10 +186,28 @@ export function MessageBubble({
 
   if (variant === "research" && isUser) {
     return (
-      <div className="flex justify-end py-2">
-        <div className="max-w-[85%] rounded-2xl bg-[#2563eb] px-4 py-2.5 text-sm text-white">
+      <div className="flex justify-end">
+        <div className="max-w-[85%] rounded-2xl rounded-br-md bg-[#2563eb] px-4 py-2.5 text-sm leading-relaxed text-white shadow-md shadow-blue-500/10">
           {message.content}
         </div>
+      </div>
+    )
+  }
+
+  if (variant === "research" && isWelcome) {
+    return (
+      <div className="rounded-xl border border-[#2a2a2a] bg-[#161616]/60 px-4 py-3 text-sm leading-relaxed text-[#bbb]">
+        <StructuredChatRenderer
+          content={message.content}
+          structured={message.structured}
+          references={message.references}
+          onCitationClick={onCitationClick}
+          showInlineReferences={showInlineReferences}
+          dark
+        />
+        {suggestions.length > 0 && (
+          <SuggestionsBar suggestions={suggestions} onSuggestionClick={onSuggestionClick} dark />
+        )}
       </div>
     )
   }
@@ -207,7 +226,7 @@ export function MessageBubble({
         />
         </div>
 
-        <div className="mt-4 flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="mt-3 flex items-center gap-3 sm:opacity-60 sm:transition-opacity sm:group-hover:opacity-100">
           <button
             type="button"
             onClick={copyMessage}
@@ -216,6 +235,9 @@ export function MessageBubble({
             <Copy size={11} />
             {copied ? "Copied!" : "Copy"}
           </button>
+          <span className="text-[10px] text-[#555]">
+            {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          </span>
         </div>
 
         {suggestions.length > 0 && (
@@ -233,12 +255,15 @@ export function MessageBubble({
 
   if (variant === "research" && !isUser) {
     return (
-      <div className="group py-3">
-        <div className="pulse-chat-card chat-message-body rounded-lg border border-[#2a2a2a] bg-[#161616] px-4 py-3 text-sm text-white">
+      <div className="group">
+        <div className="pulse-chat-card chat-message-body rounded-xl border border-[#2a2a2a] bg-[#161616] px-4 py-3.5 text-sm text-white shadow-sm shadow-black/20">
           {!message.isError && message.hasRealData && (
-            <div className="mb-2 flex items-center gap-1 text-xs font-medium text-[#7eb8ff]">
-              <span className="inline-block size-1.5 rounded-full bg-emerald-500" />
+            <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-emerald-400">
+              <span className="size-1.5 rounded-full bg-emerald-400" />
               Based on live data
+              {message.sourcesFetched ? (
+                <span className="text-emerald-500/80">· {message.sourcesFetched} posts</span>
+              ) : null}
             </div>
           )}
           {showDbError ? (
@@ -264,6 +289,20 @@ export function MessageBubble({
               dark
             />
           )}
+        </div>
+
+        <div className="mt-2 flex items-center gap-3 px-1 sm:opacity-60 sm:transition-opacity sm:group-hover:opacity-100">
+          <button
+            type="button"
+            onClick={copyMessage}
+            className="flex items-center gap-1 text-xs text-[#666] transition-colors hover:text-white"
+          >
+            <Copy size={11} />
+            {copied ? "Copied!" : "Copy"}
+          </button>
+          <span className="text-[10px] text-[#555]">
+            {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          </span>
         </div>
 
         {!message.isError && suggestions.length > 0 && (

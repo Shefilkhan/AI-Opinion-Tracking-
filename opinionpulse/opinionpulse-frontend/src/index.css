@@ -703,6 +703,38 @@ body {
   color: #e8e8e8 !important;
 }
 
+/* Chat UI polish */
+.chat-empty-hero {
+  animation: chat-slide-up 0.4s ease forwards;
+}
+
+.chat-input-shell:focus-within {
+  border-color: #7eb8ff40;
+  box-shadow: 0 0 0 1px rgba(126, 184, 255, 0.12), 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.chat-typing-card {
+  animation: chat-slide-up 0.25s ease forwards;
+}
+
+.pulse-chat-dark ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.pulse-chat-dark ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pulse-chat-dark ::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+.pulse-chat-dark ::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}
+
 /* ── Hero category showcase ───────────────────────── */
 
 .hero-category-showcase {

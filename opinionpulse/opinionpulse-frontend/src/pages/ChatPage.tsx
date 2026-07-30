@@ -267,7 +267,7 @@ export function ChatPage() {
   }
 
   const showInlineSidebar = !focusMode
-  const showOverlaySidebar = focusMode && historyOpen
+  const showOverlaySidebar = historyOpen
 
   const sidebarProps = {
     conversations,
@@ -283,7 +283,7 @@ export function ChatPage() {
   return (
     <div className="relative flex h-screen w-full overflow-hidden bg-[#0a0a0a] text-white pulse-chat-dark">
       {showInlineSidebar && (
-        <div className="flex w-52 shrink-0 flex-col border-r border-[#222] lg:w-56">
+        <div className="hidden w-52 shrink-0 flex-col border-r border-[#222] md:flex lg:w-56">
           <ChatHistorySidebar {...sidebarProps} />
         </div>
       )}
@@ -296,7 +296,12 @@ export function ChatPage() {
             className="absolute inset-0 z-40 bg-black/60"
             onClick={() => setHistoryOpen(false)}
           />
-          <div className="absolute inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col border-r border-[#222] shadow-2xl shadow-black/50">
+          <div
+            className={cn(
+              "absolute inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col border-r border-[#222] shadow-2xl shadow-black/50",
+              focusMode ? "flex" : "flex md:hidden"
+            )}
+          >
             <ChatHistorySidebar
               {...sidebarProps}
               overlay

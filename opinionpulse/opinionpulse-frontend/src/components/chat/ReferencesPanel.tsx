@@ -1,11 +1,7 @@
 import { useState } from "react"
 import {
-  Bookmark,
   ChevronRight,
-  Download,
   ExternalLink,
-  LayoutGrid,
-  List,
   Quote,
   X,
 } from "lucide-react"
@@ -135,7 +131,7 @@ export function ReferencesPanel({
   const resultsCount = dataUsed?.results_count ?? references.length
 
   return (
-    <aside className="flex w-full max-w-[420px] shrink-0 flex-col border-l border-[#222] bg-[#0d0d0d] xl:max-w-[480px]">
+    <aside className="flex h-full w-full flex-col border-l border-[#222] bg-[#0d0d0d]">
       <div className="flex items-start justify-between gap-2 border-b border-[#222] px-4 py-3">
         <div className="min-w-0">
           <p className="text-xs text-[#666]">
@@ -144,27 +140,14 @@ export function ReferencesPanel({
           </p>
           <div className="mt-2 flex items-center gap-3">
             <p className="text-sm font-medium text-white">
-              Results{" "}
-              <span className="text-[#888]">
-                {resultsCount >= 1000
-                  ? `${(resultsCount / 1000).toFixed(1)}K`
-                  : resultsCount}
-              </span>
+              {references.length} source{references.length === 1 ? "" : "s"}
+              {resultsCount > references.length && (
+                <span className="ml-1.5 text-[#666]">
+                  from {resultsCount >= 1000 ? `${(resultsCount / 1000).toFixed(1)}K` : resultsCount}{" "}
+                  posts
+                </span>
+              )}
             </p>
-            <div className="flex items-center gap-1 text-[#555]">
-              <button type="button" className="rounded p-1 hover:bg-[#222] hover:text-[#aaa]">
-                <Bookmark size={14} />
-              </button>
-              <button type="button" className="rounded p-1 hover:bg-[#222] hover:text-[#aaa]">
-                <Download size={14} />
-              </button>
-              <button type="button" className="rounded p-1 hover:bg-[#222] hover:text-[#aaa]">
-                <List size={14} />
-              </button>
-              <button type="button" className="rounded p-1 hover:bg-[#222] hover:text-[#aaa]">
-                <LayoutGrid size={14} />
-              </button>
-            </div>
           </div>
         </div>
         {onClose && (
