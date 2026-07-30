@@ -281,7 +281,7 @@ export function ChatPage() {
   }
 
   return (
-    <div className="relative flex h-screen w-full overflow-hidden bg-[#0a0a0a] text-white">
+    <div className="relative flex h-screen w-full overflow-hidden bg-[#0a0a0a] text-white pulse-chat-dark">
       {showInlineSidebar && (
         <div className="flex w-52 shrink-0 flex-col border-r border-[#222] lg:w-56">
           <ChatHistorySidebar {...sidebarProps} />

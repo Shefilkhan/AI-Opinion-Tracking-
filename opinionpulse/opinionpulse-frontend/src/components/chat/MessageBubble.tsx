@@ -232,7 +232,7 @@ export function MessageBubble({
   if (variant === "research" && !isUser) {
     return (
       <div className="group py-3">
-        <div className="rounded-lg border border-[#2a2a2a] bg-[#111] px-4 py-3 text-sm text-[#e8e8e8]">
+        <div className="rounded-lg border border-[#2a2a2a] bg-[#161616] px-4 py-3 text-sm text-white [&_*]:max-w-none">
           {!message.isError && message.hasRealData && (
             <div className="mb-2 flex items-center gap-1 text-xs font-medium text-[#7eb8ff]">
               <span className="inline-block size-1.5 rounded-full bg-emerald-500" />

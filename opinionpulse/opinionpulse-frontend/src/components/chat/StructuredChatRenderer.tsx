@@ -36,22 +36,22 @@ const MARKDOWN_CLASS =
   "[&_tr:last-child_td]:border-b-0"
 
 const DARK_MARKDOWN_CLASS =
-  "text-sm leading-relaxed text-[#e8e8e8] " +
-  "[&_strong]:font-medium [&_strong]:text-white " +
+  "text-sm leading-relaxed !text-[#f0f0f0] " +
+  "[&_strong]:font-medium [&_strong]:!text-white " +
   "[&_ul]:my-2 [&_ul]:list-none [&_ul]:space-y-1.5 [&_ul]:pl-0 " +
-  "[&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:text-[#e8e8e8] " +
-  "[&_li]:my-0.5 [&_li]:text-[#e8e8e8] " +
-  "[&_p]:my-2 [&_p]:text-[#e8e8e8] " +
-  "[&_h1]:my-3 [&_h1]:text-lg [&_h1]:font-semibold [&_h1]:text-white " +
-  "[&_h2]:my-2.5 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-white " +
-  "[&_h3]:my-2 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-white " +
-  "[&_a]:text-[#7eb8ff] [&_a]:hover:underline " +
-  "[&_blockquote]:border-l-2 [&_blockquote]:border-[#444] [&_blockquote]:pl-3 [&_blockquote]:text-[#b0b0b0] " +
-  "[&_code]:rounded [&_code]:bg-[#2a2a2a] [&_code]:px-1 [&_code]:text-xs [&_code]:text-[#e8e8e8] " +
+  "[&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:!text-[#f0f0f0] " +
+  "[&_li]:my-0.5 [&_li]:!text-[#f0f0f0] " +
+  "[&_p]:my-2 [&_p]:!text-[#f0f0f0] " +
+  "[&_h1]:my-3 [&_h1]:text-lg [&_h1]:font-semibold [&_h1]:!text-white " +
+  "[&_h2]:my-2.5 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:!text-white " +
+  "[&_h3]:my-2 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:!text-white " +
+  "[&_a]:!text-[#7eb8ff] [&_a]:hover:underline " +
+  "[&_blockquote]:border-l-2 [&_blockquote]:border-[#444] [&_blockquote]:pl-3 [&_blockquote]:!text-[#b0b0b0] " +
+  "[&_code]:rounded [&_code]:bg-[#2a2a2a] [&_code]:px-1 [&_code]:text-xs [&_code]:!text-[#f0f0f0] " +
   "[&_table]:my-3 [&_table]:w-full [&_table]:border-collapse [&_table]:overflow-hidden [&_table]:rounded-lg [&_table]:border [&_table]:border-[#333] " +
   "[&_thead]:bg-[#1a1a1a] " +
-  "[&_th]:border-b [&_th]:border-[#333] [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-[#999] " +
-  "[&_td]:border-b [&_td]:border-[#333] [&_td]:px-3 [&_td]:py-2.5 [&_td]:align-top [&_td]:text-sm [&_td]:text-[#ddd] " +
+  "[&_th]:border-b [&_th]:border-[#333] [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-wide [&_th]:!text-[#999] " +
+  "[&_td]:border-b [&_td]:border-[#333] [&_td]:px-3 [&_td]:py-2.5 [&_td]:align-top [&_td]:text-sm [&_td]:!text-[#ddd] " +
   "[&_tr:last-child_td]:border-b-0"
 
 type StructuredChatRendererProps = {

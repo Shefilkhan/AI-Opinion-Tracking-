@@ -586,6 +586,31 @@ body {
   animation: chat-slide-up 0.3s ease forwards;
 }
 
+/* Pulse AI full-page chat — dark shell while app theme may stay light */
+.pulse-chat-dark {
+  --foreground: #e8e8e8;
+  --muted-foreground: #a3a3a3;
+  --card-foreground: #e8e8e8;
+  --accent-foreground: #e8e8e8;
+  color: #e8e8e8;
+}
+
+.pulse-chat-dark .text-foreground {
+  color: #e8e8e8 !important;
+}
+
+.pulse-chat-dark .text-muted-foreground {
+  color: #a3a3a3 !important;
+}
+
+.pulse-chat-dark [class*="text-foreground"] {
+  color: #e8e8e8;
+}
+
+.pulse-chat-dark [class*="text-muted-foreground"] {
+  color: #a3a3a3;
+}
+
 /* ── Hero category showcase ───────────────────────── */
 
 .hero-category-showcase {

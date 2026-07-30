@@ -236,7 +236,7 @@ export function ChatWindow({
     <div
       className={cn(
         "flex h-full flex-col",
-        isResearchLayout ? "bg-[#0a0a0a] text-white" : "bg-background"
+        isResearchLayout ? "bg-[#0a0a0a] text-white pulse-chat-dark" : "bg-background"
       )}
     >
       <div
