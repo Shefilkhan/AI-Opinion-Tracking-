@@ -273,7 +273,7 @@ export function ChatWindow({
             <p
               className={cn(
                 "text-xs",
-                isResearchLayout ? "text-[#666]" : "text-muted-foreground"
+                isResearchLayout ? "text-[#a3a3a3]" : "text-muted-foreground"
               )}
             >
               {sourcesCount ? (
@@ -300,7 +300,7 @@ export function ChatWindow({
                 "inline-flex items-center gap-1.5 rounded-[var(--radius-md)] px-2 py-1.5 text-xs transition-colors",
                 historyOpen
                   ? "bg-[#222] text-white"
-                  : "text-[#666] hover:bg-[#222] hover:text-white"
+                  : "text-[#aaa] hover:bg-[#222] hover:text-white"
               )}
             >
               <PanelLeft size={14} />
@@ -312,7 +312,7 @@ export function ChatWindow({
               type="button"
               onClick={onExitFocusMode}
               title="Exit full screen"
-              className="rounded-[var(--radius-md)] p-1.5 text-[#666] transition-colors hover:bg-[#222] hover:text-white"
+              className="rounded-[var(--radius-md)] p-1.5 text-[#aaa] transition-colors hover:bg-[#222] hover:text-white"
             >
               <Minimize2 size={14} />
             </button>
@@ -324,7 +324,7 @@ export function ChatWindow({
             className={cn(
               "rounded-[var(--radius-md)] p-1.5 transition-colors",
               isResearchLayout
-                ? "text-[#666] hover:bg-[#222] hover:text-white"
+                ? "text-[#aaa] hover:bg-[#222] hover:text-white"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
@@ -337,7 +337,7 @@ export function ChatWindow({
             className={cn(
               "rounded-[var(--radius-md)] p-1.5 transition-colors",
               isResearchLayout
-                ? "text-[#666] hover:bg-[#222] hover:text-white"
+                ? "text-[#aaa] hover:bg-[#222] hover:text-white"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
@@ -427,7 +427,7 @@ export function ChatWindow({
             <p
               className={cn(
                 "mb-2 text-xs font-medium",
-                isResearchLayout ? "text-[#666]" : "text-muted-foreground"
+                isResearchLayout ? "text-[#a3a3a3]" : "text-muted-foreground"
               )}
             >
               Try asking:
@@ -475,25 +475,25 @@ export function ChatWindow({
                 placeholder="Ask a follow up..."
                 rows={1}
                 maxLength={500}
-                className="max-h-32 min-h-10 w-full resize-none bg-transparent px-3 py-2 text-sm text-white placeholder:text-[#555] focus:outline-none"
+                className="max-h-32 min-h-10 w-full resize-none bg-transparent px-3 py-2 text-sm text-white placeholder:text-[#888] focus:outline-none"
               />
               <div className="flex items-center justify-between gap-2 px-1 pt-1">
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
-                    className="rounded-lg p-2 text-[#666] hover:bg-[#222] hover:text-white"
+                    className="rounded-lg p-2 text-[#aaa] hover:bg-[#222] hover:text-white"
                   >
                     <Plus size={16} />
                   </button>
                   <button
                     type="button"
-                    className="rounded-lg px-2 py-1.5 text-xs text-[#888] hover:bg-[#222] hover:text-white"
+                    className="rounded-lg px-2 py-1.5 text-xs text-[#ccc] hover:bg-[#222] hover:text-white"
                   >
                     Live sources
                   </button>
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs text-[#888] hover:bg-[#222] hover:text-white"
+                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs text-[#ccc] hover:bg-[#222] hover:text-white"
                   >
                     <Sparkles size={12} />
                     Deep
@@ -502,7 +502,7 @@ export function ChatWindow({
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs text-[#888] hover:bg-[#222] hover:text-white"
+                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs text-[#ccc] hover:bg-[#222] hover:text-white"
                   >
                     <Filter size={12} />
                     Filter
@@ -561,7 +561,7 @@ export function ChatWindow({
           <p
             className={cn(
               "mt-2 text-center text-xs",
-              isResearchLayout ? "text-[#555]" : "text-muted-foreground"
+              isResearchLayout ? "text-[#999]" : "text-muted-foreground"
             )}
           >
             Pulse AI reads live data · Not financial advice
@@ -579,8 +579,8 @@ export function ChatWindow({
             </button>
           )}
           {mode === "full" && focusMode && (
-            <p className="mt-2 text-center text-[11px] text-[#555]">
-              Full screen · Use <span className="text-[#888]">History</span> in the header to
+            <p className="mt-2 text-center text-[11px] text-[#999]">
+              Full screen · Use <span className="text-[#ccc]">History</span> in the header to
               open past chats
             </p>
           )}

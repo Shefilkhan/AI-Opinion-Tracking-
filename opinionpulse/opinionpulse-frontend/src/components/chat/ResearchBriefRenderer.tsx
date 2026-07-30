@@ -25,7 +25,11 @@ function renderBoldInline(text: string, dark?: boolean): ReactNode[] {
         </strong>
       )
     }
-    return part ? <span key={i}>{part}</span> : null
+    return part ? (
+      <span key={i} className={dark ? "text-[#e8e8e8]" : undefined}>
+        {part}
+      </span>
+    ) : null
   })
 }
 

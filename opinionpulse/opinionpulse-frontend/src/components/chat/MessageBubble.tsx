@@ -94,7 +94,7 @@ function CitedMessage({
       <div
         className={cn(
           "whitespace-pre-wrap text-sm leading-relaxed",
-          dark ? "text-[#ddd]" : "text-foreground"
+          dark ? "text-[#e8e8e8]" : "text-foreground"
         )}
       >
         {renderWithCitations(content, citedSources)}
@@ -232,7 +232,7 @@ export function MessageBubble({
   if (variant === "research" && !isUser) {
     return (
       <div className="group py-3">
-        <div className="rounded-lg border border-[#2a2a2a] bg-[#111] px-4 py-3 text-sm text-[#ddd]">
+        <div className="rounded-lg border border-[#2a2a2a] bg-[#111] px-4 py-3 text-sm text-[#e8e8e8]">
           {!message.isError && message.hasRealData && (
             <div className="mb-2 flex items-center gap-1 text-xs font-medium text-[#7eb8ff]">
               <span className="inline-block size-1.5 rounded-full bg-emerald-500" />

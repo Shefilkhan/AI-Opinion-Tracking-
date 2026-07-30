@@ -19,7 +19,7 @@ export function SuggestionsBar({
       <p
         className={cn(
           "flex items-center gap-1 text-xs font-medium",
-          dark ? "text-[#666]" : "text-muted-foreground"
+          dark ? "text-[#a3a3a3]" : "text-muted-foreground"
         )}
       >
         <Search size={11} />
@@ -33,7 +33,7 @@ export function SuggestionsBar({
           className={cn(
             "flex w-full items-center gap-2 rounded-[var(--radius-md)] border px-3 py-2 text-left text-xs font-medium transition-all duration-150",
             dark
-              ? "border-[#2a2a2a] bg-[#141414] text-[#ccc] hover:border-[#444] hover:bg-[#1a1a1a] hover:text-white"
+              ? "border-[#2a2a2a] bg-[#141414] text-[#e0e0e0] hover:border-[#444] hover:bg-[#1a1a1a] hover:text-white"
               : "border-border bg-card text-foreground hover:border-primary/30 hover:bg-accent hover:text-accent-foreground"
           )}
         >

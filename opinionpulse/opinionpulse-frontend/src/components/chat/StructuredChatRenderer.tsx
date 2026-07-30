@@ -35,6 +35,25 @@ const MARKDOWN_CLASS =
   "[&_td]:border-b [&_td]:border-border/70 [&_td]:px-3 [&_td]:py-2.5 [&_td]:align-top [&_td]:text-sm " +
   "[&_tr:last-child_td]:border-b-0"
 
+const DARK_MARKDOWN_CLASS =
+  "text-sm leading-relaxed text-[#e8e8e8] " +
+  "[&_strong]:font-medium [&_strong]:text-white " +
+  "[&_ul]:my-2 [&_ul]:list-none [&_ul]:space-y-1.5 [&_ul]:pl-0 " +
+  "[&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:text-[#e8e8e8] " +
+  "[&_li]:my-0.5 [&_li]:text-[#e8e8e8] " +
+  "[&_p]:my-2 [&_p]:text-[#e8e8e8] " +
+  "[&_h1]:my-3 [&_h1]:text-lg [&_h1]:font-semibold [&_h1]:text-white " +
+  "[&_h2]:my-2.5 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-white " +
+  "[&_h3]:my-2 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-white " +
+  "[&_a]:text-[#7eb8ff] [&_a]:hover:underline " +
+  "[&_blockquote]:border-l-2 [&_blockquote]:border-[#444] [&_blockquote]:pl-3 [&_blockquote]:text-[#b0b0b0] " +
+  "[&_code]:rounded [&_code]:bg-[#2a2a2a] [&_code]:px-1 [&_code]:text-xs [&_code]:text-[#e8e8e8] " +
+  "[&_table]:my-3 [&_table]:w-full [&_table]:border-collapse [&_table]:overflow-hidden [&_table]:rounded-lg [&_table]:border [&_table]:border-[#333] " +
+  "[&_thead]:bg-[#1a1a1a] " +
+  "[&_th]:border-b [&_th]:border-[#333] [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-[#999] " +
+  "[&_td]:border-b [&_td]:border-[#333] [&_td]:px-3 [&_td]:py-2.5 [&_td]:align-top [&_td]:text-sm [&_td]:text-[#ddd] " +
+  "[&_tr:last-child_td]:border-b-0"
+
 type StructuredChatRendererProps = {
   content: string
   structured?: PulseChatStructured | null
@@ -44,26 +63,53 @@ type StructuredChatRendererProps = {
   dark?: boolean
 }
 
-function ThemeBreakdown({ items }: { items: { label: string; pct: number; detail?: string }[] }) {
+function ThemeBreakdown({
+  items,
+  dark = false,
+}: {
+  items: { label: string; pct: number; detail?: string }[]
+  dark?: boolean
+}) {
   return (
-    <div className="mb-4 space-y-2 rounded-xl border border-border bg-muted/30 p-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+    <div
+      className={cn(
+        "mb-4 space-y-2 rounded-xl border p-3",
+        dark ? "border-[#333] bg-[#161616]" : "border-border bg-muted/30"
+      )}
+    >
+      <p
+        className={cn(
+          "text-xs font-semibold uppercase tracking-wide",
+          dark ? "text-[#999]" : "text-muted-foreground"
+        )}
+      >
         Discussion themes
       </p>
       {items.map((item) => (
         <div key={item.label}>
           <div className="mb-1 flex items-center justify-between gap-2 text-xs">
-            <span className="font-medium text-foreground">{item.label}</span>
-            <span className="tabular-nums text-muted-foreground">{item.pct}%</span>
+            <span className={cn("font-medium", dark ? "text-white" : "text-foreground")}>
+              {item.label}
+            </span>
+            <span className={cn("tabular-nums", dark ? "text-[#aaa]" : "text-muted-foreground")}>
+              {item.pct}%
+            </span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-muted">
+          <div className={cn("h-2 overflow-hidden rounded-full", dark ? "bg-[#2a2a2a]" : "bg-muted")}>
             <div
               className="h-full rounded-full bg-primary transition-all"
               style={{ width: `${Math.min(100, Math.max(0, item.pct))}%` }}
             />
           </div>
           {item.detail && (
-            <p className="mt-1 text-[11px] leading-snug text-muted-foreground">{item.detail}</p>
+            <p
+              className={cn(
+                "mt-1 text-[11px] leading-snug",
+                dark ? "text-[#aaa]" : "text-muted-foreground"
+              )}
+            >
+              {item.detail}
+            </p>
           )}
         </div>
       ))}
@@ -155,7 +201,7 @@ function ComparisonChart({
   )
 }
 
-function markdownComponents() {
+function markdownComponents(dark = false) {
   return {
     h3: ({ children }: { children?: ReactNode }) => {
       const text = String(children ?? "")
@@ -167,7 +213,7 @@ function markdownComponents() {
             "rounded-lg px-2.5 py-1.5",
             isPros && "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300",
             isCons && "bg-red-500/10 text-red-800 dark:text-red-300",
-            !isPros && !isCons && "text-foreground"
+            !isPros && !isCons && (dark ? "text-white" : "text-foreground")
           )}
         >
           {children}
@@ -175,8 +221,13 @@ function markdownComponents() {
       )
     },
     li: ({ children }: { children?: ReactNode }) => (
-      <li className="flex gap-2 text-sm">
-        <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary/70" />
+      <li className={cn("flex gap-2 text-sm", dark ? "text-[#e8e8e8]" : "")}>
+        <span
+          className={cn(
+            "mt-2 size-1.5 shrink-0 rounded-full",
+            dark ? "bg-[#7eb8ff]" : "bg-primary/70"
+          )}
+        />
         <span className="min-w-0 flex-1">{children}</span>
       </li>
     ),
@@ -210,11 +261,11 @@ export function StructuredChatRenderer({
   return (
     <div>
       {showThemeFirst && structured.items?.length ? (
-        <ThemeBreakdown items={structured.items} />
+        <ThemeBreakdown items={structured.items} dark={dark} />
       ) : null}
 
-      <div className={MARKDOWN_CLASS}>
-        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents()}>
+      <div className={dark ? DARK_MARKDOWN_CLASS : MARKDOWN_CLASS}>
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents(dark)}>
           {content}
         </ReactMarkdown>
       </div>
