@@ -11,6 +11,7 @@ export async function searchOpinions(
     const data = await apiRequest<SearchResponse>("/api/search", {
       method: "POST",
       auth: true,
+      timeoutMs: 90_000,
       body: {
         query,
         platform: filters.platform,

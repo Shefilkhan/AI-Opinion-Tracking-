@@ -76,6 +76,7 @@ export function SearchPage() {
       const requestId = ++requestIdRef.current
       setLoading(true)
       setError(null)
+      setHasSearched(true)
       setSearchParams({ q: trimmed })
       try {
         const res = await searchOpinions(trimmed, f)
@@ -88,7 +89,11 @@ export function SearchPage() {
       } catch (err) {
         if (requestId !== requestIdRef.current) return
         console.error("Search failed:", err)
-        setError("Couldn't load results")
+        const message =
+          err instanceof Error && err.message
+            ? err.message
+            : "Couldn't load results"
+        setError(message)
         setData(null)
         setBaseData(null)
       } finally {
@@ -296,10 +301,17 @@ export function SearchPage() {
             {error && (
               <div className={cn(proCard, "p-8 text-center")}>
                 <InlineNotice variant="warning" title="Couldn't load results" className="mb-4 text-left">
-                  There was a problem connecting to the data source. Please try
-                  again.
+                  {error}
+                  {import.meta.env.DEV && (
+                    <span className="mt-2 block text-xs text-muted-foreground">
+                      Dev tip: start the backend with{" "}
+                      <code className="text-[11px]">uvicorn app.main:app --reload --port 8000</code>{" "}
+                      and ensure MySQL is running if configured in{" "}
+                      <code className="text-[11px]">.env.local</code>.
+                    </span>
+                  )}
                 </InlineNotice>
-                <Button className={cn("mt-4", btnPrimary)} onClick={() => runSearch(query)}>
+                <Button className={cn("mt-4", btnPrimary)} onClick={() => runSearch(query, filters)}>
                   Retry
                 </Button>
               </div>

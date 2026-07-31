@@ -164,7 +164,10 @@ async def _fetch_source(
 
     async def _call(q: str, tr: str) -> list[dict[str, Any]]:
         async with _fetch_semaphore:
-            return await asyncio.to_thread(fn, q, tr)
+            return await asyncio.wait_for(
+                asyncio.to_thread(fn, q, tr),
+                timeout=18.0,
+            )
 
     try:
         results = await _call(query, time_range)
@@ -187,6 +190,8 @@ async def _fetch_source(
         return name, results, None
     except ValueError as exc:
         return name, [], str(exc)
+    except asyncio.TimeoutError:
+        return name, [], f"{name}: timeout"
     except Exception as exc:
         logger.error("❌ %s failed: %s", name, exc)
         return name, [], str(exc)

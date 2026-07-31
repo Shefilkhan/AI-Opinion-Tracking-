@@ -23,6 +23,8 @@ type RequestOptions = {
   method?: string
   body?: unknown
   auth?: boolean
+  /** Abort the request after this many milliseconds (default: no limit). */
+  timeoutMs?: number
 }
 
 function parseLimitDetail(data: unknown): { message: string; upgradeTo: string } | null {
@@ -86,15 +88,31 @@ export async function apiRequest<T>(
 
   const url = `${API_BASE}${path}`
 
+  const controller = options.timeoutMs ? new AbortController() : null
+  const timeoutId =
+    controller && options.timeoutMs
+      ? window.setTimeout(() => controller.abort(), options.timeoutMs)
+      : null
+
   let response: Response
   try {
     response = await fetch(url, {
       method,
       headers,
       credentials: "include",
+      signal: controller?.signal,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     })
   } catch (err) {
+    if (timeoutId) window.clearTimeout(timeoutId)
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new ApiError(
+        0,
+        import.meta.env.DEV
+          ? `Search timed out. Check that the backend is running on port 8000 and MySQL is up.`
+          : "Request timed out. Please try again."
+      )
+    }
     const hint =
       import.meta.env.DEV
         ? ` Cannot reach ${url || path}. Is uvicorn running on port 8000?`
@@ -102,6 +120,8 @@ export async function apiRequest<T>(
     const msg =
       err instanceof Error ? `${err.message}${hint}` : `Network error${hint}`
     throw new ApiError(0, msg)
+  } finally {
+    if (timeoutId) window.clearTimeout(timeoutId)
   }
 
   if (response.status === 204) {

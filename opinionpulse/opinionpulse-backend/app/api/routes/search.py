@@ -1,6 +1,7 @@
+import asyncio
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -62,15 +63,25 @@ async def search_opinions(
             upgrade_to="pro",
         )
 
-    data = await search_service.run_search(
-        query=body.query.strip(),
-        platform=body.platform,
-        time_range=time_range,
-        sentiment=body.sentiment,
-        sort_by=body.sort_by,
-        source_allowlist=allowed_sources,
-        language=body.language,
-    )
+    try:
+        data = await asyncio.wait_for(
+            search_service.run_search(
+                query=body.query.strip(),
+                platform=body.platform,
+                time_range=time_range,
+                sentiment=body.sentiment,
+                sort_by=body.sort_by,
+                source_allowlist=allowed_sources,
+                language=body.language,
+            ),
+            timeout=60.0,
+        )
+    except asyncio.TimeoutError:
+        logger.error('Search timed out for query="%s"', body.query)
+        raise HTTPException(
+            status_code=504,
+            detail="Search timed out while fetching live sources. Try again or narrow filters.",
+        )
     try:
         search_service.record_search_history(
             db,
