@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import threading
 from datetime import datetime, timezone
 from typing import Any, Callable
 
@@ -62,7 +63,10 @@ logger = logging.getLogger(__name__)
 
 _query_processor = QueryProcessor()
 _brand_disambiguator = BrandDisambiguator()
-_fetch_semaphore = asyncio.Semaphore(5)
+# Thread semaphore (not asyncio.Semaphore) — module-level asyncio primitives bind to
+# the event loop that existed at import time, which breaks on Windows + uvicorn
+# --reload ("Future attached to a different loop").
+_fetch_semaphore = threading.Semaphore(5)
 
 NEWS_SOURCES = ("newsapi", "guardian", "mediastack", "currents", "gnews")
 TECH_SOURCES = ("devto", "hackernews", "github", "stackoverflow")
@@ -163,11 +167,14 @@ async def _fetch_source(
         return name, [], "unknown source"
 
     async def _call(q: str, tr: str) -> list[dict[str, Any]]:
-        async with _fetch_semaphore:
+        await asyncio.to_thread(_fetch_semaphore.acquire)
+        try:
             return await asyncio.wait_for(
                 asyncio.to_thread(fn, q, tr),
                 timeout=18.0,
             )
+        finally:
+            _fetch_semaphore.release()
 
     try:
         results = await _call(query, time_range)

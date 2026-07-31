@@ -187,6 +187,22 @@ def test_relevance_scorer_filters_irrelevant():
     assert ranked[0]["title"].startswith("Apple Inc")
 
 
+def test_fetch_source_survives_fresh_event_loops():
+    """Regression: module-level asyncio.Semaphore breaks on Windows uvicorn --reload."""
+    import asyncio
+
+    from app.services.search_service import _fetch_source
+
+    async def once():
+        return await _fetch_source("hackernews", "python", "7d")
+
+    for _ in range(2):
+        name, results, err = asyncio.run(once())
+        assert name == "hackernews"
+        assert err is None
+        assert isinstance(results, list)
+
+
 def test_search_response_accepts_float_relevance():
     import asyncio
 
