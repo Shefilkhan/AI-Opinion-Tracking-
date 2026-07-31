@@ -43,6 +43,17 @@ export function PlatformShareChart({ data }: PlatformShareChartProps) {
       color: COLORS[idx % COLORS.length]
     }))
 
+  if (chartData.length === 0) {
+    return (
+      <div className={cn(proCard, "p-5 flex flex-col")}>
+        <h3 className={cn(cardTitle, "mb-4")}>Share of Voice</h3>
+        <p className="text-sm text-muted-foreground">
+          Not enough platform data to chart yet.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className={cn(proCard, "p-5 flex flex-col")}>
       <h3 className={cn(cardTitle, "mb-4")}>
@@ -80,7 +91,12 @@ export function PlatformShareChart({ data }: PlatformShareChartProps) {
                 )
               }}
             />
-            <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+            <Legend
+              verticalAlign="bottom"
+              height={36}
+              iconType="circle"
+              wrapperStyle={{ fontSize: "12px", color: "var(--foreground)" }}
+            />
           </PieChart>
         </ResponsiveContainer>
       </div>

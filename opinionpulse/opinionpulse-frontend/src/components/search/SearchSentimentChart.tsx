@@ -70,16 +70,27 @@ export function SearchSentimentChart({ data }: SearchSentimentChartProps) {
       </h3>
       <div className="h-[220px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData}>
+          <LineChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} />
-            <XAxis dataKey="time" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-            <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} domain={[0, 100]} unit="%" />
+            <XAxis
+              dataKey="time"
+              tick={{ fontSize: 11, fill: "var(--foreground)", opacity: 0.72 }}
+            />
+            <YAxis
+              tick={{ fontSize: 11, fill: "var(--foreground)", opacity: 0.72 }}
+              domain={[0, 100]}
+              unit="%"
+            />
             <Tooltip content={<ChartTooltip />} />
-            <Legend verticalAlign="bottom" height={36} />
+            <Legend
+              verticalAlign="bottom"
+              height={36}
+              wrapperStyle={{ fontSize: "12px", color: "var(--foreground)" }}
+            />
             <Line
               type="monotone"
               dataKey="positive"
-              stroke="var(--success)"
+              stroke="#15803d"
               strokeWidth={2}
               dot={false}
               name="Positive"
@@ -87,7 +98,7 @@ export function SearchSentimentChart({ data }: SearchSentimentChartProps) {
             <Line
               type="monotone"
               dataKey="negative"
-              stroke="var(--destructive)"
+              stroke="#dc2626"
               strokeWidth={2}
               dot={false}
               name="Negative"
@@ -95,7 +106,7 @@ export function SearchSentimentChart({ data }: SearchSentimentChartProps) {
             <Line
               type="monotone"
               dataKey="neutral"
-              stroke="var(--muted-foreground)"
+              stroke="#64748b"
               strokeWidth={1.5}
               strokeDasharray="4 4"
               dot={false}

@@ -64,22 +64,25 @@ export function SentimentForecastChart({ data }: SentimentForecastChartProps) {
 
       <div className="h-[280px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <LineChart data={chartData} margin={{ top: 10, right: 16, left: 4, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
             <XAxis
               dataKey="name"
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+              tick={{ fontSize: 12, fill: "var(--foreground)", opacity: 0.72 }}
               dy={10}
             />
             <YAxis
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+              width={72}
+              tick={{ fontSize: 11, fill: "var(--foreground)", opacity: 0.72 }}
               domain={[-1, 1]}
               ticks={[-1, -0.5, 0, 0.5, 1]}
-              tickFormatter={(val) => val === 0 ? "Neutral" : val > 0 ? "Positive" : "Negative"}
+              tickFormatter={(val) =>
+                val === 0 ? "Neutral" : val > 0 ? "Positive" : "Negative"
+              }
             />
             <Tooltip
               content={({ active, payload }) => {

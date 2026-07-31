@@ -39,29 +39,30 @@ export function WordCloudChart({ data }: WordCloudChartProps) {
       <div className="h-[220px] w-full flex-1 flex flex-wrap content-center justify-center gap-x-3 gap-y-2 overflow-hidden py-2">
         {shuffledKeywords.map((kw, i) => {
           const { sentiment } = analyzeSentiment(kw.word)
-          
-          // Calculate font size between 0.8rem and 2.5rem based on relative frequency
-          const relativeFreq = kw.count / maxCount
-          const fontSize = 0.8 + (relativeFreq * 1.7)
-          
-          // Let's add some opacity variance based on frequency too
-          const opacity = 0.5 + (relativeFreq * 0.5)
 
-          let colorClass = "text-muted-foreground"
-          if (sentiment === "positive") colorClass = "text-green-500 font-medium"
-          if (sentiment === "negative") colorClass = "text-red-500 font-medium"
+          const relativeFreq = kw.count / maxCount
+          const fontSize = 0.85 + relativeFreq * 1.65
+          const fontWeight = relativeFreq > 0.55 ? 700 : relativeFreq > 0.25 ? 600 : 500
+
+          let colorClass = "text-slate-800 dark:text-slate-100"
+          if (sentiment === "positive") {
+            colorClass = "text-emerald-700 dark:text-emerald-400"
+          }
+          if (sentiment === "negative") {
+            colorClass = "text-red-600 dark:text-red-400"
+          }
 
           return (
             <span
               key={`${kw.word}-${i}`}
               className={cn(
-                "inline-block transition-transform hover:scale-110 cursor-default",
+                "inline-block cursor-default transition-transform hover:scale-110",
                 colorClass
               )}
               style={{
                 fontSize: `${fontSize}rem`,
-                opacity: opacity,
-                lineHeight: "1",
+                fontWeight,
+                lineHeight: 1.15,
               }}
               title={`${kw.word} (${kw.count} mentions)`}
             >

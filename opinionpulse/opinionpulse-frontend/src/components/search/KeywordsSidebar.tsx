@@ -45,7 +45,7 @@ export function KeywordsSidebar({ data }: KeywordsSidebarProps) {
               onClick={() =>
                 navigate(`/search?q=${encodeURIComponent(t.replace(/^#/, ""))}`)
               }
-              className="rounded-full border border-border bg-muted/40 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:bg-accent hover:text-accent-foreground"
+              className="rounded-full border border-border bg-muted/70 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
             >
               {t}
             </button>

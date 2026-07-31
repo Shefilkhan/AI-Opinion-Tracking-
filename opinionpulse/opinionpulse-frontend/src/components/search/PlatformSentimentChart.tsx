@@ -40,6 +40,17 @@ export function PlatformSentimentChart({ data }: PlatformSentimentChartProps) {
     .sort((a, b) => b.total - a.total) // Sort by volume descending
     .slice(0, 6) // Show top 6 platforms
 
+  if (chartData.length === 0) {
+    return (
+      <div className={cn(proCard, "p-5 flex flex-col")}>
+        <h3 className={cn(cardTitle, "mb-4")}>Sentiment by Platform</h3>
+        <p className="text-sm text-muted-foreground">
+          Not enough platform data to chart yet.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className={cn(proCard, "p-5 flex flex-col")}>
       <h3 className={cn(cardTitle, "mb-4")}>
@@ -47,10 +58,19 @@ export function PlatformSentimentChart({ data }: PlatformSentimentChartProps) {
       </h3>
       <div className="h-[220px] w-full flex-1">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} vertical={false} />
-            <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+            <XAxis
+              dataKey="name"
+              tick={{ fontSize: 11, fill: "var(--foreground)", opacity: 0.72 }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              tick={{ fontSize: 11, fill: "var(--foreground)", opacity: 0.72 }}
+              axisLine={false}
+              tickLine={false}
+            />
             <Tooltip
               cursor={{ fill: "transparent" }}
               content={({ active, payload, label }) => {
@@ -67,10 +87,15 @@ export function PlatformSentimentChart({ data }: PlatformSentimentChartProps) {
                 )
               }}
             />
-            <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-            <Bar dataKey="positive" name="Positive" stackId="a" fill="var(--success)" radius={[0, 0, 0, 0]} />
-            <Bar dataKey="neutral" name="Neutral" stackId="a" fill="var(--muted-foreground)" radius={[0, 0, 0, 0]} />
-            <Bar dataKey="negative" name="Negative" stackId="a" fill="var(--destructive)" radius={[4, 4, 0, 0]} />
+            <Legend
+              verticalAlign="bottom"
+              height={36}
+              iconType="circle"
+              wrapperStyle={{ fontSize: "12px", color: "var(--foreground)" }}
+            />
+            <Bar dataKey="positive" name="Positive" stackId="a" fill="#15803d" radius={[0, 0, 0, 0]} />
+            <Bar dataKey="neutral" name="Neutral" stackId="a" fill="#64748b" radius={[0, 0, 0, 0]} />
+            <Bar dataKey="negative" name="Negative" stackId="a" fill="#dc2626" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
