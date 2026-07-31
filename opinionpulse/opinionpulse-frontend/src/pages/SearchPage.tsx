@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useSearchParams } from "react-router-dom"
-import { AlertTriangle, Bot, Download, FileText, Loader2, Search, Sparkles } from "lucide-react"
+import { AlertTriangle, Bot, Download, FileText, Loader2, Search, Sparkles, WifiOff } from "lucide-react"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { InlineNotice } from "@/components/layout/InlineNotice"
@@ -25,10 +25,12 @@ import { PlatformShareChart } from "@/components/search/PlatformShareChart"
 import { WordCloudChart } from "@/components/search/WordCloudChart"
 import { SentimentForecastChart } from "@/components/search/SentimentForecastChart"
 import { AiCrisisResponseModal } from "@/components/search/AiCrisisResponseModal"
+import { ApiError } from "@/api/client"
 import { searchOpinions } from "@/lib/api/search"
 import { applyClientFilters, needsServerRefetch } from "@/lib/api/searchFilters"
 import type { SearchFilters, SearchResponse } from "@/lib/api/types"
 import { addRecentSearch } from "@/lib/recentSearchStorage"
+import { useAuth } from "@/contexts/AuthContext"
 import { useUsage } from "@/hooks/useUsage"
 import { cn } from "@/lib/utils"
 
@@ -54,40 +56,66 @@ const TIME_LABELS: Record<string, string> = {
 }
 
 export function SearchPage() {
+  const { isAuthenticated, loading: authLoading } = useAuth()
   const { usage, refresh: refreshUsage } = useUsage()
   const [crisisModalOpen, setCrisisModalOpen] = useState(false)
   const [searchParams, setSearchParams] = useSearchParams()
-  const initialQ = searchParams.get("q") ?? ""
-  const [query, setQuery] = useState(initialQ)
+  const urlQuery = searchParams.get("q") ?? ""
+  const [query, setQuery] = useState(urlQuery)
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_FILTERS)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [backendOnline, setBackendOnline] = useState<boolean | null>(null)
   const [data, setData] = useState<SearchResponse | null>(null)
   const [baseData, setBaseData] = useState<SearchResponse | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
-  const requestIdRef = useRef(0)
+  const abortRef = useRef<AbortController | null>(null)
   const prevFiltersRef = useRef<SearchFilters>(DEFAULT_FILTERS)
+  const lastAutoSearchRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/health")
+      .then((res) => {
+        if (!cancelled) setBackendOnline(res.ok)
+      })
+      .catch(() => {
+        if (!cancelled) setBackendOnline(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort()
+    }
+  }, [])
 
   const runSearch = useCallback(
     async (q: string, f: SearchFilters = DEFAULT_FILTERS) => {
       const trimmed = q.trim()
       if (trimmed.length < 2) return
 
-      const requestId = ++requestIdRef.current
+      abortRef.current?.abort()
+      const controller = new AbortController()
+      abortRef.current = controller
+
       setLoading(true)
       setError(null)
       setHasSearched(true)
       setSearchParams({ q: trimmed })
       try {
-        const res = await searchOpinions(trimmed, f)
-        if (requestId !== requestIdRef.current) return
+        const res = await searchOpinions(trimmed, f, controller.signal)
+        if (controller.signal.aborted) return
         setBaseData(res)
         setData(applyClientFilters(res, f))
         addRecentSearch(trimmed)
-        setHasSearched(true)
         void refreshUsage()
       } catch (err) {
-        if (requestId !== requestIdRef.current) return
+        if (controller.signal.aborted) return
+        if (err instanceof ApiError && err.detail === "Request cancelled") return
         console.error("Search failed:", err)
         const message =
           err instanceof Error && err.message
@@ -97,7 +125,8 @@ export function SearchPage() {
         setData(null)
         setBaseData(null)
       } finally {
-        if (requestId === requestIdRef.current) {
+        if (abortRef.current === controller) {
+          abortRef.current = null
           setLoading(false)
         }
       }
@@ -106,11 +135,18 @@ export function SearchPage() {
   )
 
   useEffect(() => {
-    if (initialQ.trim().length >= 2) {
-      void runSearch(initialQ, DEFAULT_FILTERS)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    if (authLoading || !isAuthenticated) return
+
+    const trimmed = urlQuery.trim()
+    if (trimmed.length < 2) return
+    if (lastAutoSearchRef.current === trimmed) return
+
+    lastAutoSearchRef.current = trimmed
+    setQuery(trimmed)
+    prevFiltersRef.current = DEFAULT_FILTERS
+    setFilters(DEFAULT_FILTERS)
+    void runSearch(trimmed, DEFAULT_FILTERS)
+  }, [authLoading, isAuthenticated, urlQuery, runSearch])
 
   useEffect(() => {
     if (!hasSearched || query.trim().length < 2) return
@@ -131,10 +167,13 @@ export function SearchPage() {
 
   function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault()
+    const trimmed = query.trim()
+    if (trimmed.length < 2) return
+    lastAutoSearchRef.current = trimmed
     setHasSearched(true)
     prevFiltersRef.current = DEFAULT_FILTERS
     setFilters(DEFAULT_FILTERS)
-    void runSearch(query, DEFAULT_FILTERS)
+    void runSearch(trimmed, DEFAULT_FILTERS)
   }
 
   function handleExportCSV() {
@@ -192,6 +231,18 @@ export function SearchPage() {
   return (
     <DashboardLayout title="Search" subtitle="Track public opinion across social media">
       <div className="flex w-full flex-col gap-6 lg:gap-8">
+            {backendOnline === false && (
+              <InlineNotice variant="warning" title="Backend offline">
+                <span className="inline-flex items-center gap-2">
+                  <WifiOff className="size-4 shrink-0" />
+                  Cannot reach the API at port 8000. Start the backend (
+                  <code className="text-[11px]">uvicorn app.main:app --reload --port 8000</code>
+                  ) and ensure MySQL/XAMPP is running. See{" "}
+                  <code className="text-[11px]">START.md</code> in the repo.
+                </span>
+              </InlineNotice>
+            )}
+
             <section
               className={cn(
                 proCard,
@@ -252,6 +303,7 @@ export function SearchPage() {
                       type="button"
                       onClick={() => {
                         setQuery(s.query)
+                        lastAutoSearchRef.current = s.query
                         setHasSearched(true)
                         prevFiltersRef.current = DEFAULT_FILTERS
                         setFilters(DEFAULT_FILTERS)

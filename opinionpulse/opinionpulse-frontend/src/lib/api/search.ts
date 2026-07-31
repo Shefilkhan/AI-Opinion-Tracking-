@@ -5,13 +5,15 @@ export type { SearchFilters, SearchResponse }
 
 export async function searchOpinions(
   query: string,
-  filters: SearchFilters
+  filters: SearchFilters,
+  signal?: AbortSignal
 ): Promise<SearchResponse> {
   try {
     const data = await apiRequest<SearchResponse>("/api/search", {
       method: "POST",
       auth: true,
       timeoutMs: 90_000,
+      signal,
       body: {
         query,
         platform: filters.platform,

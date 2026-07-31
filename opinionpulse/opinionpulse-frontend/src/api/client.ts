@@ -25,6 +25,21 @@ type RequestOptions = {
   auth?: boolean
   /** Abort the request after this many milliseconds (default: no limit). */
   timeoutMs?: number
+  /** Optional caller-controlled abort (e.g. cancel stale search). */
+  signal?: AbortSignal
+}
+
+function linkAbortSignals(signals: AbortSignal[]): AbortSignal {
+  const controller = new AbortController()
+  const abort = () => controller.abort()
+  for (const signal of signals) {
+    if (signal.aborted) {
+      abort()
+      break
+    }
+    signal.addEventListener("abort", abort, { once: true })
+  }
+  return controller.signal
 }
 
 function parseLimitDetail(data: unknown): { message: string; upgradeTo: string } | null {
@@ -88,11 +103,21 @@ export async function apiRequest<T>(
 
   const url = `${API_BASE}${path}`
 
-  const controller = options.timeoutMs ? new AbortController() : null
+  const timeoutController = options.timeoutMs ? new AbortController() : null
   const timeoutId =
-    controller && options.timeoutMs
-      ? window.setTimeout(() => controller.abort(), options.timeoutMs)
+    timeoutController && options.timeoutMs
+      ? window.setTimeout(() => timeoutController.abort(), options.timeoutMs)
       : null
+
+  const signals = [options.signal, timeoutController?.signal].filter(
+    (s): s is AbortSignal => Boolean(s)
+  )
+  const fetchSignal =
+    signals.length === 0
+      ? undefined
+      : signals.length === 1
+        ? signals[0]
+        : linkAbortSignals(signals)
 
   let response: Response
   try {
@@ -100,12 +125,15 @@ export async function apiRequest<T>(
       method,
       headers,
       credentials: "include",
-      signal: controller?.signal,
+      signal: fetchSignal,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     })
   } catch (err) {
     if (timeoutId) window.clearTimeout(timeoutId)
     if (err instanceof Error && err.name === "AbortError") {
+      if (options.signal?.aborted) {
+        throw new ApiError(0, "Request cancelled")
+      }
       throw new ApiError(
         0,
         import.meta.env.DEV
