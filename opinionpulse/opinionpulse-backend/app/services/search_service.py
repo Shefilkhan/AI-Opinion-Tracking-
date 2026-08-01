@@ -66,7 +66,10 @@ _brand_disambiguator = BrandDisambiguator()
 # Thread semaphore (not asyncio.Semaphore) — module-level asyncio primitives bind to
 # the event loop that existed at import time, which breaks on Windows + uvicorn
 # --reload ("Future attached to a different loop").
-_fetch_semaphore = threading.Semaphore(5)
+_FETCH_CONCURRENCY = 12
+_PER_CALL_TIMEOUT = 10.0
+_SOURCE_BUDGET_SEC = 18.0
+_fetch_semaphore = threading.Semaphore(_FETCH_CONCURRENCY)
 
 NEWS_SOURCES = ("newsapi", "guardian", "mediastack", "currents", "gnews")
 TECH_SOURCES = ("devto", "hackernews", "github", "stackoverflow")
@@ -171,30 +174,35 @@ async def _fetch_source(
         try:
             return await asyncio.wait_for(
                 asyncio.to_thread(fn, q, tr),
-                timeout=18.0,
+                timeout=_PER_CALL_TIMEOUT,
             )
         finally:
             _fetch_semaphore.release()
 
-    try:
+    async def _run() -> tuple[str, list[dict[str, Any]], str | None]:
         results = await _call(query, time_range)
+        if results:
+            return name, results, None
 
-        if not results and fallback_query and fallback_query != query:
-            results = await _call(fallback_query, time_range)
+        alt_query = (
+            fallback_query
+            if fallback_query and fallback_query != query
+            else None
+        )
+        if not alt_query and raw_query and raw_query not in (query, fallback_query):
+            alt_query = raw_query
+        if alt_query:
+            results = await _call(alt_query, time_range)
+            if results:
+                return name, results, None
 
-        if not results and raw_query and raw_query not in (query, fallback_query):
-            results = await _call(raw_query, time_range)
-
-        if (
-            not results
-            and name in NEWS_SOURCES
-            and time_range == "24h"
-        ):
+        if not results and name in NEWS_SOURCES and time_range == "24h":
             results = await _call(query, "7d")
-            if not results and fallback_query:
-                results = await _call(fallback_query, "7d")
 
         return name, results, None
+
+    try:
+        return await asyncio.wait_for(_run(), timeout=_SOURCE_BUDGET_SEC)
     except ValueError as exc:
         return name, [], str(exc)
     except asyncio.TimeoutError:
@@ -462,8 +470,11 @@ async def run_search(
         video_ids = [vid for vid in video_ids if vid and len(vid) >= 8][:5]
         if video_ids:
             try:
-                comments = await asyncio.to_thread(
-                    fetch_youtube_comments, video_ids, search_query
+                comments = await asyncio.wait_for(
+                    asyncio.to_thread(
+                        fetch_youtube_comments, video_ids, search_query
+                    ),
+                    timeout=12.0,
                 )
                 for comment in comments:
                     normalized = normalize_result(comment, search_query)
@@ -510,7 +521,17 @@ async def run_search(
     combined = filter_and_rank_results(combined, search_query, min_score=min_rank_score)
     combined = _ensure_diverse_results(combined, min_per_platform=2, per_platform=4)
 
-    wiki_summary = await asyncio.to_thread(get_wikipedia_summary, search_query)
+    try:
+        wiki_summary = await asyncio.wait_for(
+            asyncio.to_thread(get_wikipedia_summary, search_query),
+            timeout=8.0,
+        )
+    except asyncio.TimeoutError:
+        logger.warning("Wikipedia summary timed out for %r", search_query)
+        wiki_summary = None
+    except Exception as exc:
+        logger.warning("Wikipedia summary failed for %r: %s", search_query, exc)
+        wiki_summary = None
 
     if not combined:
         empty = _empty_response(

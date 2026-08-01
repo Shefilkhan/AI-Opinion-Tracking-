@@ -74,13 +74,16 @@ async def search_opinions(
                 source_allowlist=allowed_sources,
                 language=body.language,
             ),
-            timeout=60.0,
+            timeout=90.0,
         )
     except asyncio.TimeoutError:
         logger.error('Search timed out for query="%s"', body.query)
         raise HTTPException(
             status_code=504,
-            detail="Search timed out while fetching live sources. Try again or narrow filters.",
+            detail=(
+                "Search timed out while fetching live sources. "
+                "Try a shorter time range or one platform at a time."
+            ),
         )
     try:
         search_service.record_search_history(
