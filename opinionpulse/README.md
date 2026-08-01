@@ -25,6 +25,5 @@ See the [root README](../README.md) for XAMPP, backend, frontend, migrations, an
 
 ## Documentation
 
-- [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md) — Project explanation & full technology stack
 - [../docs/demo-script.md](../docs/demo-script.md)  
 - [../docs/final-testing-checklist.md](../docs/final-testing-checklist.md)  
