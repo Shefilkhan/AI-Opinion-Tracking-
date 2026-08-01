@@ -3,16 +3,26 @@ import { MessageCircle, X } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { ChatWindow } from "@/components/chat/ChatWindow"
 import { useAuth } from "@/contexts/AuthContext"
+import { useUsage } from "@/hooks/useUsage"
 import { cardSurface } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 
 export function ChatBubble() {
   const { isAuthenticated, loading } = useAuth()
+  const { usage, loading: usageLoading } = useUsage()
   const location = useLocation()
   const navigate = useNavigate()
   const [isOpen, setIsOpen] = useState(false)
 
-  if (loading || !isAuthenticated || location.pathname === "/chat") {
+  const pulseAiEnabled = usage?.features?.pulse_ai ?? false
+
+  if (
+    loading ||
+    usageLoading ||
+    !isAuthenticated ||
+    !pulseAiEnabled ||
+    location.pathname === "/chat"
+  ) {
     return null
   }
 

@@ -18,6 +18,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { DashboardTopBar } from "@/components/dashboard/DashboardTopBar"
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { Skeleton } from "@/components/ui/Skeleton"
+import { useUsage } from "@/hooks/useUsage"
 import { cn } from "@/lib/utils"
 import { pageShell } from "@/lib/ui-classes"
 import {
@@ -49,16 +50,19 @@ function NavLinkItem({
   item,
   pathname,
   onNavigate,
+  badgeOverride,
 }: {
   item: NavItem
   pathname: string
   onNavigate?: () => void
+  badgeOverride?: string
 }) {
   const Icon = item.icon
   const isActive =
     item.href === "/settings"
       ? pathname.startsWith("/settings")
       : pathname === item.href || pathname.startsWith(`${item.href}/`)
+  const badge = badgeOverride ?? item.badge
 
   return (
     <Link
@@ -73,9 +77,9 @@ function NavLinkItem({
     >
       <Icon className="size-5 shrink-0" strokeWidth={isActive ? 2.25 : 2} aria-hidden />
       <span className="truncate">{item.label}</span>
-      {item.badge && (
+      {badge && (
         <span className="ml-auto rounded-full bg-[var(--dash-accent-soft)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--dash-accent)]">
-          {item.badge}
+          {badge}
         </span>
       )}
     </Link>
@@ -87,11 +91,13 @@ function NavGroup({
   items,
   pathname,
   onNavigate,
+  getBadgeOverride,
 }: {
   label: string
   items: NavItem[]
   pathname: string
   onNavigate?: () => void
+  getBadgeOverride?: (item: NavItem) => string | undefined
 }) {
   return (
     <div>
@@ -105,6 +111,7 @@ function NavGroup({
             item={item}
             pathname={pathname}
             onNavigate={onNavigate}
+            badgeOverride={getBadgeOverride?.(item)}
           />
         ))}
       </div>
@@ -241,6 +248,15 @@ export function DashboardLayout({
   const hideHeader = hidePageHeader ?? dashShell
 
   const { user, logout } = useAuth()
+  const { usage } = useUsage()
+  const pulseAiEnabled = usage?.features?.pulse_ai ?? true
+
+  function navBadgeOverride(item: NavItem): string | undefined {
+    if (item.href === "/chat" && usage && !pulseAiEnabled) {
+      return "Pro"
+    }
+    return item.badge
+  }
 
   const initials = user?.name
     ?.split(" ")
@@ -274,6 +290,7 @@ export function DashboardLayout({
           items={mainNav}
           pathname={location.pathname}
           onNavigate={() => setMobileOpen(false)}
+          getBadgeOverride={navBadgeOverride}
         />
       </nav>
       <div className="relative z-30 shrink-0 border-t border-[var(--dash-border)] p-4">

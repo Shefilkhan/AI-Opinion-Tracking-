@@ -21,7 +21,7 @@ from app.schemas.chat import (
     PulseConversationSummary,
 )
 from app.services import chat_history_service, chat_service
-from app.services.plan_limits import check_chat_limit
+from app.services.plan_limits import check_chat_limit, check_pulse_ai_access
 from app.services.plan_service import increment_usage
 
 logger = logging.getLogger(__name__)
@@ -124,6 +124,7 @@ def list_pulse_conversations(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    check_pulse_ai_access(current_user.id, db)
     try:
         conversations = chat_history_service.get_user_conversations(
             db, current_user.id
@@ -155,6 +156,7 @@ def get_pulse_conversation_messages(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    check_pulse_ai_access(current_user.id, db)
     try:
         messages = chat_history_service.get_conversation(
             db, current_user.id, conversation_id
@@ -173,6 +175,7 @@ def delete_pulse_conversation(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    check_pulse_ai_access(current_user.id, db)
     try:
         chat_history_service.delete_conversation(
             db, current_user.id, conversation_id
@@ -190,6 +193,7 @@ def export_pulse_conversation(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    check_pulse_ai_access(current_user.id, db)
     try:
         messages = chat_history_service.get_conversation(
             db, current_user.id, conversation_id

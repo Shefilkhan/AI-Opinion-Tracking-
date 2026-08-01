@@ -101,7 +101,19 @@ def check_ai_feature_access(user_id: int, feature: str, db: Session) -> None:
         )
 
 
+def check_pulse_ai_access(user_id: int, db: Session) -> None:
+    plan = get_user_plan(user_id, db)
+    limit = plan["chat_messages_per_day"]
+    if limit == 0:
+        raise LimitExceededError(
+            "Pulse AI is available on Pro and Enterprise plans. "
+            "Upgrade to unlock conversational AI insights.",
+            upgrade_to="pro",
+        )
+
+
 def check_chat_limit(user_id: int, db: Session) -> None:
+    check_pulse_ai_access(user_id, db)
     reset_daily_chat_if_needed(user_id, db)
     plan = get_user_plan(user_id, db)
     usage = get_or_create_usage(user_id, db)
@@ -155,11 +167,13 @@ def check_keyword_alert_limit(user_id: int, db: Session) -> None:
 
 def plan_features_for_client(plan: dict[str, Any]) -> dict[str, Any]:
     allowed = parse_data_sources(plan.get("data_sources_json"))
+    chat_limit = plan.get("chat_messages_per_day", 0)
     return {
         "data_sources": allowed,
         "ai_opinion_summary": bool(plan.get("ai_opinion_summary")),
         "ai_debate_analysis": bool(plan.get("ai_debate_analysis")),
         "ai_trend_prediction": bool(plan.get("ai_trend_prediction")),
+        "pulse_ai": chat_limit != 0,
         "api_access": bool(plan.get("api_access")),
         "search_history_days": plan.get("search_history_days"),
         "chat_history_days": plan.get("chat_history_days"),

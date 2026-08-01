@@ -25,6 +25,7 @@ class UsageFeatures(BaseModel):
     ai_opinion_summary: bool
     ai_debate_analysis: bool
     ai_trend_prediction: bool
+    pulse_ai: bool
     api_access: bool
     search_history_days: int
     chat_history_days: int
