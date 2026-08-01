@@ -13,6 +13,10 @@ import { Button } from "@/components/ui/button"
 import { OpinionSummaryCard } from "@/components/search/OpinionSummaryCard"
 import { WordCloudChart } from "@/components/search/WordCloudChart"
 import { PlatformShareChart } from "@/components/search/PlatformShareChart"
+import {
+  CompareConclusionCard,
+  CompareTopicSummary,
+} from "@/components/compare/CompareTopicSummary"
 import { searchOpinions } from "@/lib/api/search"
 import type { SearchResponse } from "@/lib/api/types"
 import { cn } from "@/lib/utils"
@@ -147,26 +151,32 @@ export function ComparePage() {
             )}
 
             {!loading && !error && dataA && dataB && (
-              <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2 xl:gap-8">
-                {/* Column A */}
-                <div className="flex flex-col gap-6">
-                  <div className="flex items-center justify-center rounded-2xl bg-blue-500/10 py-3 border border-blue-500/20">
-                    <h3 className="text-xl font-bold text-blue-600 dark:text-blue-400">{queryA}</h3>
+              <div className="flex flex-col gap-8">
+                <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2 xl:gap-8">
+                  {/* Column A */}
+                  <div className="flex flex-col gap-6">
+                    <div className="flex items-center justify-center rounded-2xl border border-blue-500/20 bg-blue-500/10 py-3">
+                      <h3 className="text-xl font-bold text-blue-600 dark:text-blue-400">{queryA}</h3>
+                    </div>
+                    <CompareTopicSummary data={dataA} accent="blue" />
+                    <OpinionSummaryCard data={dataA} timeLabel="Last 24 hours" />
+                    <PlatformShareChart data={dataA} />
+                    <WordCloudChart data={dataA} />
                   </div>
-                  <OpinionSummaryCard data={dataA} timeLabel="Last 24 hours" />
-                  <PlatformShareChart data={dataA} />
-                  <WordCloudChart data={dataA} />
-                </div>
-                
-                {/* Column B */}
-                <div className="flex flex-col gap-6">
-                  <div className="flex items-center justify-center rounded-2xl bg-orange-500/10 py-3 border border-orange-500/20">
-                    <h3 className="text-xl font-bold text-orange-600 dark:text-orange-400">{queryB}</h3>
+
+                  {/* Column B */}
+                  <div className="flex flex-col gap-6">
+                    <div className="flex items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/10 py-3">
+                      <h3 className="text-xl font-bold text-orange-600 dark:text-orange-400">{queryB}</h3>
+                    </div>
+                    <CompareTopicSummary data={dataB} accent="orange" />
+                    <OpinionSummaryCard data={dataB} timeLabel="Last 24 hours" />
+                    <PlatformShareChart data={dataB} />
+                    <WordCloudChart data={dataB} />
                   </div>
-                  <OpinionSummaryCard data={dataB} timeLabel="Last 24 hours" />
-                  <PlatformShareChart data={dataB} />
-                  <WordCloudChart data={dataB} />
                 </div>
+
+                <CompareConclusionCard dataA={dataA} dataB={dataB} />
               </div>
             )}
 
