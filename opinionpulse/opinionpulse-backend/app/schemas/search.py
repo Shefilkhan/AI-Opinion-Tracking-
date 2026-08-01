@@ -131,6 +131,16 @@ class QueryMeta(BaseModel):
     expansions: list[str] = Field(default_factory=list)
 
 
+class TopicSummary(BaseModel):
+    query: str
+    overview: str
+    highlights: list[str] = Field(default_factory=list)
+    top_keywords: list[str] = Field(default_factory=list)
+    sentiment_tone: str = "mixed"
+    total_mentions: int = 0
+    sources_count: int = 0
+
+
 class SearchMetadata(BaseModel):
     spam_filtered: int = 0
     non_english_filtered: int = 0
@@ -147,6 +157,7 @@ class SearchResponse(BaseModel):
     apis_configured: dict[str, bool] = {}
     demo_mode: bool = False
     wiki_summary: Optional[WikiSummary] = None
+    topic_summary: Optional[TopicSummary] = None
     errors: Optional[list[str]] = None
     locked_sources: Optional[list[str]] = None
     upgrade_message: Optional[str] = None

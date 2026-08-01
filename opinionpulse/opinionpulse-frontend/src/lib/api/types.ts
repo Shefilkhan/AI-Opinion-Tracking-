@@ -84,8 +84,19 @@ export type SearchResultItem = {
 export type WikiSummary = {
   title: string
   summary: string
+  extract?: string
   url: string
   thumbnail?: string | null
+}
+
+export type TopicSummary = {
+  query: string
+  overview: string
+  highlights: string[]
+  top_keywords: string[]
+  sentiment_tone: string
+  total_mentions: number
+  sources_count: number
 }
 
 export type SentimentForecastPoint = {
@@ -124,11 +135,8 @@ export type SearchResponse = {
   age_analysis?: AgeAnalysis | null
   usage_context?: UsageContextItem[] | null
   risk_assessment?: TopicRiskAssessment | null
-  wiki_summary: {
-    title: string
-    extract: string
-    url: string
-  } | null
+  wiki_summary: WikiSummary | null
+  topic_summary?: TopicSummary | null
   errors: string[] | null
   locked_sources?: string[]
   upgrade_message?: string | null

@@ -18,6 +18,7 @@ import { OpinionSummaryCard } from "@/components/search/OpinionSummaryCard"
 import { ResultsFeed } from "@/components/search/ResultsFeed"
 import { SearchFiltersBar } from "@/components/search/SearchFiltersBar"
 import { SourcesStatusBar } from "@/components/search/SourcesStatusBar"
+import { TopicSummaryCard } from "@/components/search/TopicSummaryCard"
 import { WikipediaSummaryCard } from "@/components/search/WikipediaSummaryCard"
 import { SearchSentimentChart } from "@/components/search/SearchSentimentChart"
 import { PlatformSentimentChart } from "@/components/search/PlatformSentimentChart"
@@ -383,6 +384,8 @@ export function SearchPage() {
                 <div className="flex flex-col gap-6 xl:col-span-8 xl:gap-8">
                   <SourcesStatusBar data={data} />
 
+                  <TopicSummaryCard data={data} />
+
                   {data.search_metadata &&
                     (data.search_metadata.spam_filtered > 0 ||
                       data.search_metadata.non_english_filtered > 0 ||
@@ -422,12 +425,16 @@ export function SearchPage() {
                     </div>
                   )}
 
-                  {data.wiki_summary && (
+                  {data.wiki_summary && !data.topic_summary && (
                     <WikipediaSummaryCard
                       wiki={{
                         title: data.wiki_summary.title,
-                        summary: data.wiki_summary.extract,
+                        summary:
+                          data.wiki_summary.summary ??
+                          data.wiki_summary.extract ??
+                          "",
                         url: data.wiki_summary.url,
+                        thumbnail: data.wiki_summary.thumbnail,
                       }}
                     />
                   )}

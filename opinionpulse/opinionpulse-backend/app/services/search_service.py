@@ -52,6 +52,7 @@ from app.services.content_classifier import classify_content_type
 from app.services.query_processor import QueryProcessor
 from app.services.relevance_scorer import filter_and_rank_results
 from app.services.risk_assessor import assess_risk_level
+from app.services.topic_summary_service import build_topic_summary
 from app.services.sentiment_analysis import (
     analyze_sentiment_intensity,
     calculate_sentiment_forecast,
@@ -534,9 +535,20 @@ async def run_search(
         wiki_summary = None
 
     if not combined:
+        topic_summary = build_topic_summary(
+            query=query,
+            results=[],
+            sentiment_summary={"positive": 0, "negative": 0, "neutral": 0},
+            platforms_searched=[],
+            most_active_platform=None,
+            trending_keywords=[],
+            wiki_summary=wiki_summary,
+            total_results=0,
+        )
         empty = _empty_response(
             query, configured, wiki_summary, errors, platform, search_metadata
         )
+        empty["topic_summary"] = topic_summary
         empty["source_health"] = source_health
         empty["data_freshness"] = {"fetched_at": fetched_at, "relevance_mode": "strict"}
         empty["relevance_mode"] = "strict"
@@ -614,6 +626,21 @@ async def run_search(
     except Exception as e:
         logger.error("Failed to archive historical data: %s", e)
 
+    topic_summary = build_topic_summary(
+        query=query,
+        results=combined,
+        sentiment_summary=summary,
+        platforms_searched=platforms_searched,
+        most_active_platform=max(
+            {r.get("platform") for r in combined if r.get("platform")},
+            key=lambda p: sum(1 for r in combined if r.get("platform") == p),
+            default=None,
+        ),
+        trending_keywords=keywords,
+        wiki_summary=wiki_summary,
+        total_results=len(combined),
+    )
+
     return {
         "query": query,
         "total_results": len(combined),
@@ -638,6 +665,7 @@ async def run_search(
         "sentiment_forecast": forecast,
         "last_updated": fetched_at,
         "wiki_summary": wiki_summary,
+        "topic_summary": topic_summary,
         "errors": errors if errors else None,
         "source_health": source_health,
         "search_metadata": search_metadata,
