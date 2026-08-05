@@ -97,6 +97,7 @@ export type TopicSummary = {
   sentiment_tone: string
   total_mentions: number
   sources_count: number
+  ai_generated?: boolean
 }
 
 export type SentimentForecastPoint = {

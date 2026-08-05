@@ -140,6 +140,105 @@ Posts: {json.dumps(titles)}"""
         return _fallback_summary(query, sentiment_summary)
 
 
+TOPIC_OVERVIEW_SYSTEM_PROMPT = """You are Pulse AI, the OpinionPulse research assistant.
+Write clear, helpful explanations for non-expert users.
+
+Rules:
+- Use plain language. Avoid jargon unless you briefly define it.
+- Write 2–4 short paragraphs separated by blank lines.
+- Paragraph 1: What the topic is and why it matters.
+- Paragraph 2: What people are currently discussing online (use the live data provided).
+- Paragraph 3 (optional): Notable sentiment patterns or platform differences.
+- Do NOT invent specific facts, statistics, or quotes not supported by the provided context.
+- If Wikipedia context is provided, treat it as the factual baseline for "what it is."
+- End naturally — no bullet lists, no JSON, no headings."""
+
+
+def _call_claude_prose(prompt: str, system: str) -> str:
+    client = _get_client()
+    if client is None:
+        raise RuntimeError("ANTHROPIC_API_KEY not configured")
+    message = client.messages.create(
+        model=MODEL,
+        max_tokens=900,
+        system=system,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return message.content[0].text.strip()
+
+
+async def generate_topic_overview(
+    query: str,
+    results: list[dict[str, Any]],
+    sentiment_summary: dict[str, Any],
+    wiki_summary: dict[str, Any] | None,
+    trending_keywords: list[dict[str, Any]],
+    total_results: int,
+    platforms_searched: list[str],
+    most_active_platform: str | None,
+    live_pulse: str,
+) -> tuple[str, bool]:
+    """Return (overview_text, ai_generated). Uses Claude when available."""
+    cache_key = _cache_key("topic_overview", query, str(total_results))
+    cached = get_cached(cache_key)
+    if cached and isinstance(cached, dict) and cached.get("overview"):
+        return str(cached["overview"]), bool(cached.get("ai_generated"))
+
+    if not ai_available():
+        return live_pulse, False
+
+    wiki_block = ""
+    if wiki_summary and wiki_summary.get("summary"):
+        wiki_block = (
+            f"\nWikipedia ({wiki_summary.get('title', query)}):\n"
+            f"{wiki_summary['summary'][:600]}"
+        )
+
+    pos = round(sentiment_summary.get("positive", 0))
+    neg = round(sentiment_summary.get("negative", 0))
+    neu = round(sentiment_summary.get("neutral", 0))
+
+    keywords = [
+        str(k.get("word", "")).strip()
+        for k in trending_keywords[:8]
+        if str(k.get("word", "")).strip()
+    ]
+    sample_titles = [
+        (r.get("title") or (r.get("content") or "")[:100]).strip()
+        for r in results[:6]
+        if (r.get("title") or r.get("content"))
+    ]
+
+    prompt = f"""Topic: "{query}"
+
+Live data snapshot:
+- {total_results} mentions across {len(platforms_searched)} platforms
+- Sentiment: {pos}% positive, {neu}% neutral, {neg}% negative
+- Most active platform: {most_active_platform or "unknown"}
+- Trending keywords: {", ".join(keywords) if keywords else "none"}
+- Sample discussion titles: {"; ".join(sample_titles[:5]) if sample_titles else "none"}
+{wiki_block}
+
+Write a detailed but easy-to-read summary so a user comparing or researching "{query}" understands:
+1) what this topic is,
+2) why it is being discussed right now, and
+3) how public sentiment looks based on the live data above."""
+
+    try:
+        text = await asyncio.wait_for(
+            asyncio.to_thread(_call_claude_prose, prompt, TOPIC_OVERVIEW_SYSTEM_PROMPT),
+            timeout=20.0,
+        )
+        text = text.strip()
+        if not text:
+            return live_pulse, False
+        set_cached(cache_key, {"overview": text, "ai_generated": True}, AI_CACHE_TTL)
+        return text, True
+    except Exception as exc:
+        logger.error("AI topic overview failed for %r: %s", query, exc)
+        return live_pulse, False
+
+
 def _fallback_summary(query: str, sentiment_summary: dict[str, Any] | None = None) -> dict[str, Any]:
     s = sentiment_summary or {}
     pos = int(s.get("positive", 40))

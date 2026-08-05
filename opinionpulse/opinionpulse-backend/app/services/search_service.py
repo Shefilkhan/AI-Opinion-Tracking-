@@ -52,6 +52,8 @@ from app.services.content_classifier import classify_content_type
 from app.services.query_processor import QueryProcessor
 from app.services.relevance_scorer import filter_and_rank_results
 from app.services.risk_assessor import assess_risk_level
+from app.services.platforms.wikipedia import ensure_wikipedia_link
+from app.services.ai_service import generate_topic_overview
 from app.services.topic_summary_service import build_topic_summary
 from app.services.sentiment_analysis import (
     analyze_sentiment_intensity,
@@ -249,6 +251,35 @@ def _ensure_diverse_results(
             selected.append(row)
 
     return selected
+
+
+async def _enrich_topic_summary(
+    topic_summary: dict[str, Any],
+    *,
+    query: str,
+    results: list[dict[str, Any]],
+    sentiment_summary: dict[str, Any],
+    wiki_summary: dict[str, Any] | None,
+    trending_keywords: list[dict[str, Any]],
+    total_results: int,
+    platforms_searched: list[str],
+    most_active_platform: str | None,
+) -> dict[str, Any]:
+    live_pulse = topic_summary.get("overview", "")
+    overview, ai_generated = await generate_topic_overview(
+        query=query,
+        results=results,
+        sentiment_summary=sentiment_summary,
+        wiki_summary=wiki_summary,
+        trending_keywords=trending_keywords,
+        total_results=total_results,
+        platforms_searched=platforms_searched,
+        most_active_platform=most_active_platform,
+        live_pulse=live_pulse,
+    )
+    topic_summary["overview"] = overview
+    topic_summary["ai_generated"] = ai_generated
+    return topic_summary
 
 
 def _empty_response(
@@ -534,6 +565,8 @@ async def run_search(
         logger.warning("Wikipedia summary failed for %r: %s", search_query, exc)
         wiki_summary = None
 
+    wiki_summary = ensure_wikipedia_link(search_query, wiki_summary)
+
     if not combined:
         topic_summary = build_topic_summary(
             query=query,
@@ -544,6 +577,17 @@ async def run_search(
             trending_keywords=[],
             wiki_summary=wiki_summary,
             total_results=0,
+        )
+        topic_summary = await _enrich_topic_summary(
+            topic_summary,
+            query=query,
+            results=[],
+            sentiment_summary={"positive": 0, "negative": 0, "neutral": 0},
+            wiki_summary=wiki_summary,
+            trending_keywords=[],
+            total_results=0,
+            platforms_searched=[],
+            most_active_platform=None,
         )
         empty = _empty_response(
             query, configured, wiki_summary, errors, platform, search_metadata
@@ -626,19 +670,31 @@ async def run_search(
     except Exception as e:
         logger.error("Failed to archive historical data: %s", e)
 
+    most_active = max(
+        {r.get("platform") for r in combined if r.get("platform")},
+        key=lambda p: sum(1 for r in combined if r.get("platform") == p),
+        default=None,
+    )
     topic_summary = build_topic_summary(
         query=query,
         results=combined,
         sentiment_summary=summary,
         platforms_searched=platforms_searched,
-        most_active_platform=max(
-            {r.get("platform") for r in combined if r.get("platform")},
-            key=lambda p: sum(1 for r in combined if r.get("platform") == p),
-            default=None,
-        ),
+        most_active_platform=most_active,
         trending_keywords=keywords,
         wiki_summary=wiki_summary,
         total_results=len(combined),
+    )
+    topic_summary = await _enrich_topic_summary(
+        topic_summary,
+        query=query,
+        results=combined,
+        sentiment_summary=summary,
+        wiki_summary=wiki_summary,
+        trending_keywords=keywords,
+        total_results=len(combined),
+        platforms_searched=platforms_searched,
+        most_active_platform=most_active,
     )
 
     return {

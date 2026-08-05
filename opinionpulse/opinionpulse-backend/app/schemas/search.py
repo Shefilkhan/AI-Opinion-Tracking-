@@ -139,6 +139,7 @@ class TopicSummary(BaseModel):
     sentiment_tone: str = "mixed"
     total_mentions: int = 0
     sources_count: int = 0
+    ai_generated: bool = False
 
 
 class SearchMetadata(BaseModel):

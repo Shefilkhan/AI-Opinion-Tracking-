@@ -21,6 +21,19 @@ def _wiki_title(query: str) -> str:
     return query.strip().replace(" ", "_")
 
 
+def _fallback_wiki_link(query: str) -> dict:
+    """Return a search URL when no single Wikipedia article resolves."""
+    from urllib.parse import quote
+
+    q = query.strip()
+    return {
+        "title": q,
+        "summary": "",
+        "url": f"https://en.wikipedia.org/wiki/Special:Search?search={quote(q)}",
+        "thumbnail": None,
+    }
+
+
 def _fetch_summary(title: str) -> requests.Response:
     return requests.get(
         f"https://en.wikipedia.org/api/rest_v1/page/summary/{requests.utils.quote(title)}",
@@ -75,10 +88,20 @@ def get_wikipedia_summary(query: str) -> dict | None:
                 return None
             data = resp.json()
             if data.get("type") == "disambiguation":
-                return None
+                resolved = _search_wikipedia_title(query)
+                if resolved and resolved.lower() != title.lower():
+                    title = resolved
+                    resp = _fetch_summary(title)
+                    if not resp.ok:
+                        return _fallback_wiki_link(query)
+                    data = resp.json()
+                    if data.get("type") == "disambiguation":
+                        return _fallback_wiki_link(query)
+                else:
+                    return _fallback_wiki_link(query)
             extract = (data.get("extract") or "").strip()
             if not extract:
-                return None
+                return _fallback_wiki_link(query)
             page_url = (
                 data.get("content_urls", {})
                 .get("desktop", {})
@@ -98,3 +121,10 @@ def get_wikipedia_summary(query: str) -> dict | None:
             return None
 
     return cached(cache_key, fetch, ttl_seconds=3600)
+
+
+def ensure_wikipedia_link(query: str, summary: dict | None) -> dict:
+    """Always return a wiki_summary dict with at least a search URL."""
+    if summary and summary.get("url"):
+        return summary
+    return _fallback_wiki_link(query)
