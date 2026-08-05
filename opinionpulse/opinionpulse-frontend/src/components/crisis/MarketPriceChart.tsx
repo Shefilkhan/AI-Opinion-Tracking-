@@ -86,9 +86,14 @@ export function MarketPriceChart({ data, loading }: MarketPriceChartProps) {
                 {typeLabel}
               </span>
             </div>
-            <p className="text-xs text-[var(--dash-text-faint)]">
-              {data.asset_type === "crypto" ? "7-day price (CoinGecko)" : "5-day price (Yahoo Finance)"}
-            </p>
+        <p className="text-xs text-[var(--dash-text-faint)]">
+          {data.asset_type === "crypto" ? "7-day price (CoinGecko)" : "5-day price (Yahoo Finance)"}
+          {data.proxy_note && (
+            <span className="mt-1 block text-[10px] text-amber-700 dark:text-amber-400">
+              {data.proxy_note}
+            </span>
+          )}
+        </p>
           </div>
         </div>
 

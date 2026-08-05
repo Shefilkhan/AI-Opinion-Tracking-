@@ -20,3 +20,12 @@ class MarketChartResponse(BaseModel):
     currency: str = "USD"
     points: list[PricePoint]
     message: Optional[str] = None
+    proxy_note: Optional[str] = None
+
+
+class WatchMarketChart(MarketChartResponse):
+    watch_id: str
+
+
+class WatchMarketChartsResponse(BaseModel):
+    charts: list[WatchMarketChart]

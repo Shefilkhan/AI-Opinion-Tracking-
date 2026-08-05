@@ -26,13 +26,54 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { InlineNotice } from "@/components/layout/InlineNotice"
 import { Button } from "@/components/ui/button"
 import { useCrisisDetail, useCrisisRadar } from "@/hooks/useCrisisRadar"
-import { useMarketChart } from "@/hooks/useMarketChart"
 import { useQuiverIntelligence } from "@/hooks/useQuiverIntelligence"
+import { useWatchMarketCharts } from "@/hooks/useWatchMarketCharts"
 import { btnPrimary, proCard } from "@/lib/ui-classes"
 import { cn } from "@/lib/utils"
 import "@/styles/crisis-radar.css"
+import type { WatchMarketChart } from "@/api/market"
 
 type DetailTab = "narratives" | "timeline"
+
+function formatWatchPrice(chart: WatchMarketChart | undefined) {
+  if (!chart?.current_price) return null
+  const price =
+    chart.current_price >= 1000
+      ? `$${chart.current_price.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+      : `$${chart.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  const change =
+    chart.change_pct != null
+      ? `${chart.change_pct >= 0 ? "+" : ""}${chart.change_pct}%`
+      : null
+  return { price, change, symbol: chart.symbol, isUp: (chart.change_pct ?? 0) >= 0 }
+}
+
+function WatchLivePrice({ chart }: { chart: WatchMarketChart | undefined }) {
+  const formatted = formatWatchPrice(chart)
+  if (!formatted) {
+    return (
+      <span className="text-[10px] text-[var(--dash-text-faint)]">No market data</span>
+    )
+  }
+  return (
+    <span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px]">
+      {formatted.symbol && (
+        <span className="font-semibold text-[var(--dash-text-mid)]">{formatted.symbol}</span>
+      )}
+      <span className="font-semibold text-[var(--dash-text)]">{formatted.price}</span>
+      {formatted.change && (
+        <span
+          className={cn(
+            "font-semibold",
+            formatted.isUp ? "text-emerald-600" : "text-red-600"
+          )}
+        >
+          {formatted.change}
+        </span>
+      )}
+    </span>
+  )
+}
 
 export function CrisisRadarPage() {
   const [searchParams] = useSearchParams()
@@ -66,9 +107,15 @@ export function CrisisRadarPage() {
   )
 
   const { data: detail, isLoading: detailLoading } = useCrisisDetail(selectedId)
-  const { data: marketChart, isLoading: marketLoading } = useMarketChart(
-    selectedPoint?.keyword ?? null
-  )
+  const { data: watchCharts, isLoading: marketLoading } = useWatchMarketCharts(points.length > 0)
+  const marketChartByWatch = useMemo(() => {
+    const map = new Map<string, WatchMarketChart>()
+    for (const chart of watchCharts?.charts ?? []) {
+      map.set(chart.watch_id, chart)
+    }
+    return map
+  }, [watchCharts])
+  const selectedMarketChart = selectedId ? marketChartByWatch.get(selectedId) : undefined
   const { data: quiverIntel, isLoading: quiverLoading } = useQuiverIntelligence(
     selectedPoint?.keyword ?? null
   )
@@ -200,6 +247,7 @@ export function CrisisRadarPage() {
                           <span className="text-xs text-[var(--dash-text-faint)]">
                             {p.spike_label ?? `${p.mention_count_30m} mentions · ${p.negative_pct_30m}% neg`}
                           </span>
+                          <WatchLivePrice chart={marketChartByWatch.get(p.watch_id)} />
                         </div>
                         <CrisisQuadrantBadge quadrant={p.quadrant} />
                       </button>
@@ -329,7 +377,7 @@ export function CrisisRadarPage() {
                       <p className="mb-3 text-xs text-[var(--dash-text-faint)]">
                         Live crypto or public-company stock chart matched to this watch keyword.
                       </p>
-                      <MarketPriceChart data={marketChart} loading={marketLoading} />
+                      <MarketPriceChart data={selectedMarketChart} loading={marketLoading} />
                     </div>
 
                     {/* Quiver alternative data */}

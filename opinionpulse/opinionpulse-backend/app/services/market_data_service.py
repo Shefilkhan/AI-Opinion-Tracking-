@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime, timezone
 from typing import Any, Literal, Optional
 
@@ -82,6 +83,86 @@ STOCK_TICKERS: dict[str, str] = {
     "airbnb": "ABNB",
     "spotify": "SPOT",
     "shopify": "SHOP",
+    "openai": "MSFT",
+    "walmart": "WMT",
+    "wmt": "WMT",
+    "costco": "COST",
+    "nike": "NKE",
+    "nke": "NKE",
+    "coca cola": "KO",
+    "cocacola": "KO",
+    "pepsi": "PEP",
+    "pepsico": "PEP",
+    "boeing": "BA",
+    "ford": "F",
+    "gm": "GM",
+    "general motors": "GM",
+    "goldman sachs": "GS",
+    "bank of america": "BAC",
+    "wells fargo": "WFC",
+    "oracle": "ORCL",
+    "orcl": "ORCL",
+    "ibm": "IBM",
+    "adobe": "ADBE",
+    "adbe": "ADBE",
+    "paypal": "PYPL",
+    "pypl": "PYPL",
+    "snap": "SNAP",
+    "snapchat": "SNAP",
+    "twitter": "X",
+    "x corp": "X",
+    "roblox": "RBLX",
+    "snowflake": "SNOW",
+    "crowdstrike": "CRWD",
+    "datadog": "DDOG",
+    "block": "SQ",
+    "square": "SQ",
+    "robinhood": "HOOD",
+    "gamestop": "GME",
+    "gme": "GME",
+    "amc": "AMC",
+    "rivian": "RIVN",
+    "lucid": "LCID",
+    "nio": "NIO",
+    "byd": "BYDDY",
+    "samsung": "SSNLF",
+    "sony": "SONY",
+    "toyota": "TM",
+    "honda": "HMC",
+}
+
+# Private / unlisted brands mapped to a liquid public proxy (investor or sector peer).
+PUBLIC_PROXIES: dict[str, dict[str, str]] = {
+    "openai": {
+        "symbol": "MSFT",
+        "name": "Microsoft (OpenAI partner)",
+        "note": "OpenAI is private; showing Microsoft as a related public stock.",
+    },
+    "chatgpt": {
+        "symbol": "MSFT",
+        "name": "Microsoft (OpenAI partner)",
+        "note": "OpenAI is private; showing Microsoft as a related public stock.",
+    },
+    "anthropic": {
+        "symbol": "GOOGL",
+        "name": "Alphabet (Anthropic investor)",
+        "note": "Anthropic is private; showing Alphabet as a related public stock.",
+    },
+    "claude": {
+        "symbol": "GOOGL",
+        "name": "Alphabet (Anthropic investor)",
+        "note": "Anthropic is private; showing Alphabet as a related public stock.",
+    },
+    "spacex": {
+        "symbol": "TSLA",
+        "name": "Tesla (Elon Musk)",
+        "note": "SpaceX is private; showing Tesla as a related public stock.",
+    },
+    "stripe": {
+        "symbol": "SQ",
+        "name": "Block (payments peer)",
+        "note": "Stripe is private; showing Block as a payments-sector proxy.",
+    },
 }
 
 HEADERS = {
@@ -89,16 +170,98 @@ HEADERS = {
     "Accept": "application/json",
 }
 
+_TICKER_RE = re.compile(r"^[A-Z]{1,5}(\.[A-Z]{1,2})?$")
+
 
 def _normalize_query(query: str) -> str:
     return query.strip().lower().replace("$", "").replace("#", "")
 
 
+def _looks_like_ticker(raw: str) -> bool:
+    token = raw.strip().upper().replace("$", "")
+    return bool(_TICKER_RE.match(token))
+
+
+def _search_coingecko_id(query: str) -> Optional[str]:
+    cache_key = f"cg_search_{_normalize_query(query)}"
+
+    def fetch() -> Optional[str]:
+        try:
+            resp = requests.get(
+                "https://api.coingecko.com/api/v3/search",
+                params={"query": query.strip()},
+                headers=HEADERS,
+                timeout=10,
+            )
+            if not resp.ok:
+                return None
+            coins = resp.json().get("coins") or []
+            if not coins:
+                return None
+            return str(coins[0]["id"])
+        except Exception as exc:
+            logger.debug("CoinGecko search failed for %r: %s", query, exc)
+            return None
+
+    return cached(cache_key, fetch, ttl_seconds=86400)
+
+
+def _search_yahoo_ticker(query: str) -> Optional[str]:
+    cache_key = f"yahoo_search_{_normalize_query(query)}"
+
+    def fetch() -> Optional[str]:
+        try:
+            resp = requests.get(
+                "https://query2.finance.yahoo.com/v1/finance/search",
+                params={
+                    "q": query.strip(),
+                    "quotesCount": 8,
+                    "newsCount": 0,
+                    "listsCount": 0,
+                },
+                headers=HEADERS,
+                timeout=10,
+            )
+            if not resp.ok:
+                return None
+            quotes = resp.json().get("quotes") or []
+            for quote in quotes:
+                quote_type = (quote.get("quoteType") or "").upper()
+                symbol = quote.get("symbol")
+                if not symbol or quote_type not in ("EQUITY", "ETF"):
+                    continue
+                return str(symbol)
+            return None
+        except Exception as exc:
+            logger.debug("Yahoo search failed for %r: %s", query, exc)
+            return None
+
+    return cached(cache_key, fetch, ttl_seconds=86400)
+
+
 def resolve_market_asset(query: str) -> dict[str, Any]:
     """Map a brand-watch keyword to crypto id or stock ticker."""
-    key = _normalize_query(query)
+    raw = query.strip()
+    key = _normalize_query(raw)
     if not key:
-        return {"asset_type": "unknown", "symbol": None, "name": query}
+        return {"asset_type": "unknown", "symbol": None, "name": query, "proxy_note": None}
+
+    if key in PUBLIC_PROXIES:
+        proxy = PUBLIC_PROXIES[key]
+        return {
+            "asset_type": "stock",
+            "symbol": proxy["symbol"],
+            "name": proxy["name"],
+            "proxy_note": proxy.get("note"),
+        }
+
+    if _looks_like_ticker(raw):
+        return {
+            "asset_type": "stock",
+            "symbol": raw.upper().replace("$", ""),
+            "name": raw.upper(),
+            "proxy_note": None,
+        }
 
     if key in CRYPTO_IDS:
         coin_id = CRYPTO_IDS[key]
@@ -106,7 +269,8 @@ def resolve_market_asset(query: str) -> dict[str, Any]:
             "asset_type": "crypto",
             "symbol": coin_id.upper()[:6],
             "coingecko_id": coin_id,
-            "name": query.strip(),
+            "name": raw,
+            "proxy_note": None,
         }
 
     if key in STOCK_TICKERS:
@@ -114,17 +278,18 @@ def resolve_market_asset(query: str) -> dict[str, Any]:
         return {
             "asset_type": "stock",
             "symbol": ticker,
-            "name": query.strip(),
+            "name": raw,
+            "proxy_note": None,
         }
 
-    # Partial match — e.g. "Bitcoin price" -> bitcoin
     for token, coin_id in CRYPTO_IDS.items():
         if len(token) >= 3 and token in key:
             return {
                 "asset_type": "crypto",
                 "symbol": coin_id.upper()[:6],
                 "coingecko_id": coin_id,
-                "name": query.strip(),
+                "name": raw,
+                "proxy_note": None,
             }
 
     for token, ticker in STOCK_TICKERS.items():
@@ -132,10 +297,53 @@ def resolve_market_asset(query: str) -> dict[str, Any]:
             return {
                 "asset_type": "stock",
                 "symbol": ticker,
-                "name": query.strip(),
+                "name": raw,
+                "proxy_note": None,
             }
 
-    return {"asset_type": "unknown", "symbol": None, "name": query.strip()}
+    coin_id = _search_coingecko_id(raw)
+    if coin_id:
+        return {
+            "asset_type": "crypto",
+            "symbol": coin_id.upper()[:6],
+            "coingecko_id": coin_id,
+            "name": raw,
+            "proxy_note": None,
+        }
+
+    ticker = _search_yahoo_ticker(raw)
+    if ticker:
+        return {
+            "asset_type": "stock",
+            "symbol": ticker,
+            "name": raw,
+            "proxy_note": None,
+        }
+
+    return {
+        "asset_type": "unknown",
+        "symbol": None,
+        "name": raw,
+        "proxy_note": None,
+    }
+
+
+def resolve_market_asset_from_terms(terms: list[str]) -> dict[str, Any]:
+    """Try several watch terms (brand, product, aliases) until one resolves."""
+    seen: set[str] = set()
+    for term in terms:
+        cleaned = (term or "").strip()
+        if not cleaned:
+            continue
+        norm = _normalize_query(cleaned)
+        if norm in seen:
+            continue
+        seen.add(norm)
+        asset = resolve_market_asset(cleaned)
+        if asset["asset_type"] != "unknown":
+            return asset
+    first = next((t.strip() for t in terms if t and t.strip()), "Unknown")
+    return {"asset_type": "unknown", "symbol": None, "name": first, "proxy_note": None}
 
 
 def _fetch_crypto_chart(coin_id: str) -> dict[str, Any]:
@@ -230,25 +438,28 @@ def _fetch_stock_chart(ticker: str) -> dict[str, Any]:
     }
 
 
-def get_price_chart(query: str) -> dict[str, Any]:
+def get_price_chart(query: str, *, terms: list[str] | None = None) -> dict[str, Any]:
     """Return 7-day (crypto) or 5-day (stock) price series for a watch keyword."""
-    asset = resolve_market_asset(query)
+    search_terms = terms if terms else [query]
+    asset = resolve_market_asset_from_terms(search_terms)
     asset_type: AssetType = asset["asset_type"]
+    display_name = asset.get("name") or query
 
     if asset_type == "unknown":
         return {
             "query": query,
             "asset_type": "unknown",
             "symbol": None,
-            "name": asset["name"],
+            "name": display_name,
             "current_price": None,
             "change_pct": None,
             "currency": "USD",
             "points": [],
             "message": (
-                "No market ticker matched this keyword. Try names like Bitcoin, Ethereum, "
-                "Apple, Tesla, or NVDA."
+                "No market ticker matched this brand. Add a public company name, "
+                "stock ticker (e.g. AAPL), or crypto name (Bitcoin, Ethereum)."
             ),
+            "proxy_note": None,
         }
 
     cache_key = f"market_chart_{asset_type}_{asset.get('coingecko_id') or asset.get('symbol')}"
@@ -262,9 +473,10 @@ def get_price_chart(query: str) -> dict[str, Any]:
             "query": query,
             "asset_type": asset_type,
             "symbol": asset.get("symbol"),
-            "name": asset["name"],
+            "name": display_name,
             **chart,
-            "message": None,
+            "message": asset.get("proxy_note"),
+            "proxy_note": asset.get("proxy_note"),
         }
 
     try:
@@ -275,10 +487,23 @@ def get_price_chart(query: str) -> dict[str, Any]:
             "query": query,
             "asset_type": asset_type,
             "symbol": asset.get("symbol"),
-            "name": asset["name"],
+            "name": display_name,
             "current_price": None,
             "change_pct": None,
             "currency": "USD",
             "points": [],
             "message": "Market data temporarily unavailable. Try again in a few minutes.",
+            "proxy_note": asset.get("proxy_note"),
         }
+
+
+def get_price_charts_for_watches(watches: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Fetch live price charts for multiple brand watches."""
+    charts: list[dict[str, Any]] = []
+    for watch in watches:
+        watch_id = watch["watch_id"]
+        query = watch["query"]
+        terms = watch.get("terms") or [query]
+        chart = get_price_chart(query, terms=terms)
+        charts.append({"watch_id": watch_id, **chart})
+    return charts
