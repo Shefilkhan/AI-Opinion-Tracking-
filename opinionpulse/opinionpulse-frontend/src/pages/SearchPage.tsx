@@ -343,10 +343,40 @@ export function SearchPage() {
             </section>
 
             {data && data.total_results === 0 && !loading && (
-              <InlineNotice variant="warning">
-                No results from live APIs for this query. Reddit, Dev.to, and
-                Hacker News need no keys. Check the backend terminal for
-                per-source logs.
+              <InlineNotice variant="warning" title="No live results for this query">
+                <p>
+                  {data.platforms_searched?.length
+                    ? `${data.platforms_searched.length} source(s) responded but nothing matched after filtering.`
+                    : "No sources returned data for this query."}
+                </p>
+                {data.errors && data.errors.length > 0 && (
+                  <ul className="mt-2 list-inside list-disc space-y-1 text-xs">
+                    {data.errors.slice(0, 8).map((msg) => (
+                      <li key={msg}>{msg}</li>
+                    ))}
+                  </ul>
+                )}
+                {data.source_health && (
+                  <ul className="mt-2 list-inside list-disc space-y-1 text-xs">
+                    {Object.entries(data.source_health)
+                      .filter(([, v]) => v.status !== "ok")
+                      .slice(0, 8)
+                      .map(([name, v]) => (
+                        <li key={name}>
+                          {name}: {v.message || v.status}
+                          {v.count ? ` (${v.count} raw)` : ""}
+                        </li>
+                      ))}
+                  </ul>
+                )}
+                {data.upgrade_message && (
+                  <p className="mt-2 text-xs">{data.upgrade_message}</p>
+                )}
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Tip: try a shorter keyword, switch time range to 7 days, or verify API keys in{" "}
+                  <code className="text-[11px]">.env.local</code> (not placeholder values). Restart
+                  the backend after changing keys.
+                </p>
               </InlineNotice>
             )}
 

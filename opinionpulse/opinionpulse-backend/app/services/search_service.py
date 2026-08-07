@@ -52,12 +52,8 @@ from app.services.content_classifier import classify_content_type
 from app.services.query_processor import QueryProcessor
 from app.services.relevance_scorer import filter_and_rank_results
 from app.services.risk_assessor import assess_risk_level
-<<<<<<< HEAD
 from app.services.platform_rate_limit import is_rate_limited
-from app.services.platforms.wikipedia import ensure_wikipedia_link
-from app.services.ai_service import generate_topic_overview
-=======
->>>>>>> parent of 2612a4b (Add AI topic summaries and Wikipedia links on Compare)
+from app.services.api_key_utils import is_valid_api_key
 from app.services.topic_summary_service import build_topic_summary
 from app.services.sentiment_analysis import (
     analyze_sentiment_intensity,
@@ -73,9 +69,9 @@ _brand_disambiguator = BrandDisambiguator()
 # Thread semaphore (not asyncio.Semaphore) — module-level asyncio primitives bind to
 # the event loop that existed at import time, which breaks on Windows + uvicorn
 # --reload ("Future attached to a different loop").
-_FETCH_CONCURRENCY = 6
-_PER_CALL_TIMEOUT = 10.0
-_SOURCE_BUDGET_SEC = 18.0
+_FETCH_CONCURRENCY = 8
+_PER_CALL_TIMEOUT = 15.0
+_SOURCE_BUDGET_SEC = 25.0
 _fetch_semaphore = threading.Semaphore(_FETCH_CONCURRENCY)
 
 NEWS_SOURCES = ("newsapi", "guardian", "mediastack", "currents", "gnews")
@@ -86,16 +82,16 @@ def apis_configured() -> dict[str, bool]:
     s = get_settings()
     return {
         "reddit": True,
-        "newsapi": bool(s.news_api_key.strip()),
-        "youtube": bool(s.youtube_api_key.strip()),
-        "guardian": bool(s.guardian_api_key.strip()),
-        "mediastack": bool(s.mediastack_api_key.strip()),
-        "currents": bool(s.currents_api_key.strip()),
-        "gnews": bool(s.gnews_api_key.strip()),
+        "newsapi": is_valid_api_key(s.news_api_key),
+        "youtube": is_valid_api_key(s.youtube_api_key),
+        "guardian": is_valid_api_key(s.guardian_api_key),
+        "mediastack": is_valid_api_key(s.mediastack_api_key),
+        "currents": is_valid_api_key(s.currents_api_key),
+        "gnews": is_valid_api_key(s.gnews_api_key),
         "devto": True,
         "hackernews": True,
         "wikipedia": True,
-        "mastodon": bool(s.mastodon_access_token.strip()),
+        "mastodon": is_valid_api_key(s.mastodon_access_token),
         "github": True,
         "stackoverflow": True,
         "bluesky": True,
@@ -262,6 +258,34 @@ def _ensure_diverse_results(
     return selected
 
 
+def _apply_result_filters(
+    combined: list[dict[str, Any]],
+    *,
+    search_query: str,
+    time_range: str,
+    processed: dict[str, Any],
+    relaxed: bool = False,
+) -> list[dict[str, Any]]:
+    """Rank and diversify already-cleaned fetch results."""
+    rows = list(combined)
+    relevance_min = 2 if relaxed else 4
+    rows = filter_by_relevance(rows, search_query, min_score=relevance_min)
+    rows = filter_by_time_range(rows, time_range, fallback_to_all=True)
+    rows = deduplicate_results(rows)
+
+    min_rank_score = 0.08 if relaxed else (0.15 if len(rows) < 8 else 0.25)
+    if not relaxed and (
+        processed["intent"] in ("technical", "comparison") or len(search_query) <= 12
+    ):
+        min_rank_score = min(min_rank_score, 0.12 if len(rows) < 8 else 0.18)
+
+    rows = filter_and_rank_results(rows, search_query, min_score=min_rank_score)
+    per_platform = 6 if relaxed else 4
+    min_per = 1 if relaxed else 2
+    rows = _ensure_diverse_results(rows, min_per_platform=min_per, per_platform=per_platform)
+    return rows
+
+
 def _empty_response(
     query: str,
     configured: dict[str, bool],
@@ -269,14 +293,18 @@ def _empty_response(
     errors: list[str],
     platform_filter: str,
     search_metadata: dict[str, int] | None = None,
+    *,
+    platforms_searched: list[str] | None = None,
+    platforms_live: dict[str, bool] | None = None,
 ) -> dict[str, Any]:
     logger.warning("⚠️ No live results for '%s' — returning empty list (no mock data)", query)
+    live = platforms_live if platforms_live is not None else platforms_live_status()
     return {
         "query": query,
         "total_results": 0,
         "sentiment_summary": {"positive": 0, "negative": 0, "neutral": 0},
-        "platforms_searched": [],
-        "platforms_live": configured,
+        "platforms_searched": platforms_searched or [],
+        "platforms_live": live,
         "apis_configured": configured,
         "demo_mode": False,
         "peak_discussion": None,
@@ -523,17 +551,36 @@ async def run_search(
             brand_filtered.append(row)
         combined = brand_filtered
 
-    combined = filter_by_relevance(combined, search_query)
-    combined = filter_by_time_range(combined, time_range, fallback_to_all=True)
-    combined = deduplicate_results(combined)
+    raw_fetched_count = len(combined)
+    combined_before_history = list(combined)
+    relevance_mode = "strict"
+
+    combined = _apply_result_filters(
+        combined,
+        search_query=search_query,
+        time_range=time_range,
+        processed=processed,
+        relaxed=False,
+    )
     combined = _merge_historical(combined, search_query, time_range)
     combined = deduplicate_results(combined)
 
-    min_rank_score = 0.15 if len(combined) < 8 else 0.25
-    if processed["intent"] in ("technical", "comparison") or len(search_query) <= 12:
-        min_rank_score = min(min_rank_score, 0.12 if len(combined) < 8 else 0.18)
-    combined = filter_and_rank_results(combined, search_query, min_score=min_rank_score)
-    combined = _ensure_diverse_results(combined, min_per_platform=2, per_platform=4)
+    if not combined and raw_fetched_count > 0:
+        logger.warning(
+            "Strict filters removed all %s fetched results for %r; using relaxed mode",
+            raw_fetched_count,
+            search_query,
+        )
+        relevance_mode = "relaxed"
+        combined = _apply_result_filters(
+            combined_before_history,
+            search_query=search_query,
+            time_range=time_range,
+            processed=processed,
+            relaxed=True,
+        )
+        combined = _merge_historical(combined, search_query, time_range)
+        combined = deduplicate_results(combined)
 
     try:
         wiki_summary = await asyncio.wait_for(
@@ -552,19 +599,26 @@ async def run_search(
             query=query,
             results=[],
             sentiment_summary={"positive": 0, "negative": 0, "neutral": 0},
-            platforms_searched=[],
+            platforms_searched=platforms_searched,
             most_active_platform=None,
             trending_keywords=[],
             wiki_summary=wiki_summary,
             total_results=0,
         )
         empty = _empty_response(
-            query, configured, wiki_summary, errors, platform, search_metadata
+            query,
+            configured,
+            wiki_summary,
+            errors,
+            platform,
+            search_metadata,
+            platforms_searched=platforms_searched,
+            platforms_live=platforms_live_status(),
         )
         empty["topic_summary"] = topic_summary
         empty["source_health"] = source_health
-        empty["data_freshness"] = {"fetched_at": fetched_at, "relevance_mode": "strict"}
-        empty["relevance_mode"] = "strict"
+        empty["data_freshness"] = {"fetched_at": fetched_at, "relevance_mode": relevance_mode}
+        empty["relevance_mode"] = relevance_mode
         empty["query_meta"] = {
             "original": processed["original"],
             "cleaned": processed["cleaned"],
@@ -654,12 +708,13 @@ async def run_search(
         total_results=len(combined),
     )
 
+    live_status = platforms_live_status()
     return {
         "query": query,
         "total_results": len(combined),
         "sentiment_summary": summary,
         "platforms_searched": platforms_searched,
-        "platforms_live": configured,
+        "platforms_live": live_status,
         "apis_configured": configured,
         "demo_mode": False,
         "peak_discussion": datetime.now(timezone.utc).strftime("Today at %I:%M %p"),
@@ -689,7 +744,7 @@ async def run_search(
                 1 for s in source_health.values() if s.get("status") != "ok"
             ),
         },
-        "relevance_mode": "strict",
+        "relevance_mode": relevance_mode,
         "query_meta": {
             "original": processed["original"],
             "cleaned": processed["cleaned"],

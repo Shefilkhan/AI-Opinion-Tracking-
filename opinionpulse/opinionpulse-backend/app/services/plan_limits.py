@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.db.models import SavedSearch
 from app.services.plan_service import (
     get_or_create_usage,
@@ -53,10 +54,15 @@ def resolve_plan_sources(
     user_id: int, platform_filter: str, db: Session
 ) -> tuple[list[str], list[str]]:
     """Resolve API sources for a search, filtered by the user's plan."""
-    plan = get_user_plan(user_id, db)
-    allowed = parse_data_sources(plan.get("data_sources_json"))
     configured = apis_configured()
     requested = _resolve_sources(platform_filter, configured)
+
+    # Local development: use every configured source when keys are set.
+    if get_settings().app_env == "development":
+        return requested, []
+
+    plan = get_user_plan(user_id, db)
+    allowed = parse_data_sources(plan.get("data_sources_json"))
     return filter_sources_by_plan(requested, allowed)
 
 
