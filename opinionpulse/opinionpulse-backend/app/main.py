@@ -86,6 +86,20 @@ async def lifespan(app: FastAPI):
         load_plans(db)
     logger.info("Plans loaded; chat_messages table ready")
     start_pulse_scheduler()
+
+    def _warm_source_health() -> None:
+        try:
+            from app.services.source_health_service import get_source_health
+
+            get_source_health(force_refresh=True)
+            logger.info("Source health probe cache warmed")
+        except Exception as exc:
+            logger.warning("Source health warm-up failed: %s", exc)
+
+    import threading
+
+    threading.Thread(target=_warm_source_health, daemon=True).start()
+
     yield
     stop_pulse_scheduler()
 

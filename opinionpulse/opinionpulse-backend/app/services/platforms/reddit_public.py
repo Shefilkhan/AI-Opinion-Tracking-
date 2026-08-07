@@ -66,7 +66,7 @@ def _fetch_reddit_rss(query: str, time_range: str, t: str, limit: int) -> list[d
         )
         resp = requests.get(url, headers=_headers(), timeout=TIMEOUT)
         if resp.status_code == 429:
-            mark_rate_limited("reddit", 600)
+            mark_rate_limited("reddit", 300)
             logger.warning("Reddit RSS fallback: HTTP 429 for %r — cooling down", query)
             return []
         resp.raise_for_status()
@@ -124,7 +124,7 @@ def search_reddit(query: str, time_range: str = "24h", limit: int = 20) -> list[
             )
             resp = requests.get(url, headers=_headers(), timeout=TIMEOUT)
             if resp.status_code == 429:
-                mark_rate_limited("reddit", 600)
+                mark_rate_limited("reddit", 300)
                 logger.warning("Reddit: HTTP 429 for %r — skipping RSS retry during cooldown", query)
                 cache_set(cache_key, [], REDDIT_RATE_LIMIT_CACHE_TTL)
                 return []
@@ -217,7 +217,7 @@ def get_trending_reddit(limit: int = 10) -> list[dict]:
             url = f"https://www.reddit.com/r/{sub}.rss?limit={limit}"
             resp = requests.get(url, headers=_headers(), timeout=TIMEOUT)
             if resp.status_code == 429:
-                mark_rate_limited("reddit", 600)
+                mark_rate_limited("reddit", 300)
                 logger.warning("Reddit trending RSS: HTTP 429 for r/%s", sub)
                 return []
             resp.raise_for_status()

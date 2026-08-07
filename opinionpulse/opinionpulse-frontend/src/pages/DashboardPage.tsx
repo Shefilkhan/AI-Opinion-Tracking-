@@ -98,7 +98,7 @@ export function DashboardPage() {
 
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
             <div className="xl:col-span-7">
-              <OverviewPulseCards stats={data.stats} sourcesLive={liveSourceCount || 13} />
+              <OverviewPulseCards stats={data.stats} sourcesLive={liveSourceCount} />
             </div>
             <div className="xl:col-span-5">
               <RecentActivityPanel items={data.live_debates ?? []} />

@@ -100,7 +100,9 @@ def apis_configured() -> dict[str, bool]:
 
 
 def platforms_live_status() -> dict[str, bool]:
-    return apis_configured()
+    from app.services.source_health_service import platforms_live_from_probe
+
+    return platforms_live_from_probe()
 
 
 def _source_enabled(name: str, configured: dict[str, bool]) -> bool:

@@ -67,6 +67,8 @@ export function SearchPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null)
+  const [sourcesLive, setSourcesLive] = useState<number | null>(null)
+  const [rateLimitedSources, setRateLimitedSources] = useState<string[]>([])
   const [data, setData] = useState<SearchResponse | null>(null)
   const [baseData, setBaseData] = useState<SearchResponse | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
@@ -77,8 +79,16 @@ export function SearchPage() {
   useEffect(() => {
     let cancelled = false
     fetch("/api/health")
-      .then((res) => {
-        if (!cancelled) setBackendOnline(res.ok)
+      .then((res) => res.json().then((body) => ({ ok: res.ok, body })))
+      .then(({ ok, body }) => {
+        if (cancelled) return
+        setBackendOnline(ok)
+        if (typeof body?.sources_live === "number") {
+          setSourcesLive(body.sources_live)
+        }
+        if (Array.isArray(body?.rate_limited_sources)) {
+          setRateLimitedSources(body.rate_limited_sources)
+        }
       })
       .catch(() => {
         if (!cancelled) setBackendOnline(false)
@@ -232,6 +242,19 @@ export function SearchPage() {
   return (
     <DashboardLayout title="Search" subtitle="Track public opinion across social media">
       <div className="flex w-full flex-col gap-6 lg:gap-8">
+            {backendOnline === true && sourcesLive === 0 && (
+              <InlineNotice variant="warning" title="Live sources temporarily unavailable">
+                Upstream APIs are rate-limited or missing keys.
+                {rateLimitedSources.length > 0 && (
+                  <span className="mt-1 block text-xs">
+                    Rate-limited: {rateLimitedSources.join(", ")}. Retry in a few minutes, or
+                    check <code className="text-[11px]">GET /api/health/sources</code> in the
+                    backend.
+                  </span>
+                )}
+              </InlineNotice>
+            )}
+
             {backendOnline === false && (
               <InlineNotice variant="warning" title="Backend offline">
                 <span className="inline-flex items-center gap-2">

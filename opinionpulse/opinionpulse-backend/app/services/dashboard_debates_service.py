@@ -305,8 +305,9 @@ def get_live_debates() -> list[dict[str, Any]]:
     if hit is not None:
         _refresh_cache_async("dashboard_debates", _build_live_debates)
         return hit
-    _refresh_cache_async("dashboard_debates", _build_live_debates)
-    return []
+    debates = _run_coro(_build_live_debates())
+    cache_set("dashboard_debates", debates, CACHE_TTL)
+    return debates
 
 
 def get_most_discussed() -> list[dict[str, Any]]:
@@ -314,8 +315,9 @@ def get_most_discussed() -> list[dict[str, Any]]:
     if hit is not None:
         _refresh_cache_async("dashboard_most_discussed", _build_most_discussed)
         return hit
-    _refresh_cache_async("dashboard_most_discussed", _build_most_discussed)
-    return []
+    most = _run_coro(_build_most_discussed())
+    cache_set("dashboard_most_discussed", most, CACHE_TTL)
+    return most
 
 
 async def _fetch_both_parallel() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -334,7 +336,7 @@ async def _fetch_both_parallel() -> tuple[list[dict[str, Any]], list[dict[str, A
 
 
 def get_dashboard_extras_fast() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Return cached debates/most-discussed immediately; warm cache in background on miss."""
+    """Return debates/most-discussed; fetch synchronously on cache miss so UI isn't empty."""
     d_hit = cache_get("dashboard_debates")
     m_hit = cache_get("dashboard_most_discussed")
     if d_hit is not None and m_hit is not None:
@@ -342,9 +344,10 @@ def get_dashboard_extras_fast() -> tuple[list[dict[str, Any]], list[dict[str, An
         _refresh_cache_async("dashboard_most_discussed", _build_most_discussed)
         return d_hit, m_hit
 
-    _refresh_cache_async("dashboard_debates", _build_live_debates)
-    _refresh_cache_async("dashboard_most_discussed", _build_most_discussed)
-    return d_hit or [], m_hit or []
+    debates, most = _run_coro(_fetch_both_parallel())
+    cache_set("dashboard_debates", debates, CACHE_TTL)
+    cache_set("dashboard_most_discussed", most, CACHE_TTL)
+    return debates, most
 
 
 def get_dashboard_extras() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:

@@ -26,7 +26,7 @@ export function LiveDataIndicator({ isLive, lastUpdated }: LiveDataIndicatorProp
         live: !!(isLive.newsapi || isLive.guardian || isLive.gnews),
       }
     }
-    return { name: s.name, live: isLive[s.key] ?? s.key !== "youtube" }
+    return { name: s.name, live: isLive[s.key] ?? false }
   })
 
   return (

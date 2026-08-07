@@ -34,7 +34,7 @@ GNEWS_RATE_LIMIT_CACHE_TTL = 300
 def _gnews_get(url: str, params: dict) -> requests.Response:
     resp = requests.get(url, params=params, timeout=TIMEOUT)
     if resp.status_code == 429:
-        mark_rate_limited("gnews", 600)
+        mark_rate_limited("gnews", 300)
         raise requests.HTTPError("429 Too Many Requests", response=resp)
     return resp
 
