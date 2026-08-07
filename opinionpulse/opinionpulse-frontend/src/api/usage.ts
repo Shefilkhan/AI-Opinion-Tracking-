@@ -9,7 +9,6 @@ export type UsageFeatures = {
   ai_opinion_summary: boolean
   ai_debate_analysis: boolean
   ai_trend_prediction: boolean
-  pulse_ai: boolean
   api_access: boolean
   search_history_days: number
   chat_history_days: number

@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useState } from "react"
-import { Link } from "react-router-dom"
-import { MessageCircle } from "lucide-react"
 import {
   deleteChatConversation,
   getChatConversation,
@@ -12,7 +10,6 @@ import { ChatMain, generateConversationId } from "@/components/chat/ChatMain"
 import { ChatSidebar } from "@/components/chat/ChatSidebar"
 import type { ChatMessageItem } from "@/components/chat/types"
 import { useAuth } from "@/contexts/AuthContext"
-import { useUsage } from "@/hooks/useUsage"
 import { getUserInitials } from "@/lib/chat-message-utils"
 
 function storedToChatMessages(rows: PulseStoredMessage[]): ChatMessageItem[] {
@@ -36,8 +33,6 @@ function storedToChatMessages(rows: PulseStoredMessage[]): ChatMessageItem[] {
 
 export function ChatPage() {
   const { user } = useAuth()
-  const { usage, loading: usageLoading } = useUsage()
-  const pulseAiEnabled = usage?.features?.pulse_ai ?? false
   const [conversations, setConversations] = useState<PulseConversation[]>([])
   const [activeConvId, setActiveConvId] = useState(generateConversationId)
   const [chatSessionKey, setChatSessionKey] = useState(0)
@@ -58,35 +53,8 @@ export function ChatPage() {
   }, [])
 
   useEffect(() => {
-    if (!pulseAiEnabled) {
-      setLoadingList(false)
-      return
-    }
     void refreshConversations()
-  }, [refreshConversations, pulseAiEnabled])
-
-  if (!usageLoading && usage && !pulseAiEnabled) {
-    return (
-      <div className="flex h-screen flex-col items-center justify-center bg-[var(--chat-bg)] px-6 text-center">
-        <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-[var(--chat-accent-soft,var(--primary)/0.1)]">
-          <MessageCircle className="size-8 text-primary" strokeWidth={1.75} aria-hidden />
-        </div>
-        <h1 className="text-2xl font-semibold text-[var(--chat-text,var(--foreground))]">
-          Pulse AI is a Pro feature
-        </h1>
-        <p className="mt-2 max-w-md text-sm text-[var(--chat-text-muted,var(--muted-foreground))]">
-          Ask questions, explore sentiment, and get research briefs powered by live platform
-          data. Upgrade to Pro to unlock Pulse AI.
-        </p>
-        <Link
-          to="/pricing"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground no-underline shadow-sm transition-colors hover:bg-primary/90"
-        >
-          Unlock with Pro
-        </Link>
-      </div>
-    )
-  }
+  }, [refreshConversations])
 
   const loadConversation = useCallback(async (conversationId: string) => {
     try {

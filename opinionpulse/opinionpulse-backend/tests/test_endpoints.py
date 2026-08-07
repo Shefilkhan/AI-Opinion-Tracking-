@@ -51,25 +51,14 @@ def test_crisis_radar_ok(client):
     assert "legend" in body
 
 
-def test_chat_402_starter_no_pulse_ai(client):
-    auth = _token(client, "chatcap@example.com")
-    r = client.post("/api/chat/message", json={"message": "hi there"}, headers=auth)
-    assert r.status_code == 402, r.text
-    detail = r.json()["detail"]
-    assert detail["error"] == "limit_exceeded"
-    assert "Pulse AI" in detail["message"]
-
-
 def test_chat_402_at_daily_cap(client, db):
     auth = _token(client, "chatcap@example.com")
     user = db.query(User).filter(User.email == "chatcap@example.com").first()
-    user.plan_id = "pro"
-    db.commit()
     from app.services.plan_service import get_or_create_usage
 
     usage = get_or_create_usage(user.id, db)
     row = db.get(UsageTracking, usage["id"])
-    row.chat_messages_used_today = 100  # Pro daily cap
+    row.chat_messages_used_today = 5  # Starter daily cap
     row.chat_messages_today_date = date.today()
     db.commit()
     r = client.post("/api/chat/message", json={"message": "hi there"}, headers=auth)
