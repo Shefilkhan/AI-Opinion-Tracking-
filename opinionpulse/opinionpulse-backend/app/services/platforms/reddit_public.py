@@ -12,7 +12,8 @@ from typing import Any
 import requests
 
 from app.core.config import get_settings
-from app.services.cache_utils import cached
+from app.services.cache_utils import cache_get, cache_set, cached
+from app.services.platform_rate_limit import is_rate_limited, mark_rate_limited
 from app.services.platforms.platform_common import build_result, log_platform_error, log_platform_success
 from app.services.platforms.query_helpers import (
     filter_by_time_range,
@@ -48,14 +49,26 @@ def _headers() -> dict[str, str]:
     return {"User-Agent": ua}
 
 
+logger = logging.getLogger(__name__)
+TIMEOUT = 12
+REDDIT_CACHE_TTL = 180
+REDDIT_RATE_LIMIT_CACHE_TTL = 300
+
+
 def _fetch_reddit_rss(query: str, time_range: str, t: str, limit: int) -> list[dict]:
     """RSS fallback when JSON search is blocked."""
+    if is_rate_limited("reddit"):
+        return []
     try:
         url = (
             "https://www.reddit.com/search.rss"
             f"?q={requests.utils.quote(query)}&sort=new&t={t}&limit={limit}"
         )
         resp = requests.get(url, headers=_headers(), timeout=TIMEOUT)
+        if resp.status_code == 429:
+            mark_rate_limited("reddit", 600)
+            logger.warning("Reddit RSS fallback: HTTP 429 for %r — cooling down", query)
+            return []
         resp.raise_for_status()
         root = ET.fromstring(resp.content)
         namespaces = {"atom": "http://www.w3.org/2005/Atom"}
@@ -99,6 +112,10 @@ def search_reddit(query: str, time_range: str = "24h", limit: int = 20) -> list[
     t = time_map.get(time_range, "day")
     cache_key = make_search_cache_key("reddit", query, time_range, str(limit))
 
+    if is_rate_limited("reddit"):
+        hit = cache_get(cache_key)
+        return hit if isinstance(hit, list) else []
+
     def fetch() -> list[dict]:
         try:
             url = (
@@ -106,10 +123,16 @@ def search_reddit(query: str, time_range: str = "24h", limit: int = 20) -> list[
                 f"?q={requests.utils.quote(quoted_phrase_query(query))}&sort=new&t={t}&limit={limit}"
             )
             resp = requests.get(url, headers=_headers(), timeout=TIMEOUT)
-            if resp.status_code in (403, 429):
+            if resp.status_code == 429:
+                mark_rate_limited("reddit", 600)
+                logger.warning("Reddit: HTTP 429 for %r — skipping RSS retry during cooldown", query)
+                cache_set(cache_key, [], REDDIT_RATE_LIMIT_CACHE_TTL)
+                return []
+            if resp.status_code == 403:
                 results = _fetch_reddit_rss(query, time_range, t, limit)
                 results = sort_results_by_posted_at(results)
-                log_platform_success("Reddit (RSS fallback)", query, len(results))
+                if results:
+                    log_platform_success("Reddit (RSS fallback)", query, len(results))
                 return results
             resp.raise_for_status()
             payload = resp.json()
@@ -176,11 +199,14 @@ def search_reddit(query: str, time_range: str = "24h", limit: int = 20) -> list[
             log_platform_error("Reddit", query, exc)
             return []
 
-    return cached(cache_key, fetch, ttl_seconds=60)
+    return cached(cache_key, fetch, ttl_seconds=REDDIT_CACHE_TTL)
 
 
 def get_trending_reddit(limit: int = 10) -> list[dict]:
     import random
+
+    if is_rate_limited("reddit"):
+        return []
 
     subs = ["worldnews", "technology", "politics", "business", "science"]
     sub = random.choice(subs)
@@ -190,6 +216,10 @@ def get_trending_reddit(limit: int = 10) -> list[dict]:
         try:
             url = f"https://www.reddit.com/r/{sub}.rss?limit={limit}"
             resp = requests.get(url, headers=_headers(), timeout=TIMEOUT)
+            if resp.status_code == 429:
+                mark_rate_limited("reddit", 600)
+                logger.warning("Reddit trending RSS: HTTP 429 for r/%s", sub)
+                return []
             resp.raise_for_status()
 
             root = ET.fromstring(resp.content)

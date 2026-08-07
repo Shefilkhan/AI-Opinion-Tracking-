@@ -24,9 +24,37 @@ class QueryProcessor:
         "java": {"context": "programming language JVM"},
         "react": {"context": "React JavaScript framework web development"},
         "angular": {"context": "Angular JavaScript framework Google"},
+        "vue": {"context": "Vue.js JavaScript framework frontend"},
+        "svelte": {"context": "Svelte JavaScript framework frontend"},
+        "nextjs": {"context": "Next.js React framework Vercel"},
+        "django": {"context": "Django Python web framework"},
+        "flask": {"context": "Flask Python web framework"},
         "bitcoin": {"ticker": "BTC", "alt": "cryptocurrency crypto"},
         "ethereum": {"ticker": "ETH", "alt": "cryptocurrency crypto"},
     }
+
+    TECH_TERMS = frozenset(
+        {
+            "react",
+            "angular",
+            "vue",
+            "svelte",
+            "nextjs",
+            "next.js",
+            "django",
+            "flask",
+            "python",
+            "rust",
+            "java",
+            "javascript",
+            "typescript",
+            "nodejs",
+            "node.js",
+            "golang",
+            "kubernetes",
+            "docker",
+        }
+    )
 
     STOP_WORDS = {
         "the",
@@ -100,7 +128,9 @@ class QueryProcessor:
         return q.strip()
 
     def _detect_intent(self, query: str) -> str:
-        q = query.lower()
+        q = query.lower().strip()
+        if q in self.TECH_TERMS:
+            return "technical"
 
         if any(w in q for w in ["vs", "versus", "compare", "better", "best"]):
             return "comparison"
@@ -141,9 +171,9 @@ class QueryProcessor:
 
         subreddit_hints = {
             "financial": "investing OR stocks OR crypto",
-            "technical": "programming OR coding OR developer",
+            "technical": "programming OR webdev OR javascript",
             "technical_issue": "techsupport OR programming",
-            "comparison": "programming OR technology",
+            "comparison": "programming OR webdev OR javascript",
             "crisis": "news OR technology OR worldnews",
             "general": "",
         }
@@ -196,6 +226,8 @@ class QueryProcessor:
         return query
 
     def _so_query(self, query: str, intent: str) -> str:
+        if intent in ("technical", "comparison", "technical_issue"):
+            return f"{query} javascript"
         if intent in ["financial", "news", "crisis"]:
             return query
         return query

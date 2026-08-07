@@ -10,6 +10,7 @@ from typing import Any
 
 from app.db.database import SessionLocal
 from app.services.cache_utils import cache_get, cache_set
+from app.services.platform_rate_limit import is_rate_limited
 from app.services.trending_snapshot_service import get_discovered_topics
 from app.services.search_service import search_all_platforms
 from app.services.sentiment_analysis import calculate_sentiment_summary
@@ -17,7 +18,8 @@ from app.services.sentiment_analysis import calculate_sentiment_summary
 logger = logging.getLogger(__name__)
 
 CACHE_TTL = 300
-FETCH_TIMEOUT = 8.0
+FETCH_TIMEOUT = 12.0
+_DASHBOARD_SEARCH_SEM = asyncio.Semaphore(2)
 # Dashboard widgets only need a few fast sources — not all 13 platforms per topic.
 DASHBOARD_SOURCE_ALLOWLIST = [
     "reddit",
@@ -26,7 +28,29 @@ DASHBOARD_SOURCE_ALLOWLIST = [
     "gnews",
     "currents",
     "hackernews",
+    "devto",
+    "stackoverflow",
 ]
+
+
+def _dashboard_sources() -> list[str]:
+    """Omit rate-limited upstreams so dashboard scans don't amplify 429 storms."""
+    blocked = {"reddit", "gnews"}
+    return [
+        s
+        for s in DASHBOARD_SOURCE_ALLOWLIST
+        if not (s in blocked and is_rate_limited(s))
+    ]
+
+
+async def _dashboard_search(query: str, time_range: str) -> list[dict[str, Any]]:
+    async with _DASHBOARD_SEARCH_SEM:
+        return await search_all_platforms(
+            query,
+            time_range,
+            fetch_timeout=FETCH_TIMEOUT,
+            source_allowlist=_dashboard_sources(),
+        )
 
 DEBATE_TOPICS = [
     "AI regulation",
@@ -119,15 +143,7 @@ def _most_discussed_queries() -> list[str]:
 async def _build_live_debates() -> list[dict[str, Any]]:
     topics = _debate_topics()[:3]
     topic_results = await asyncio.gather(
-        *[
-            search_all_platforms(
-                t,
-                "24h",
-                fetch_timeout=FETCH_TIMEOUT,
-                source_allowlist=DASHBOARD_SOURCE_ALLOWLIST,
-            )
-            for t in topics
-        ]
+        *[_dashboard_search(t, "24h") for t in topics]
     )
 
     debates: list[dict[str, Any]] = []
@@ -185,17 +201,9 @@ async def _build_live_debates() -> list[dict[str, Any]]:
 
 
 async def _build_most_discussed() -> list[dict[str, Any]]:
-    queries = _most_discussed_queries()[:5]
+    queries = _most_discussed_queries()[:3]
     query_results = await asyncio.gather(
-        *[
-            search_all_platforms(
-                q,
-                "7d",
-                fetch_timeout=FETCH_TIMEOUT,
-                source_allowlist=DASHBOARD_SOURCE_ALLOWLIST,
-            )
-            for q in queries
-        ]
+        *[_dashboard_search(q, "7d") for q in queries]
     )
 
     discussed: list[dict[str, Any]] = []

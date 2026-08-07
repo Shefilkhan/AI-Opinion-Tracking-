@@ -52,6 +52,7 @@ from app.services.content_classifier import classify_content_type
 from app.services.query_processor import QueryProcessor
 from app.services.relevance_scorer import filter_and_rank_results
 from app.services.risk_assessor import assess_risk_level
+from app.services.platform_rate_limit import is_rate_limited
 from app.services.platforms.wikipedia import ensure_wikipedia_link
 from app.services.ai_service import generate_topic_overview
 from app.services.topic_summary_service import build_topic_summary
@@ -69,7 +70,7 @@ _brand_disambiguator = BrandDisambiguator()
 # Thread semaphore (not asyncio.Semaphore) — module-level asyncio primitives bind to
 # the event loop that existed at import time, which breaks on Windows + uvicorn
 # --reload ("Future attached to a different loop").
-_FETCH_CONCURRENCY = 12
+_FETCH_CONCURRENCY = 6
 _PER_CALL_TIMEOUT = 10.0
 _SOURCE_BUDGET_SEC = 18.0
 _fetch_semaphore = threading.Semaphore(_FETCH_CONCURRENCY)
@@ -171,6 +172,9 @@ async def _fetch_source(
     fn = _fetcher_for(name)
     if not fn:
         return name, [], "unknown source"
+
+    if name in ("reddit", "gnews") and is_rate_limited(name):
+        return name, [], f"{name} temporarily rate-limited — retry in a few minutes"
 
     async def _call(q: str, tr: str) -> list[dict[str, Any]]:
         await asyncio.to_thread(_fetch_semaphore.acquire)
@@ -550,13 +554,15 @@ async def run_search(
     combined = deduplicate_results(combined)
 
     min_rank_score = 0.15 if len(combined) < 8 else 0.25
+    if processed["intent"] in ("technical", "comparison") or len(search_query) <= 12:
+        min_rank_score = min(min_rank_score, 0.12 if len(combined) < 8 else 0.18)
     combined = filter_and_rank_results(combined, search_query, min_score=min_rank_score)
     combined = _ensure_diverse_results(combined, min_per_platform=2, per_platform=4)
 
     try:
         wiki_summary = await asyncio.wait_for(
             asyncio.to_thread(get_wikipedia_summary, search_query),
-            timeout=8.0,
+            timeout=15.0,
         )
     except asyncio.TimeoutError:
         logger.warning("Wikipedia summary timed out for %r", search_query)
