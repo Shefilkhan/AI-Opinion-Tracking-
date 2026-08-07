@@ -1,6 +1,6 @@
 import { useState } from "react"
 
-import { useDashboard } from "@/hooks/useDashboard"
+import { useDashboard, useLiveDebates } from "@/hooks/useDashboard"
 
 import { AiInsightOfTheDay } from "@/components/dashboard/AiInsightOfTheDay"
 
@@ -27,6 +27,8 @@ import { WeeklyActivityChart } from "@/components/dashboard/WeeklyActivityChart"
 import { DashboardSection } from "@/components/dashboard/DashboardSection"
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { InlineNotice } from "@/components/layout/InlineNotice"
+import { Button } from "@/components/ui/button"
 
 import { dashCardStatic } from "@/lib/dash-classes"
 
@@ -65,11 +67,21 @@ function OverviewSkeleton() {
 export function DashboardPage() {
   const [recent, setRecent] = useState(getRecentSearches)
   const selectedPlan = getSelectedPlan()
-  const { data, isLoading, isFetching, refetch } = useDashboard()
+  const { data, isLoading, isFetching, isError, error, refetch } = useDashboard()
+  const {
+    data: liveDebatesData,
+    isFetching: liveDebatesFetching,
+    refetch: refetchLiveDebates,
+  } = useLiveDebates(!isLoading || Boolean(data))
+
+  const liveDebates = liveDebatesData ?? data?.live_debates ?? []
 
   const liveSourceCount = data
     ? Object.values(data.is_live ?? {}).filter(Boolean).length
     : 0
+
+  const errorMessage =
+    error instanceof Error ? error.message : "Could not load dashboard data"
 
   return (
     <DashboardLayout
@@ -77,6 +89,22 @@ export function DashboardPage() {
       toolbarLastUpdated={data?.last_updated}
       toolbarIsLive={data ? Object.values(data.is_live ?? {}).some(Boolean) : true}
     >
+      {isError && !data && (
+        <div className={cn(dashCardStatic, "p-6")}>
+          <InlineNotice variant="warning" title="Dashboard could not load">
+            {errorMessage}
+            <span className="mt-2 block text-xs text-muted-foreground">
+              Ensure the backend is running on port 8000 and MySQL/XAMPP is up.
+              Check token status at{" "}
+              <code className="text-[11px]">GET /api/health/tokens</code>.
+            </span>
+          </InlineNotice>
+          <Button className="mt-4" onClick={() => void refetch()}>
+            Retry
+          </Button>
+        </div>
+      )}
+
       {isLoading && !data ? (
         <OverviewSkeleton />
       ) : data ? (
@@ -101,7 +129,7 @@ export function DashboardPage() {
               <OverviewPulseCards stats={data.stats} sourcesLive={liveSourceCount} />
             </div>
             <div className="xl:col-span-5">
-              <RecentActivityPanel items={data.live_debates ?? []} />
+              <RecentActivityPanel items={liveDebates} />
             </div>
           </div>
 
@@ -115,10 +143,13 @@ export function DashboardPage() {
           </div>
 
           <LiveDebates
-            debates={data.live_debates ?? []}
-            isRefreshing={isFetching}
+            debates={liveDebates}
+            isRefreshing={isFetching || liveDebatesFetching}
             lastUpdated={data.last_updated}
-            onRefresh={() => void refetch()}
+            onRefresh={() => {
+              void refetch()
+              void refetchLiveDebates()
+            }}
           />
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">

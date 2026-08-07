@@ -269,3 +269,133 @@ def platforms_live_from_probe() -> dict[str, bool]:
                 "wikipedia",
             )
     return live
+
+
+def get_token_audit(force_refresh: bool = False) -> dict[str, Any]:
+    """Human-readable audit of API keys and upstream token/limit status."""
+    s = get_settings()
+    health = get_source_health(force_refresh=force_refresh)
+    sources = health.get("sources") or {}
+
+    key_fields = {
+        "newsapi": ("NEWS_API_KEY", s.news_api_key),
+        "youtube": ("YOUTUBE_API_KEY", s.youtube_api_key),
+        "guardian": ("GUARDIAN_API_KEY", s.guardian_api_key),
+        "mediastack": ("MEDIASTACK_API_KEY", s.mediastack_api_key),
+        "currents": ("CURRENTS_API_KEY", s.currents_api_key),
+        "gnews": ("GNEWS_API_KEY", s.gnews_api_key),
+        "mastodon": ("MASTODON_ACCESS_TOKEN", s.mastodon_access_token),
+        "github": ("GITHUB_TOKEN", s.github_token),
+        "groq": ("GROQ_API_KEY", s.groq_api_key),
+        "anthropic": ("ANTHROPIC_API_KEY", s.anthropic_api_key),
+        "quiver": ("QUIVER_API_KEY", s.quiver_api_key),
+    }
+
+    free_sources = {
+        "reddit": "No key needed (public RSS/JSON)",
+        "devto": "No key needed",
+        "hackernews": "No key needed",
+        "stackoverflow": "No key needed",
+        "bluesky": "Optional BLUESKY_HANDLE + BLUESKY_APP_PASSWORD",
+        "wikipedia": "No key needed",
+    }
+
+    tokens: list[dict[str, Any]] = []
+    issues: list[str] = []
+
+    for name, (env_name, value) in key_fields.items():
+        configured = bool((value or "").strip())
+        probe = sources.get(name, {})
+        status = probe.get("status", "not_probed")
+        message = probe.get("message") or ""
+
+        if not configured:
+            entry = {
+                "source": name,
+                "env_var": env_name,
+                "configured": False,
+                "status": "missing",
+                "action": f"Add {env_name} to .env.local for this source",
+            }
+        elif status == "ok":
+            entry = {
+                "source": name,
+                "env_var": env_name,
+                "configured": True,
+                "status": "working",
+                "latency_ms": probe.get("latency_ms"),
+                "results": probe.get("count", 0),
+            }
+        elif status == "rate_limited":
+            entry = {
+                "source": name,
+                "env_var": env_name,
+                "configured": True,
+                "status": "rate_limited",
+                "action": message or "Wait a few minutes or restart backend to clear cooldown",
+                "retry_in_seconds": probe.get("retry_in_seconds"),
+            }
+            issues.append(f"{name}: rate-limited")
+        elif status == "missing_key":
+            entry = {
+                "source": name,
+                "env_var": env_name,
+                "configured": False,
+                "status": "missing",
+                "action": f"Add {env_name} to .env.local",
+            }
+        elif "401" in message or (
+            name == "github" and status == "error" and configured
+        ):
+            entry = {
+                "source": name,
+                "env_var": env_name,
+                "configured": True,
+                "status": "expired_or_invalid",
+                "action": f"Update or remove {env_name} in .env.local (token rejected with 401)",
+            }
+            issues.append(f"{name}: token expired or invalid")
+        else:
+            entry = {
+                "source": name,
+                "env_var": env_name,
+                "configured": True,
+                "status": status,
+                "action": message or "Check backend logs for details",
+            }
+            if status not in ("empty", "ok"):
+                issues.append(f"{name}: {status}")
+
+        tokens.append(entry)
+
+    for name, note in free_sources.items():
+        probe = sources.get(name, {})
+        status = probe.get("status", "not_probed")
+        entry: dict[str, Any] = {
+            "source": name,
+            "env_var": None,
+            "configured": True,
+            "note": note,
+            "status": "working" if probe.get("live") else status,
+        }
+        if status == "rate_limited":
+            entry["status"] = "rate_limited"
+            entry["action"] = probe.get("message") or "Wait and retry"
+            issues.append(f"{name}: rate-limited")
+        elif not probe.get("live") and status not in ("ok", "not_probed"):
+            entry["action"] = probe.get("message") or "Source returned no data"
+        tokens.append(entry)
+
+    return {
+        "checked_at": health.get("checked_at"),
+        "summary": {
+            "working": sum(1 for t in tokens if t.get("status") == "working"),
+            "missing_keys": sum(1 for t in tokens if t.get("status") == "missing"),
+            "rate_limited": sum(1 for t in tokens if t.get("status") == "rate_limited"),
+            "expired_or_invalid": sum(
+                1 for t in tokens if t.get("status") == "expired_or_invalid"
+            ),
+            "issues": issues,
+        },
+        "tokens": tokens,
+    }

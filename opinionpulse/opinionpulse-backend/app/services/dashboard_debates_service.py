@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 CACHE_TTL = 300
 FETCH_TIMEOUT = 12.0
+OVERVIEW_EXTRAS_WAIT = 5.0
 _DASHBOARD_SEARCH_SEM = asyncio.Semaphore(2)
 # Dashboard widgets only need a few fast sources — not all 13 platforms per topic.
 DASHBOARD_SOURCE_ALLOWLIST = [
@@ -336,7 +337,7 @@ async def _fetch_both_parallel() -> tuple[list[dict[str, Any]], list[dict[str, A
 
 
 def get_dashboard_extras_fast() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Return debates/most-discussed; fetch synchronously on cache miss so UI isn't empty."""
+    """Return debates/most-discussed; bounded wait so overview API stays fast."""
     d_hit = cache_get("dashboard_debates")
     m_hit = cache_get("dashboard_most_discussed")
     if d_hit is not None and m_hit is not None:
@@ -344,10 +345,25 @@ def get_dashboard_extras_fast() -> tuple[list[dict[str, Any]], list[dict[str, An
         _refresh_cache_async("dashboard_most_discussed", _build_most_discussed)
         return d_hit, m_hit
 
-    debates, most = _run_coro(_fetch_both_parallel())
-    cache_set("dashboard_debates", debates, CACHE_TTL)
-    cache_set("dashboard_most_discussed", most, CACHE_TTL)
-    return debates, most
+    async def _bounded() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        return await asyncio.wait_for(
+            _fetch_both_parallel(),
+            timeout=OVERVIEW_EXTRAS_WAIT,
+        )
+
+    try:
+        debates, most = _run_coro(_bounded())
+        cache_set("dashboard_debates", debates, CACHE_TTL)
+        cache_set("dashboard_most_discussed", most, CACHE_TTL)
+        return debates, most
+    except (asyncio.TimeoutError, TimeoutError):
+        logger.warning(
+            "Dashboard extras timed out after %.0fs — overview returns without blocking",
+            OVERVIEW_EXTRAS_WAIT,
+        )
+        _refresh_cache_async("dashboard_debates", _build_live_debates)
+        _refresh_cache_async("dashboard_most_discussed", _build_most_discussed)
+        return d_hit or [], m_hit or []
 
 
 def get_dashboard_extras() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:

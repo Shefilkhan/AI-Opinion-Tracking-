@@ -90,12 +90,22 @@ export type PlatformPulse = {
   live?: boolean
 }
 
-export async function getDashboardOverview(): Promise<DashboardOverview> {
-  return apiRequest<DashboardOverview>("/api/dashboard/overview", { auth: true })
+export async function getDashboardOverview(options?: {
+  timeoutMs?: number
+}): Promise<DashboardOverview> {
+  return apiRequest<DashboardOverview>("/api/dashboard/overview", {
+    auth: true,
+    timeoutMs: options?.timeoutMs,
+  })
 }
 
-export async function getLiveDebates(): Promise<LiveDebateItem[]> {
-  return apiRequest<LiveDebateItem[]>("/api/dashboard/debates", { auth: true })
+export async function getLiveDebates(options?: {
+  timeoutMs?: number
+}): Promise<LiveDebateItem[]> {
+  return apiRequest<LiveDebateItem[]>("/api/dashboard/debates", {
+    auth: true,
+    timeoutMs: options?.timeoutMs,
+  })
 }
 
 export async function getMostDiscussed(): Promise<MostDiscussedItem[]> {

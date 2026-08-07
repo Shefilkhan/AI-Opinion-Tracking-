@@ -64,7 +64,10 @@ def search_github(query: str, time_range: str = "24h", limit: int = 15) -> list[
             )
 
             if resp.status_code == 401:
-                logger.warning("GitHub auth failed (401), retrying without token")
+                logger.warning(
+                    "GitHub auth failed (401) — GITHUB_TOKEN is invalid or expired; "
+                    "update .env.local or remove the token to use unauthenticated limits (60/hr)"
+                )
                 unauth_headers = {
                     "Accept": "application/vnd.github+json",
                     "User-Agent": "OpinionPulse/1.0",

@@ -3,7 +3,11 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
-from app.services.source_health_service import get_source_health, get_source_health_summary
+from app.services.source_health_service import (
+    get_source_health,
+    get_source_health_summary,
+    get_token_audit,
+)
 
 router = APIRouter(prefix="/api", tags=["health"])
 
@@ -25,6 +29,12 @@ def health_check():
 def sources_health_check(refresh: bool = Query(False, description="Force a fresh probe")):
     """Live probe of configured upstream data sources (cached ~90s)."""
     return get_source_health(force_refresh=refresh)
+
+
+@router.get("/health/tokens")
+def tokens_health_check(refresh: bool = Query(False, description="Force a fresh probe")):
+    """Audit API keys: working, missing, expired, or rate-limited."""
+    return get_token_audit(force_refresh=refresh)
 
 
 @router.get("/health/db")

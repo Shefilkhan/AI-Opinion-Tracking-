@@ -373,14 +373,11 @@ def _build_dashboard_overview(db: Session | None = None) -> dict[str, Any]:
 
 def get_dashboard_overview(db: Session | None = None) -> dict[str, Any]:
     """Fast dashboard payload: DB snapshots + cache; live APIs only on cold start."""
-    if db is not None:
-        return _build_dashboard_overview(db=db)
-
     hit = cache_get(OVERVIEW_CACHE_KEY)
     if hit is not None:
         _refresh_overview_cache_async()
         return hit
 
-    payload = _build_dashboard_overview()
+    payload = _build_dashboard_overview(db=db)
     cache_set(OVERVIEW_CACHE_KEY, payload, OVERVIEW_CACHE_TTL)
     return payload

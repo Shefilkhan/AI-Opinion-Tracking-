@@ -41,3 +41,22 @@ def test_health_sources_returns_probe_payload(client):
     body = r.json()
     assert body["summary"]["live"] == 2
     assert body["sources"]["reddit"]["live"] is True
+
+
+def test_health_tokens_returns_audit(client):
+    audit = {
+        "checked_at": "2026-01-01T00:00:00Z",
+        "summary": {
+            "working": 3,
+            "missing_keys": 2,
+            "rate_limited": 1,
+            "expired_or_invalid": 1,
+            "issues": ["github: token expired or invalid", "reddit: rate-limited"],
+        },
+        "tokens": [],
+    }
+    with patch("app.api.routes.health.get_token_audit", return_value=audit):
+        r = client.get("/api/health/tokens")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["summary"]["expired_or_invalid"] == 1
