@@ -38,12 +38,6 @@ export function TopicSummaryCard({ data }: TopicSummaryCardProps) {
               <p className="text-xs font-semibold uppercase tracking-wide text-primary">
                 Topic Summary
               </p>
-              {summary.ai_generated && (
-                <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-primary/80">
-                  <Sparkles className="size-3" />
-                  Powered by Pulse AI
-                </span>
-              )}
               <h2 className={cn(sectionTitle, "mt-1 text-xl sm:text-2xl")}>
                 {summary.query}
               </h2>
@@ -111,19 +105,17 @@ export function TopicSummaryCard({ data }: TopicSummaryCardProps) {
           </div>
         )}
 
-        <a
-          href={
-            data.wiki_summary?.url?.startsWith("https://")
-              ? data.wiki_summary.url
-              : `https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(summary.query)}`
-          }
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm font-medium text-primary hover:bg-muted/50"
-        >
-          <BookOpen className="size-4" />
-          Wikipedia: {data.wiki_summary?.title ?? summary.query}
-        </a>
+        {data.wiki_summary?.url && (
+          <a
+            href={data.wiki_summary.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+          >
+            <BookOpen className="size-4" />
+            Read more on Wikipedia
+          </a>
+        )}
       </div>
     </section>
   )
