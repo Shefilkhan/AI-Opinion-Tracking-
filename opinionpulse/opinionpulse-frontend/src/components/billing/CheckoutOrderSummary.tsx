@@ -96,15 +96,23 @@ export function CheckoutOrderSummary({
           </div>
 
           <p className="text-xs text-[var(--le-muted)]">
+            Tax (GST/HST/VAT/sales tax) is calculated at checkout based on your billing
+            address and added to the total on the payment form.
+          </p>
+
+          <p className="text-xs text-[var(--le-muted)]">
             Promotion codes can be applied on the payment form.
           </p>
 
           <div className="flex items-center justify-between border-t border-[var(--le-border)] pt-4">
-            <span className="font-medium text-[var(--le-text)]">Total due today</span>
+            <span className="font-medium text-[var(--le-text)]">Subtotal due today</span>
             <span className="font-serif-display text-xl font-semibold text-[var(--le-text)]">
               ${totalDue.toFixed(2)}
             </span>
           </div>
+          <p className="text-xs text-[var(--le-muted)]">
+            Final total including tax is shown on the secure Stripe payment step.
+          </p>
         </div>
       </div>
     </aside>

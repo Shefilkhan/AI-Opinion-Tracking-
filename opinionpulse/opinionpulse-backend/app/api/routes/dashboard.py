@@ -11,6 +11,7 @@ from app.schemas.dashboard import (
     TopicsTableResponse,
 )
 from app.services.dashboard_debates_service import get_live_debates, get_most_discussed
+from app.services.dashboard_intelligence_service import build_user_dashboard_intelligence
 from app.services.dashboard_live_service import get_dashboard_overview
 from app.services.dashboard_topics_table_service import get_topics_table
 
@@ -22,7 +23,10 @@ def dashboard_overview(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return DashboardOverviewResponse(**get_dashboard_overview(db=db))
+    payload = get_dashboard_overview(db=db)
+    intelligence = build_user_dashboard_intelligence(db, current_user.id, payload)
+    payload["intelligence"] = intelligence
+    return DashboardOverviewResponse(**payload)
 
 
 @router.get("/debates", response_model=list[LiveDebateItem])

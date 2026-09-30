@@ -1,30 +1,15 @@
+"""YouTube collection helpers for project-based mention ingestion."""
+
+from __future__ import annotations
+
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
-
-import requests
+from typing import Any, Dict, List, Optional
 
 from app.core.config import get_settings
+from app.services.platforms.youtube_client import YouTubeApiError, youtube_get
 
 logger = logging.getLogger(__name__)
-
-YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3"
-REQUEST_TIMEOUT = 10
-
-
-class YouTubeApiError(Exception):
-    def __init__(self, message: str, *, quota_exceeded: bool = False):
-        super().__init__(message)
-        self.quota_exceeded = quota_exceeded
-
-
-def _api_key() -> str:
-    key = get_settings().youtube_api_key.strip()
-    if not key:
-        raise YouTubeApiError(
-            "YouTube API key is not configured. Set YOUTUBE_API_KEY in backend .env."
-        )
-    return key
 
 
 def _parse_published_at(value: Optional[str]) -> Optional[datetime]:
@@ -37,61 +22,14 @@ def _parse_published_at(value: Optional[str]) -> Optional[datetime]:
         return None
 
 
-def _handle_error_response(response: requests.Response) -> None:
-    try:
-        payload = response.json()
-        error = payload.get("error", {})
-        message = error.get("message", response.text or "YouTube API error")
-        reasons = []
-        for item in error.get("errors", []):
-            if isinstance(item, dict) and item.get("reason"):
-                reasons.append(item["reason"])
-        quota_exceeded = (
-            response.status_code == 403
-            and (
-                "quotaExceeded" in reasons
-                or "dailyLimitExceeded" in reasons
-                or "quota" in message.lower()
-            )
-        )
-        if quota_exceeded:
-            raise YouTubeApiError(
-                "YouTube API quota exceeded. Try again tomorrow or reduce keywords.",
-                quota_exceeded=True,
-            )
-        raise YouTubeApiError(message)
-    except YouTubeApiError:
-        raise
-    except Exception:
-        response.raise_for_status()
-
-
-def _youtube_get(endpoint: str, params: Dict[str, Any]) -> Dict[str, Any]:
-    params = {**params, "key": _api_key()}
-    url = f"{YOUTUBE_API_BASE}/{endpoint}"
-    try:
-        response = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
-    except requests.RequestException as exc:
-        logger.warning("YouTube request failed: %s", exc)
-        raise YouTubeApiError(f"YouTube request failed: {exc}") from exc
-
-    if not response.ok:
-        _handle_error_response(response)
-
-    try:
-        return response.json()
-    except ValueError as exc:
-        raise YouTubeApiError("Invalid JSON from YouTube API") from exc
-
-
 def search_youtube_videos(query: str, max_results: int = 3) -> List[Dict[str, Any]]:
-    """Search videos via search.list (100 quota units per call)."""
+    """Search videos via search.list (used by project collection)."""
     query = query.strip()
     if not query:
         return []
 
     max_results = max(1, min(max_results, 50))
-    payload = _youtube_get(
+    payload = youtube_get(
         "search",
         {
             "part": "snippet",
@@ -127,17 +65,15 @@ def search_youtube_videos(query: str, max_results: int = 3) -> List[Dict[str, An
     return videos
 
 
-def get_video_comments(
-    video_id: str, max_results: int = 20
-) -> List[Dict[str, Any]]:
-    """Top-level comments via commentThreads.list (1 quota unit per call)."""
+def get_video_comments(video_id: str, max_results: int = 20) -> List[Dict[str, Any]]:
+    """Top-level comments via commentThreads.list (project collection)."""
     video_id = video_id.strip()
     if not video_id:
         return []
 
     max_results = max(1, min(max_results, 100))
     try:
-        payload = _youtube_get(
+        payload = youtube_get(
             "commentThreads",
             {
                 "part": "snippet",
@@ -148,8 +84,7 @@ def get_video_comments(
             },
         )
     except YouTubeApiError as exc:
-        # Comments disabled or not available for this video
-        if "disabled" in str(exc).lower() or "commentsDisabled" in str(exc):
+        if exc.comments_disabled or "disabled" in str(exc).lower():
             logger.info("Comments disabled for video %s", video_id)
             return []
         raise
@@ -169,7 +104,9 @@ def get_video_comments(
             continue
 
         comment_id = top_comment.get("id")
-        text = (comment_snippet.get("textDisplay") or comment_snippet.get("textOriginal") or "").strip()
+        text = (
+            comment_snippet.get("textDisplay") or comment_snippet.get("textOriginal") or ""
+        ).strip()
         if not comment_id or not text:
             continue
 
@@ -199,10 +136,7 @@ def collect_youtube_for_keyword(
     max_videos: Optional[int] = None,
     max_comments: Optional[int] = None,
 ) -> Dict[str, Any]:
-    """
-    Search videos for a keyword and collect top-level comments.
-    Returns videos, comments, and optional error/quota flags.
-    """
+    """Search videos for a keyword and collect top-level comments."""
     settings = get_settings()
     max_videos = max_videos or settings.youtube_max_videos_per_keyword
     max_comments = max_comments or settings.youtube_max_comments_per_video
@@ -228,9 +162,7 @@ def collect_youtube_for_keyword(
                     result["quota_exceeded"] = True
                     result["error"] = str(exc)
                     return result
-                logger.warning(
-                    "Skipping comments for video %s: %s", video_id, exc
-                )
+                logger.warning("Skipping comments for video %s: %s", video_id, exc)
     except YouTubeApiError as exc:
         result["error"] = str(exc)
         result["quota_exceeded"] = exc.quota_exceeded

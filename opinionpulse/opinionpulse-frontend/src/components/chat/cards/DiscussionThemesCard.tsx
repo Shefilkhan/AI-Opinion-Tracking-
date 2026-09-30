@@ -1,7 +1,7 @@
 import { BarChart3 } from "lucide-react"
 import type { DiscussionTheme } from "@/components/chat/types"
 
-const BAR_COLORS = ["#8B5CF6", "#60A5FA", "#34D399", "#FBBF24", "#F87171"]
+const BAR_COLORS = ["#5E8F6B", "#6E8C7A", "#8DB69A", "#C49A4A", "#B55B52"]
 
 type DiscussionThemesCardProps = {
   themes: DiscussionTheme[]
@@ -13,7 +13,7 @@ export function DiscussionThemesCard({ themes }: DiscussionThemesCardProps) {
   return (
     <div className="chat-card mb-3 overflow-hidden">
       <div className="chat-card-header">
-        <BarChart3 size={14} className="text-[var(--chat-purple)]" />
+        <BarChart3 size={14} className="text-[var(--chat-primary)]" />
         <span className="chat-card-label">Discussion Themes</span>
       </div>
       <div className="flex flex-col gap-3.5 p-[18px]">

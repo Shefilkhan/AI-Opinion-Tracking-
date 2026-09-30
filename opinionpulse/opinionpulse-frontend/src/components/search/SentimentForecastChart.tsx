@@ -40,9 +40,9 @@ export function SentimentForecastChart({ data }: SentimentForecastChartProps) {
     <div className={cn(proCard, "p-5 sm:p-6")}>
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h3 className={sectionTitle}>7-Day Sentiment Forecast</h3>
+          <h3 className={sectionTitle}>7-Day Sentiment Outlook</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            AI-driven extrapolation based on data velocity and historical momentum.
+            Statistical projection based on recent sentiment, conversation velocity, and historical momentum.
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1">

@@ -9,8 +9,9 @@ from dateutil.parser import parse as parse_date
 
 
 def time_range_delta(time_range: str) -> timedelta:
-    """True window: 24h = 24 hours, not 1 calendar day."""
+    """True window: 1h = 1 hour, 24h = 24 hours, not calendar days."""
     mapping = {
+        "1h": timedelta(hours=1),
         "24h": timedelta(hours=24),
         "7d": timedelta(days=7),
         "30d": timedelta(days=30),
@@ -20,7 +21,7 @@ def time_range_delta(time_range: str) -> timedelta:
 
 def time_range_days(time_range: str) -> int:
     """Calendar days for APIs that only accept date (not datetime)."""
-    return { "24h": 1, "7d": 7, "30d": 30 }.get(time_range, 1)
+    return {"1h": 1, "24h": 1, "7d": 7, "30d": 30}.get(time_range, 1)
 
 
 def time_range_cutoff(time_range: str) -> datetime:

@@ -11,17 +11,27 @@ from typing import Any
 from app.db.database import SessionLocal
 from app.services.cache_utils import cache_get, cache_set
 from app.services.platform_rate_limit import is_rate_limited
-from app.services.trending_snapshot_service import get_discovered_topics
-from app.services.search_service import search_all_platforms
+from app.services.platforms import (
+    get_all_trending_news_async,
+    get_trending_reddit,
+    get_trending_youtube,
+)
+from app.services.platforms.query_helpers import (
+    filter_by_time_range,
+    sort_results_by_posted_at,
+)
 from app.services.sentiment_analysis import calculate_sentiment_summary
+from app.services.trending_snapshot_service import get_discovered_topics, _extract_topic
+from app.services.search_service import search_all_platforms
 
 logger = logging.getLogger(__name__)
 
 CACHE_TTL = 300
-FETCH_TIMEOUT = 12.0
-OVERVIEW_EXTRAS_WAIT = 5.0
-_DASHBOARD_SEARCH_SEM = asyncio.Semaphore(2)
-# Dashboard widgets only need a few fast sources — not all 13 platforms per topic.
+FETCH_TIMEOUT = 25.0
+OVERVIEW_EXTRAS_WAIT = 18.0
+LIVE_DEBATE_WINDOW = "1h"
+_DASHBOARD_SEARCH_SEM = threading.Semaphore(2)
+
 DASHBOARD_SOURCE_ALLOWLIST = [
     "reddit",
     "newsapi",
@@ -31,6 +41,8 @@ DASHBOARD_SOURCE_ALLOWLIST = [
     "hackernews",
     "devto",
     "stackoverflow",
+    "bluesky",
+    "mastodon",
 ]
 
 
@@ -45,13 +57,18 @@ def _dashboard_sources() -> list[str]:
 
 
 async def _dashboard_search(query: str, time_range: str) -> list[dict[str, Any]]:
-    async with _DASHBOARD_SEARCH_SEM:
-        return await search_all_platforms(
+    await asyncio.to_thread(_DASHBOARD_SEARCH_SEM.acquire)
+    try:
+        results = await search_all_platforms(
             query,
             time_range,
             fetch_timeout=FETCH_TIMEOUT,
             source_allowlist=_dashboard_sources(),
         )
+        return filter_by_time_range(results, time_range, fallback_to_all=True)
+    finally:
+        _DASHBOARD_SEARCH_SEM.release()
+
 
 DEBATE_TOPICS = [
     "AI regulation",
@@ -97,9 +114,12 @@ def _time_ago(iso: str) -> str:
     try:
         dt = datetime.fromisoformat(iso.replace("Z", "+00:00"))
         delta = datetime.now(timezone.utc) - dt
-        hours = int(delta.total_seconds() // 3600)
-        if hours < 1:
+        minutes = int(delta.total_seconds() // 60)
+        if minutes < 1:
             return "Just now"
+        if minutes < 60:
+            return f"{minutes}m ago"
+        hours = minutes // 60
         if hours < 24:
             return f"{hours}h ago"
         return f"{hours // 24}d ago"
@@ -141,58 +161,110 @@ def _most_discussed_queries() -> list[str]:
     return discovered if discovered else MOST_DISCUSSED_QUERIES[:8]
 
 
-async def _build_live_debates() -> list[dict[str, Any]]:
-    topics = _debate_topics()[:3]
-    topic_results = await asyncio.gather(
-        *[_dashboard_search(t, "24h") for t in topics]
-    )
+def _debate_from_results(topic: str, results: list[dict[str, Any]]) -> dict[str, Any] | None:
+    if not results:
+        return None
+
+    positive = sum(1 for r in results if r.get("sentiment") == "positive")
+    negative = sum(1 for r in results if r.get("sentiment") == "negative")
+    total = len(results)
+    pos_pct = round((positive / total) * 100)
+    neg_pct = round((negative / total) * 100)
+    neu_pct = max(0, 100 - pos_pct - neg_pct)
+
+    platforms = list({r.get("platform", "") for r in results if r.get("platform")})
+    top_result = max(results, key=_engagement_score)
+    total_engagement = sum(_engagement_score(r) for r in results)
+    is_heated = pos_pct >= 15 and neg_pct >= 15 and abs(pos_pct - neg_pct) < 30
+
+    return {
+        "topic": topic,
+        "headline": top_result.get("title", topic),
+        "summary": (top_result.get("content") or "")[:200],
+        "source_url": top_result.get("source_url", ""),
+        "source_label": top_result.get("source_label", ""),
+        "thumbnail": top_result.get("thumbnail") or top_result.get("image_url"),
+        "platforms": platforms[:4],
+        "total_mentions": total,
+        "total_engagement": total_engagement,
+        "sentiment": {
+            "positive": pos_pct,
+            "negative": neg_pct,
+            "neutral": neu_pct,
+        },
+        "top_results": [_trim_result(r) for r in results[:3]],
+        "is_heated": is_heated,
+        "posted_at": top_result.get("posted_at", ""),
+        "time_ago": _time_ago(top_result.get("posted_at", "")),
+    }
+
+
+async def _fetch_last_hour_trending() -> list[dict[str, Any]]:
+    """Fast live pull from trending endpoints, trimmed to the last hour."""
+    try:
+        reddit, news, youtube = await asyncio.wait_for(
+            asyncio.gather(
+                asyncio.to_thread(get_trending_reddit, 15),
+                get_all_trending_news_async(25),
+                asyncio.to_thread(get_trending_youtube, "US"),
+            ),
+            timeout=15.0,
+        )
+    except asyncio.TimeoutError:
+        logger.warning("Live debate trending fetch timed out")
+        return []
+
+    combined = sort_results_by_posted_at([*reddit, *news, *youtube])
+    recent = filter_by_time_range(combined, LIVE_DEBATE_WINDOW, fallback_to_all=False)
+    if len(recent) < 5:
+        recent = filter_by_time_range(combined, LIVE_DEBATE_WINDOW, fallback_to_all=True)
+    return recent
+
+
+def _debates_from_trending(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Cluster last-hour headlines into debate cards."""
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for row in items:
+        title = (row.get("title") or row.get("content") or "").strip()
+        if not title:
+            continue
+        topic = _extract_topic(title)
+        groups.setdefault(topic, []).append(row)
 
     debates: list[dict[str, Any]] = []
-    for topic, results in zip(topics, topic_results):
-        if len(results) < 5:
+    for topic, results in groups.items():
+        debate = _debate_from_results(topic.title(), results)
+        if debate and debate["total_mentions"] >= 1:
+            debates.append(debate)
+
+    debates.sort(
+        key=lambda d: (d["is_heated"], d["total_mentions"], d["total_engagement"]),
+        reverse=True,
+    )
+    return debates
+
+
+async def _build_live_debates() -> list[dict[str, Any]]:
+    """Trending debates from the last hour — fast feed first, topic search as fallback."""
+    trending_items = await _fetch_last_hour_trending()
+    debates = _debates_from_trending(trending_items)
+
+    if len(debates) >= 3:
+        return debates[:6]
+
+    seen_topics = {d["topic"].lower() for d in debates}
+    for topic in _debate_topics()[:3]:
+        if topic.lower() in seen_topics:
             continue
-
-        positive = sum(1 for r in results if r.get("sentiment") == "positive")
-        negative = sum(1 for r in results if r.get("sentiment") == "negative")
-        total = len(results)
-        pos_pct = round((positive / total) * 100)
-        neg_pct = round((negative / total) * 100)
-        neu_pct = max(0, 100 - pos_pct - neg_pct)
-
-        if pos_pct < 20 or neg_pct < 20:
+        results = await _dashboard_search(topic, LIVE_DEBATE_WINDOW)
+        if len(results) < 2:
             continue
-        if pos_pct > 70 or neg_pct > 70:
-            continue
-
-        platforms = list({r.get("platform", "") for r in results if r.get("platform")})
-        if len(platforms) < 2:
-            continue
-
-        top_result = max(results, key=_engagement_score)
-        total_engagement = sum(_engagement_score(r) for r in results)
-
-        debates.append(
-            {
-                "topic": topic,
-                "headline": top_result.get("title", topic),
-                "summary": (top_result.get("content") or "")[:200],
-                "source_url": top_result.get("source_url", ""),
-                "source_label": top_result.get("source_label", ""),
-                "thumbnail": top_result.get("thumbnail") or top_result.get("image_url"),
-                "platforms": platforms[:4],
-                "total_mentions": total,
-                "total_engagement": total_engagement,
-                "sentiment": {
-                    "positive": pos_pct,
-                    "negative": neg_pct,
-                    "neutral": neu_pct,
-                },
-                "top_results": [_trim_result(r) for r in results[:3]],
-                "is_heated": abs(pos_pct - neg_pct) < 20,
-                "posted_at": top_result.get("posted_at", ""),
-                "time_ago": _time_ago(top_result.get("posted_at", "")),
-            }
-        )
+        debate = _debate_from_results(topic, results)
+        if debate:
+            debates.append(debate)
+            seen_topics.add(topic.lower())
+        if len(debates) >= 6:
+            break
 
     debates.sort(
         key=lambda d: (d["is_heated"], d["total_mentions"], d["total_engagement"]),
@@ -203,12 +275,9 @@ async def _build_live_debates() -> list[dict[str, Any]]:
 
 async def _build_most_discussed() -> list[dict[str, Any]]:
     queries = _most_discussed_queries()[:3]
-    query_results = await asyncio.gather(
-        *[_dashboard_search(q, "7d") for q in queries]
-    )
-
     discussed: list[dict[str, Any]] = []
-    for query, results in zip(queries, query_results):
+    for query in queries:
+        results = await _dashboard_search(query, "7d")
         if not results:
             continue
 
@@ -263,14 +332,7 @@ def _refresh_cache_async(key: str, builder) -> None:
 
 
 def _run_coro(coro):
-    """Run a coroutine to completion from sync OR async call sites.
-
-    FastAPI runs sync endpoints in a threadpool (no running loop, so
-    ``asyncio.run`` works), but async endpoints such as
-    ``/api/ai/insight-of-the-day`` are already inside the event loop, where
-    ``asyncio.run()`` raises "cannot be called from a running event loop".
-    In that case we run the coroutine on a dedicated thread with its own loop.
-    """
+    """Run a coroutine to completion from sync OR async call sites."""
     try:
         asyncio.get_running_loop()
     except RuntimeError:
@@ -322,17 +384,8 @@ def get_most_discussed() -> list[dict[str, Any]]:
 
 
 async def _fetch_both_parallel() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    results = await asyncio.gather(
-        _build_live_debates(),
-        _build_most_discussed(),
-        return_exceptions=True,
-    )
-    debates = results[0] if not isinstance(results[0], Exception) else []
-    if isinstance(results[0], Exception):
-        logger.error("Live debates fetch failed: %s", results[0])
-    most = results[1] if not isinstance(results[1], Exception) else []
-    if isinstance(results[1], Exception):
-        logger.error("Most discussed fetch failed: %s", results[1])
+    debates = await _build_live_debates()
+    most = await _build_most_discussed()
     return debates, most
 
 

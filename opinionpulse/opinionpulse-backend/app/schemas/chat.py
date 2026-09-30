@@ -67,9 +67,19 @@ class ChatSessionListResponse(BaseModel):
     sessions: List[ChatSessionResponse]
 
 
+class PulseAnalysisConfidence(BaseModel):
+    level: str = "LOW"
+    label: str = ""
+    total_items: int = 0
+    sources_referenced: int = 0
+    explanation: str = ""
+
+
 class PulseChatMessageRequest(BaseModel):
     message: str = Field(min_length=1, max_length=500)
     conversation_id: Optional[str] = None
+    live_sources: bool = True
+    deep_mode: bool = False
 
 
 class PulseChatDataUsed(BaseModel):
@@ -115,6 +125,10 @@ class PulseChatMessageResponse(BaseModel):
     references: List[PulseChatReference] = Field(default_factory=list)
     cited_sources: List[PulseChatCitedSource] = Field(default_factory=list)
     sources_fetched: int = 0
+    intent: Optional[str] = None
+    analysis_confidence: Optional[PulseAnalysisConfidence] = None
+    deep_mode: bool = False
+    live_sources: bool = True
 
 
 class PulseConversationSummary(BaseModel):

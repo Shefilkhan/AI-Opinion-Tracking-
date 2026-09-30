@@ -29,7 +29,7 @@ export function AIThinkingIndicator() {
             {[0, 1, 2].map((i) => (
               <span
                 key={i}
-                className="chat-bounce-dot size-1.5 rounded-full bg-[var(--chat-purple)]"
+                className="chat-bounce-dot size-1.5 rounded-full bg-[var(--chat-primary)]"
                 style={{ animationDelay: `${i * 0.15}s` }}
               />
             ))}

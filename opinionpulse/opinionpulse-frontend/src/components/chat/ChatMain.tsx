@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { PanelLeft, RefreshCw, Share2, Sparkles } from "lucide-react"
+import { ThemeModeToggle } from "@/components/ui/ThemeModeToggle"
 import { getChatExportUrl, sendChatMessage } from "@/api/chat"
 import { ApiError } from "@/api/client"
 import { AIMessage } from "@/components/chat/AIMessage"
@@ -34,6 +35,7 @@ function generateConversationId() {
 type ChatMainProps = {
   conversationId: string
   initialMessages?: ChatMessageItem[] | null
+  initialPrompt?: string | null
   onConversationChange?: (id: string) => void
   onToggleSidebar?: () => void
   sidebarOpen?: boolean
@@ -42,6 +44,7 @@ type ChatMainProps = {
 export function ChatMain({
   conversationId: initialConvId,
   initialMessages = null,
+  initialPrompt = null,
   onConversationChange,
   onToggleSidebar,
 }: ChatMainProps) {
@@ -50,6 +53,7 @@ export function ChatMain({
   const [conversationId, setConversationId] = useState(initialConvId)
   const [sourcesCount, setSourcesCount] = useState<number | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const promptSentRef = useRef(false)
 
   useEffect(() => {
     setConversationId(initialConvId)
@@ -68,7 +72,10 @@ export function ChatMain({
   }, [messages, isLoading])
 
   const sendMessage = useCallback(
-    async (text: string) => {
+    async (
+      text: string,
+      options?: { liveSources?: boolean; deepMode?: boolean }
+    ) => {
       const trimmed = text.trim()
       if (!trimmed || isLoading) return
 
@@ -83,7 +90,10 @@ export function ChatMain({
       setIsLoading(true)
 
       try {
-        const data = await sendChatMessage(trimmed, conversationId)
+        const data = await sendChatMessage(trimmed, conversationId, {
+          liveSources: options?.liveSources,
+          deepMode: options?.deepMode,
+        })
 
         if (data.conversation_id) {
           setConversationId(data.conversation_id)
@@ -132,6 +142,13 @@ export function ChatMain({
     [conversationId, isLoading, onConversationChange]
   )
 
+  useEffect(() => {
+    if (!initialPrompt?.trim() || promptSentRef.current || isLoading) return
+    if (messages.length > 1 || messages[0]?.id !== "welcome") return
+    promptSentRef.current = true
+    void sendMessage(initialPrompt.trim(), { liveSources: true, deepMode: true })
+  }, [initialPrompt, isLoading, messages, sendMessage])
+
   function clearChat() {
     const newId = generateConversationId()
     setMessages([WELCOME_MESSAGE])
@@ -166,18 +183,19 @@ export function ChatMain({
             </button>
           )}
           <div className="min-w-0">
-            <h2 className="chat-serif m-0 max-w-[500px] truncate text-[15px] font-semibold text-[var(--chat-text)]">
-              {conversationTitle}
+            <h2 className="chat-serif m-0 text-[15px] font-semibold text-[var(--chat-text)]">
+              Pulse AI
             </h2>
             <p className="chat-mono m-0 flex items-center gap-1.5 text-[11px] text-[var(--chat-text-muted)]">
               <span className="inline-block size-1.5 rounded-full bg-[var(--chat-green)]" />
               {sourcesCount
-                ? `Analyzed ${sourcesCount} live posts before answering`
-                : "Live sources · cited answers"}
+                ? `Analyzed ${sourcesCount} live posts · ${conversationTitle.slice(0, 48)}${conversationTitle.length > 48 ? "…" : ""}`
+                : "Live source intelligence assistant · cited answers"}
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <ThemeModeToggle variant="chat" className="hidden sm:inline-flex" />
           <button type="button" onClick={clearChat} title="New conversation" className="chat-icon-btn">
             <RefreshCw size={15} />
           </button>
@@ -192,16 +210,21 @@ export function ChatMain({
         <div className="mx-auto flex max-w-3xl flex-col gap-6">
           {isEmptyChat && (
             <div className="chat-empty-hero py-8 text-center">
-              <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-surface)]">
-                <Sparkles size={24} className="text-[var(--chat-purple)]" />
+              <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-primary-dim)]">
+                <Sparkles size={24} className="text-[var(--chat-primary)]" />
               </div>
               <h1 className="chat-serif m-0 text-2xl font-semibold text-[var(--chat-text)] sm:text-3xl">
                 What does the world think?
               </h1>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[var(--chat-text-muted)]">
+              <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[var(--chat-text-mid)]">
                 Pulse AI searches live sources across Reddit, news, YouTube, and more — then cites
                 them in every answer.
               </p>
+              <ul className="mx-auto mt-4 flex max-w-lg flex-wrap justify-center gap-2 text-xs text-[var(--chat-text-muted)]">
+                <li className="rounded-full border border-[var(--chat-border)] px-3 py-1">Live sources</li>
+                <li className="rounded-full border border-[var(--chat-border)] px-3 py-1">Cited answers</li>
+                <li className="rounded-full border border-[var(--chat-border)] px-3 py-1">Cross-platform sentiment</li>
+              </ul>
               <div className="mt-6">
                 <SuggestionChips
                   suggestions={STARTER_SUGGESTIONS}
@@ -229,7 +252,7 @@ export function ChatMain({
       </div>
 
       <ChatInputBar
-        onSend={(text) => void sendMessage(text)}
+        onSend={(text, opts) => void sendMessage(text, opts)}
         isLoading={isLoading}
         placeholder={isEmptyChat ? "Ask about any topic…" : "Ask a follow up…"}
       />

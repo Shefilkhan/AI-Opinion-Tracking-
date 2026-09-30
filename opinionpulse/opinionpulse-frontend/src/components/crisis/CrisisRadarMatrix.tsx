@@ -1,24 +1,24 @@
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import type { CrisisQuadrant, RadarPoint } from "@/api/crisis"
+import { CrisisStatusBadge } from "@/components/crisis/CrisisStatusBadge"
+import {
+  QUADRANT_DISPLAY,
+  formatNegativeDelta,
+  formatRelativeTime,
+  formatVolumeDelta,
+  quadrantDisplayLabel,
+} from "@/lib/crisis-display"
 import { cn } from "@/lib/utils"
 
 const QUADRANT_DOT: Record<CrisisQuadrant, string> = {
-  quiet: "bg-emerald-500 shadow-emerald-500/30",
-  noise: "bg-amber-400 shadow-amber-400/30",
-  watch: "bg-orange-500 shadow-orange-500/30",
-  crisis: "bg-red-500 shadow-red-500/40 animate-pulse",
-}
-
-const QUADRANT_BADGE: Record<CrisisQuadrant, string> = {
-  quiet: "bg-emerald-600/90",
-  noise: "bg-amber-500/90",
-  watch: "bg-orange-500/90",
-  crisis: "bg-red-600/90",
+  quiet: "bg-emerald-500 shadow-emerald-500/40",
+  noise: "bg-orange-400 shadow-orange-400/40",
+  watch: "bg-amber-500 shadow-amber-500/40",
+  crisis: "bg-red-500 shadow-red-500/50 animate-pulse",
 }
 
 type PlacedPoint = RadarPoint & { px: number; py: number }
 
-/** Spread overlapping dots (e.g. unscanned 0/0 watches) in the quiet quadrant. */
 function layoutPoints(points: RadarPoint[]): PlacedPoint[] {
   const placed: PlacedPoint[] = points.map((point, index) => {
     const baseX = point.volume_score > 0 ? point.volume_score : 12 + (index % 3) * 14
@@ -36,7 +36,7 @@ function layoutPoints(points: RadarPoint[]): PlacedPoint[] {
       const dy = placed[j].py - placed[i].py
       const dist = Math.hypot(dx, dy)
       if (dist < 14) {
-        const angle = Math.atan2(dy, dx) || (j * 1.2)
+        const angle = Math.atan2(dy, dx) || j * 1.2
         placed[j].px = Math.min(94, Math.max(6, placed[i].px + Math.cos(angle) * 16))
         placed[j].py = Math.min(94, Math.max(6, placed[i].py + Math.sin(angle) * 16))
       }
@@ -51,19 +51,64 @@ type CrisisRadarMatrixProps = {
   onSelect: (watchId: string) => void
 }
 
+function MatrixPopover({ point }: { point: PlacedPoint }) {
+  return (
+    <div className="crisis-matrix-popover" role="tooltip">
+      <p className="font-semibold text-[var(--dash-text)]">{point.keyword}</p>
+      <CrisisStatusBadge quadrant={point.quadrant} size="sm" className="mt-1" />
+      <dl className="mt-3 space-y-1.5 text-xs">
+        <div className="flex justify-between gap-4">
+          <dt className="text-[var(--dash-text-faint)]">Volume</dt>
+          <dd className="font-medium text-[var(--dash-text)]">
+            {Math.round(point.volume_score)} / 100
+          </dd>
+        </div>
+        <div className="flex justify-between gap-4">
+          <dt className="text-[var(--dash-text-faint)]">Velocity</dt>
+          <dd className="font-medium text-[var(--dash-text)]">
+            {Math.round(point.velocity_score)} / 100
+          </dd>
+        </div>
+        <div className="flex justify-between gap-4">
+          <dt className="text-[var(--dash-text-faint)]">Mentions</dt>
+          <dd className="font-medium text-[var(--dash-text)]">{point.mention_count_30m}</dd>
+        </div>
+        <div className="flex justify-between gap-4">
+          <dt className="text-[var(--dash-text-faint)]">Negative</dt>
+          <dd className="font-medium text-[var(--dash-text)]">{point.negative_pct_30m}%</dd>
+        </div>
+        {formatVolumeDelta(point) && (
+          <div className="flex justify-between gap-4">
+            <dt className="text-[var(--dash-text-faint)]">Volume vs baseline</dt>
+            <dd>{formatVolumeDelta(point)}</dd>
+          </div>
+        )}
+        {formatNegativeDelta(point) && (
+          <div className="flex justify-between gap-4">
+            <dt className="text-[var(--dash-text-faint)]">Negativity vs normal</dt>
+            <dd>{formatNegativeDelta(point)}</dd>
+          </div>
+        )}
+      </dl>
+      <p className="mt-2 text-[10px] text-[var(--dash-text-faint)]">
+        Last scanned {formatRelativeTime(point.last_scanned_at)}
+      </p>
+    </div>
+  )
+}
+
 export function CrisisRadarMatrix({ points, selectedId, onSelect }: CrisisRadarMatrixProps) {
   const placed = useMemo(() => layoutPoints(points), [points])
+  const [hoverId, setHoverId] = useState<string | null>(null)
 
   return (
-    <div className="crisis-radar-chart">
-      {/* Y-axis */}
+    <div className="crisis-radar-chart crisis-radar-chart-lg">
       <div className="crisis-radar-y-axis">
-        <span className="crisis-radar-axis-title">Velocity</span>
+        <span className="crisis-radar-axis-title">Negative velocity</span>
         <span className="crisis-radar-axis-hint">↑ faster negativity</span>
       </div>
 
       <div className="crisis-radar-plot">
-        {/* Quadrant backgrounds */}
         <div className="crisis-radar-grid" aria-hidden>
           <div className="crisis-radar-quadrant crisis-radar-quadrant-watch">
             <span className="crisis-radar-quadrant-label">Watch</span>
@@ -74,40 +119,45 @@ export function CrisisRadarMatrix({ points, selectedId, onSelect }: CrisisRadarM
             <span className="crisis-radar-quadrant-desc">Act now</span>
           </div>
           <div className="crisis-radar-quadrant crisis-radar-quadrant-quiet">
-            <span className="crisis-radar-quadrant-label">Quiet</span>
-            <span className="crisis-radar-quadrant-desc">Normal</span>
+            <span className="crisis-radar-quadrant-label">Normal</span>
+            <span className="crisis-radar-quadrant-desc">Stable</span>
           </div>
           <div className="crisis-radar-quadrant crisis-radar-quadrant-noise">
-            <span className="crisis-radar-quadrant-label">Noise</span>
-            <span className="crisis-radar-quadrant-desc">High volume</span>
+            <span className="crisis-radar-quadrant-label">High Activity</span>
+            <span className="crisis-radar-quadrant-desc">High conversation</span>
           </div>
         </div>
 
-        {/* Crosshair midlines */}
         <div className="crisis-radar-crosshair-h" aria-hidden />
         <div className="crisis-radar-crosshair-v" aria-hidden />
 
-        {/* Data points + labels (HTML for readability) */}
         {placed.map((point) => {
           const selected = point.watch_id === selectedId
-          const unscanned = point.volume_score === 0 && point.velocity_score === 0
+          const hovered = point.watch_id === hoverId
+          const unscanned = !point.last_scanned_at
           return (
             <button
               key={point.watch_id}
               type="button"
               className={cn(
                 "crisis-radar-point group",
-                selected && "crisis-radar-point-selected"
+                selected && "crisis-radar-point-selected",
+                hovered && "crisis-radar-point-hover"
               )}
               style={{ left: `${point.px}%`, top: `${point.py}%` }}
               onClick={() => onSelect(point.watch_id)}
-              title={`${point.keyword} — ${point.status_label}`}
+              onMouseEnter={() => setHoverId(point.watch_id)}
+              onMouseLeave={() => setHoverId(null)}
+              onFocus={() => setHoverId(point.watch_id)}
+              onBlur={() => setHoverId(null)}
+              aria-label={`${point.keyword}, ${quadrantDisplayLabel(point.quadrant)}`}
+              aria-pressed={selected}
             >
               <span
                 className={cn(
-                  "crisis-radar-dot shadow-lg",
+                  "crisis-radar-dot",
                   QUADRANT_DOT[point.quadrant],
-                  selected && "ring-2 ring-[var(--dash-accent)] ring-offset-2 ring-offset-[var(--dash-surface)]"
+                  selected && "crisis-radar-dot-selected"
                 )}
               />
               <span className="crisis-radar-label">
@@ -116,12 +166,12 @@ export function CrisisRadarMatrix({ points, selectedId, onSelect }: CrisisRadarM
                   <span className="block text-[9px] font-normal opacity-70">Not scanned</span>
                 )}
               </span>
+              {hovered && <MatrixPopover point={point} />}
             </button>
           )
         })}
       </div>
 
-      {/* X-axis */}
       <div className="crisis-radar-x-axis">
         <span className="crisis-radar-axis-title">Volume →</span>
         <span className="crisis-radar-axis-hint">mentions in last 30 min</span>
@@ -131,41 +181,21 @@ export function CrisisRadarMatrix({ points, selectedId, onSelect }: CrisisRadarM
 }
 
 export function CrisisQuadrantBadge({ quadrant }: { quadrant: CrisisQuadrant }) {
-  const labels: Record<CrisisQuadrant, string> = {
-    quiet: "Normal",
-    noise: "Noise",
-    watch: "Watch",
-    crisis: "Crisis",
-  }
-  return (
-    <span
-      className={cn(
-        "inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-white",
-        QUADRANT_BADGE[quadrant]
-      )}
-    >
-      {labels[quadrant]}
-    </span>
-  )
+  return <CrisisStatusBadge quadrant={quadrant} size="sm" />
 }
 
 export function CrisisLegendGrid() {
-  const items: { quadrant: CrisisQuadrant; title: string; desc: string }[] = [
-    { quadrant: "quiet", title: "Quiet", desc: "Normal activity — no action needed" },
-    { quadrant: "watch", title: "Watch", desc: "Negativity accelerating — monitor closely" },
-    { quadrant: "noise", title: "Noise", desc: "Lots of talk, stable sentiment" },
-    { quadrant: "crisis", title: "Crisis", desc: "High volume + rapid acceleration" },
-  ]
+  const items: CrisisQuadrant[] = ["quiet", "watch", "noise", "crisis"]
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-      {items.map((item) => (
+      {items.map((quadrant) => (
         <div
-          key={item.quadrant}
-          className="rounded-lg border border-[var(--dash-border)] bg-[var(--dash-bg)] px-3 py-2"
+          key={quadrant}
+          className="rounded-xl border border-[var(--dash-border)] bg-[var(--dash-bg)] px-3 py-2.5"
         >
-          <CrisisQuadrantBadge quadrant={item.quadrant} />
+          <CrisisStatusBadge quadrant={quadrant} size="sm" />
           <p className="mt-1.5 text-[11px] leading-snug text-[var(--dash-text-faint)]">
-            {item.desc}
+            {QUADRANT_DISPLAY[quadrant].description}
           </p>
         </div>
       ))}

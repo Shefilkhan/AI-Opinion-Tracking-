@@ -179,9 +179,13 @@ async def probe_all_sources() -> dict[str, Any]:
             sources[name] = result
 
     configured = apis_configured()
-    live_count = sum(1 for s in sources.values() if s.get("live"))
-    reachable_count = sum(
-        1 for s in sources.values() if s.get("status") in ("ok", "empty")
+    from app.services.search_service import SEARCH_PLATFORM_NAMES
+
+    search_configured = [n for n in SEARCH_PLATFORM_NAMES if configured.get(n)]
+    live_count = sum(
+        1
+        for name in SEARCH_PLATFORM_NAMES
+        if (sources.get(name) or {}).get("live")
     )
     return {
         "checked_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -190,13 +194,13 @@ async def probe_all_sources() -> dict[str, Any]:
         "sources": sources,
         "summary": {
             "live": live_count,
-            "total_configured": sum(1 for v in configured.values() if v),
+            "total_configured": len(search_configured),
             "total_probed": len(sources),
             "any_live": live_count > 0,
             "rate_limited": [
                 name
-                for name, s in sources.items()
-                if s.get("status") == "rate_limited"
+                for name in SEARCH_PLATFORM_NAMES
+                if (sources.get(name) or {}).get("status") == "rate_limited"
             ],
         },
     }
@@ -220,22 +224,35 @@ def get_source_health_summary() -> dict[str, Any]:
         return hit["summary"]
 
     configured = apis_configured()
-    free_always = ("reddit", "devto", "hackernews", "github", "stackoverflow", "bluesky")
+    from app.services.search_service import SEARCH_PLATFORM_NAMES
+
+    search_configured = [n for n in SEARCH_PLATFORM_NAMES if configured.get(n)]
     live_estimate = sum(
-        1
-        for name in configured
-        if configured[name] and not is_rate_limited(name) and name in free_always
+        1 for name in search_configured if not is_rate_limited(name)
     )
     return {
         "live": live_estimate,
-        "total_configured": sum(1 for v in configured.values() if v),
+        "total_configured": len(search_configured),
         "total_probed": 0,
         "any_live": live_estimate > 0,
         "rate_limited": [
-            name for name in free_always if is_rate_limited(name)
+            name for name in search_configured if is_rate_limited(name)
         ],
         "stale": True,
     }
+
+
+def get_sources_summary_for_dashboard() -> dict[str, int]:
+    """Live vs configured counts for the 13 search platforms (excludes Wikipedia)."""
+    from app.services.search_service import SEARCH_PLATFORM_NAMES, apis_configured
+
+    configured_map = apis_configured()
+    live_map = platforms_live_from_probe()
+    configured = sum(
+        1 for name in SEARCH_PLATFORM_NAMES if configured_map.get(name)
+    )
+    live = sum(1 for name in SEARCH_PLATFORM_NAMES if live_map.get(name))
+    return {"live": live, "configured": configured, "total": len(SEARCH_PLATFORM_NAMES)}
 
 
 def platforms_live_from_probe() -> dict[str, bool]:
@@ -259,15 +276,9 @@ def platforms_live_from_probe() -> dict[str, bool]:
         elif is_rate_limited(name):
             live[name] = False
         else:
-            # Free sources are assumed reachable until a probe proves otherwise.
-            live[name] = name in (
-                "reddit",
-                "devto",
-                "hackernews",
-                "github",
-                "stackoverflow",
-                "wikipedia",
-            )
+            # Before the first probe completes: configured sources are assumed
+            # reachable unless rate-limited (replaced by probe results once cached).
+            live[name] = True
     return live
 
 

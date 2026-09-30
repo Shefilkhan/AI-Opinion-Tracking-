@@ -62,7 +62,7 @@ export function LiveDebates({
   return (
     <DashboardSection
       title="Ongoing debates right now"
-      description="Topics with heated discussion on both sides"
+      description="Trending topics with live discussion from the last hour"
       action={headerAction}
     >
       {isLoading ? (
@@ -72,7 +72,7 @@ export function LiveDebates({
           <DashboardEmptyState
             icon={MessageSquare}
             title="No active debates found right now"
-            description="Check back soon — debates update every 5 minutes"
+            description="Fetching live headlines from the last hour — updates every 5 minutes"
           />
         </div>
       ) : (

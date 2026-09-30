@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import logging
 import re
 from urllib.parse import urlparse
 
@@ -21,7 +22,9 @@ from app.services.platforms.query_helpers import (
     sort_results_by_posted_at,
 )
 
+logger = logging.getLogger(__name__)
 TIMEOUT = 12
+_warned_no_mastodon_token = False
 
 
 def _strip_html(html_content: str) -> str:
@@ -48,10 +51,15 @@ def search_mastodon(query: str, time_range: str = "24h", limit: int = 15) -> lis
     cache_key = make_search_cache_key("mastodon", query, time_range, str(limit))
 
     def fetch() -> list[dict]:
+        global _warned_no_mastodon_token
         settings = get_settings()
         token = (settings.mastodon_access_token or "").strip()
         if not token:
-            print("⚠️ Mastodon: no access token configured, skipping")
+            if not _warned_no_mastodon_token:
+                _warned_no_mastodon_token = True
+                logger.info(
+                    "Mastodon: no access token configured — skipping until MASTODON_ACCESS_TOKEN is set."
+                )
             return []
 
         base_url = _instance_base()

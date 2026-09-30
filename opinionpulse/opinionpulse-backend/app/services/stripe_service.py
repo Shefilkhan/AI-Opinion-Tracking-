@@ -99,6 +99,19 @@ def get_or_create_customer(db: Session, user: User) -> str:
     return customer.id
 
 
+def _checkout_tax_options() -> dict:
+    """Stripe Tax: calculate VAT/GST/sales tax from the customer's billing address."""
+    settings = get_settings()
+    if not settings.stripe_automatic_tax:
+        return {}
+    return {
+        "automatic_tax": {"enabled": True},
+        # Persist address on the Customer for renewals and the billing portal.
+        "customer_update": {"address": "auto", "name": "auto"},
+        "tax_id_collection": {"enabled": True},
+    }
+
+
 def create_checkout_session(
     db: Session,
     user: User,
@@ -136,6 +149,7 @@ def create_checkout_session(
         "metadata": metadata,
         "subscription_data": {"metadata": metadata},
         "allow_promotion_codes": True,
+        **_checkout_tax_options(),
     }
 
     if ui_mode == "embedded":

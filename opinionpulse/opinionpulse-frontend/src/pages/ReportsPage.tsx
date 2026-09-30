@@ -1,7 +1,15 @@
 import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Download } from "lucide-react"
-import { fetchSearchHistory } from "@/lib/api/search"
+import { Download, Loader2 } from "lucide-react"
+import { fetchSearchHistory, searchOpinions } from "@/lib/api/search"
+import type { SearchFilters } from "@/lib/api/types"
+import {
+  buildDetailedSearchCsv,
+  buildSearchHistorySummaryCsv,
+  detailedSearchFilename,
+  downloadCsv,
+  historySummaryFilename,
+} from "@/lib/csv-export"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import {
   DataTable,
@@ -18,30 +26,12 @@ import { Button } from "@/components/ui/button"
 import { LoadingState } from "@/components/ui/LoadingState"
 import { btnPrimary } from "@/lib/ui-classes"
 
-function exportCsv(
-  rows: {
-    query: string
-    searched_at: string
-    results_count: number
-    sentiment_positive?: number | null
-    sentiment_negative?: number | null
-    sentiment_neutral?: number | null
-  }[]
-) {
-  const header = "query,date,results_count,positive_pct,negative_pct,neutral_pct\n"
-  const body = rows
-    .map((r) => {
-      const d = new Date(r.searched_at).toISOString()
-      return `"${r.query.replace(/"/g, '""')}",${d},${r.results_count},${r.sentiment_positive ?? ""},${r.sentiment_negative ?? ""},${r.sentiment_neutral ?? ""}`
-    })
-    .join("\n")
-  const blob = new Blob([header + body], { type: "text/csv" })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement("a")
-  a.href = url
-  a.download = `opinionpulse-reports-${Date.now()}.csv`
-  a.click()
-  URL.revokeObjectURL(url)
+const DEFAULT_FILTERS: SearchFilters = {
+  platform: "all",
+  timeRange: "7d",
+  sentiment: "all",
+  sortBy: "recent",
+  language: "all",
 }
 
 const RANGE_OPTIONS = [
@@ -52,8 +42,8 @@ const RANGE_OPTIONS = [
 
 export function ReportsPage() {
   const [range, setRange] = useState<"7" | "30" | "all">("30")
-  // Capture "now" once at mount so the recency filter stays render-pure
-  // (Date.now() during render is flagged as impure by react-hooks/purity).
+  const [exportingId, setExportingId] = useState<string | null>(null)
+  const [exportingAll, setExportingAll] = useState(false)
   const [mountedAt] = useState(() => Date.now())
   const { data, isLoading } = useQuery({
     queryKey: ["search-history"],
@@ -68,6 +58,30 @@ export function ReportsPage() {
     return list.filter((r) => new Date(r.searched_at).getTime() >= cutoff)
   }, [data, range, mountedAt])
 
+  async function exportDetailedReport(row: (typeof items)[number]) {
+    setExportingId(row.id)
+    try {
+      const searchData = await searchOpinions(row.query, DEFAULT_FILTERS)
+      const csv = buildDetailedSearchCsv(searchData, { history: row })
+      downloadCsv(csv, detailedSearchFilename(row.query))
+    } catch (err) {
+      console.error("Detailed export failed:", err)
+      window.alert("Could not export detailed report. Try running the search again from the Search page.")
+    } finally {
+      setExportingId(null)
+    }
+  }
+
+  function exportAllSummary() {
+    setExportingAll(true)
+    try {
+      const csv = buildSearchHistorySummaryCsv(items)
+      downloadCsv(csv, historySummaryFilename())
+    } finally {
+      setExportingAll(false)
+    }
+  }
+
   return (
     <DashboardLayout
       title="Reports"
@@ -77,10 +91,15 @@ export function ReportsPage() {
           <Button
             type="button"
             className={btnPrimary}
-            onClick={() => exportCsv(items)}
+            disabled={exportingAll}
+            onClick={exportAllSummary}
           >
-            <Download className="size-4" />
-            Export all
+            {exportingAll ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Download className="size-4" />
+            )}
+            Export summary
           </Button>
         ) : undefined
       }
@@ -113,7 +132,7 @@ export function ReportsPage() {
                   <DataTableHeaderCell>Positive</DataTableHeaderCell>
                   <DataTableHeaderCell>Negative</DataTableHeaderCell>
                   <DataTableHeaderCell>Neutral</DataTableHeaderCell>
-                  <DataTableHeaderCell className="w-28">
+                  <DataTableHeaderCell className="w-36">
                     <span className="sr-only">Actions</span>
                   </DataTableHeaderCell>
                 </DataTableRow>
@@ -159,16 +178,29 @@ export function ReportsPage() {
                         variant="outline"
                         size="sm"
                         className="gap-1"
-                        onClick={() => exportCsv([row])}
+                        disabled={exportingId === row.id}
+                        onClick={() => exportDetailedReport(row)}
                       >
-                        <Download className="size-3.5" />
-                        Export
+                        {exportingId === row.id ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <Download className="size-3.5" />
+                        )}
+                        Export CSV
                       </Button>
                     </DataTableCell>
                   </DataTableRow>
                 ))}
               </DataTableBody>
             </DataTable>
+          )}
+
+          {items.length > 0 && (
+            <p className="mt-4 text-xs text-muted-foreground">
+              <strong>Export CSV</strong> downloads a full report with summary stats and every
+              mention (platform, author, sentiment, content, URLs).{" "}
+              <strong>Export summary</strong> exports your search history table only.
+            </p>
           )}
         </PageSection>
       )}

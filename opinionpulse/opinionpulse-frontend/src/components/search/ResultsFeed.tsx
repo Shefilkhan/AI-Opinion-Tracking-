@@ -118,7 +118,19 @@ function ResultItem({ r }: { r: SearchResultItem }) {
               )}
               {r.platform === "youtube" && (
                 <span className="inline-flex items-center rounded bg-red-500/10 px-1.5 py-0.5 text-[10px] font-medium text-red-600">
-                  {r.content_type === "comment" ? "💬 Comment" : "▶️ Video"}
+                  {r.content_type === "reply"
+                    ? "↩️ Reply"
+                    : r.content_type === "comment"
+                      ? "💬 Comment"
+                      : "▶️ Video"}
+                </span>
+              )}
+              {r.platform === "youtube" && r.metadata?.channel_name && r.content_type === "video" && (
+                <span className="text-[11px] text-muted-foreground">{r.metadata.channel_name}</span>
+              )}
+              {r.platform === "youtube" && r.metadata?.video_title && r.content_type !== "video" && (
+                <span className="text-[11px] text-muted-foreground line-clamp-1">
+                  on {r.metadata.video_title}
                 </span>
               )}
               <span className="text-xs text-muted-foreground">{r.author}</span>

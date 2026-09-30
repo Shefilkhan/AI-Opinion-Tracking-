@@ -22,9 +22,11 @@ from app.services.platforms.query_helpers import (
 logger = logging.getLogger(__name__)
 TIMEOUT = 12
 GITHUB_API_BASE = "https://api.github.com"
+_warned_no_github_token = False
 
 
 def _headers() -> dict[str, str]:
+    global _warned_no_github_token
     headers = {
         "Accept": "application/vnd.github+json",
         "User-Agent": "OpinionPulse/1.0",
@@ -32,8 +34,11 @@ def _headers() -> dict[str, str]:
     token = (get_settings().github_token or "").strip()
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    else:
-        print("⚠️ GitHub: no token configured, using unauthenticated rate limits (60/hr)")
+    elif not _warned_no_github_token:
+        _warned_no_github_token = True
+        logger.info(
+            "GitHub: no token configured — using unauthenticated search (60 requests/hour)."
+        )
     return headers
 
 

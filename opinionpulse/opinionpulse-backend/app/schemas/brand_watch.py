@@ -42,6 +42,24 @@ class BrandWatchOut(BaseModel):
     watch_type: str = "bundle"
 
 
+class BrandWatchSuggestOption(BaseModel):
+    id: str
+    label: str
+    query: str
+    type: str = "brand"
+    total_mentions: int = 0
+    platforms: list[str] = Field(default_factory=list)
+    has_live_data: bool = False
+    sample_title: Optional[str] = None
+    sentiment_positive: int = 0
+    sentiment_negative: int = 0
+
+
+class BrandWatchSuggestResponse(BaseModel):
+    query: str
+    options: list[BrandWatchSuggestOption] = Field(default_factory=list)
+
+
 class ResponseBriefOut(BaseModel):
     topic: str
     talking_points: list[str]

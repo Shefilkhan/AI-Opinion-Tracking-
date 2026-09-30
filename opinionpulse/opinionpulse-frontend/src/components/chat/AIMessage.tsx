@@ -135,7 +135,7 @@ function MessageHeader({
 }) {
   return (
     <div className="mb-2.5 flex flex-wrap items-center gap-2">
-      <span className="text-[13px] font-semibold text-[var(--chat-purple)]">Pulse AI</span>
+      <span className="text-[13px] font-semibold text-[var(--chat-primary)]">Pulse AI</span>
       {sourcesCount > 0 && (
         <span className="chat-mono text-[10px] tracking-wider text-[var(--chat-text-muted)]">
           · {sourcesCount} SOURCES ANALYZED

@@ -362,15 +362,11 @@ def get_quiver_intelligence(query: str) -> dict[str, Any]:
     }
 
     if not base_response["configured"]:
-        base_response["message"] = (
-            "Add QUIVER_API_KEY in backend .env.local to enable Quiver Quant datasets "
-            "(congressional trades, insiders, lobbying, 13F, and more)."
-        )
         base_response["sections"] = [
             {
                 **section,
                 "available": False,
-                "message": "API key not configured",
+                "message": None,
                 "records": [],
             }
             for section in SECTION_DEFS
@@ -408,7 +404,7 @@ def get_quiver_intelligence(query: str) -> dict[str, Any]:
         ]
         return base_response
 
-    cache_key = f"quiver_intel_{ticker.upper()}"
+    cache_key = f"quiver_intel_v2_{ticker.upper()}"
 
     def fetch() -> dict[str, Any]:
         section_results: dict[str, tuple[list[dict[str, Any]], Optional[str]]] = {}

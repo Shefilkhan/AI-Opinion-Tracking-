@@ -11,6 +11,7 @@ from app.api.deps import get_current_user
 from app.db.database import get_db
 from app.db.models import User
 from app.schemas.chat import (
+    PulseAnalysisConfidence,
     PulseChatCitedSource,
     PulseChatDataUsed,
     PulseChatMessageRequest,
@@ -64,7 +65,11 @@ async def send_pulse_chat_message(
         logger.exception("DB save error (user message): %s", exc)
 
     result = await chat_service.process_chat_message(
-        message, formatted_history, current_user.id
+        message,
+        formatted_history,
+        current_user.id,
+        live_sources=body.live_sources,
+        deep_mode=body.deep_mode,
     )
 
     try:
@@ -83,6 +88,10 @@ async def send_pulse_chat_message(
                 "references": result.get("references", []),
                 "cited_sources": result.get("cited_sources", []),
                 "sources_fetched": result.get("sources_fetched", 0),
+                "intent": result.get("intent"),
+                "analysis_confidence": result.get("analysis_confidence"),
+                "deep_mode": result.get("deep_mode"),
+                "live_sources": result.get("live_sources"),
             },
         )
     except Exception as exc:
@@ -116,6 +125,14 @@ async def send_pulse_chat_message(
             if isinstance(ref, dict)
         ],
         sources_fetched=result.get("sources_fetched", 0),
+        intent=result.get("intent"),
+        analysis_confidence=(
+            PulseAnalysisConfidence(**result["analysis_confidence"])
+            if isinstance(result.get("analysis_confidence"), dict)
+            else None
+        ),
+        deep_mode=bool(result.get("deep_mode", body.deep_mode)),
+        live_sources=bool(result.get("live_sources", body.live_sources)),
     )
 
 

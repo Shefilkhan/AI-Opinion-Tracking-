@@ -15,6 +15,24 @@ export type BrandWatch = {
   watch_type: string
 }
 
+export type BrandWatchSuggestOption = {
+  id: string
+  label: string
+  query: string
+  type: string
+  total_mentions: number
+  platforms: string[]
+  has_live_data: boolean
+  sample_title?: string | null
+  sentiment_positive: number
+  sentiment_negative: number
+}
+
+export type BrandWatchSuggestResponse = {
+  query: string
+  options: BrandWatchSuggestOption[]
+}
+
 export type ResponseBrief = {
   topic: string
   talking_points: string[]
@@ -34,6 +52,18 @@ export type AlertPreferences = {
 
 export async function listBrandWatches(): Promise<BrandWatch[]> {
   return apiRequest<BrandWatch[]>("/api/brand-watches", { auth: true })
+}
+
+export async function suggestBrandWatches(
+  query: string,
+  signal?: AbortSignal
+): Promise<BrandWatchSuggestResponse> {
+  const params = new URLSearchParams({ q: query.trim() })
+  return apiRequest<BrandWatchSuggestResponse>(`/api/brand-watches/suggest?${params.toString()}`, {
+    auth: true,
+    timeoutMs: 45_000,
+    signal,
+  })
 }
 
 export async function createBrandWatch(data: {

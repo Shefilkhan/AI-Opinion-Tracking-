@@ -66,6 +66,9 @@ function toAiPayloadResults(results: SearchResultItem[]) {
     sentiment: r.sentiment,
     posted_at: r.posted_at,
     source_url: r.source_url || r.url,
+    content_type: r.content_type,
+    metadata: r.metadata,
+    engagement: r.engagement,
   }))
 }
 

@@ -82,6 +82,8 @@ STOCK_TICKERS: dict[str, str] = {
     "airbnb": "ABNB",
     "spotify": "SPOT",
     "shopify": "SHOP",
+    "walmart": "WMT",
+    "wmt": "WMT",
 }
 
 HEADERS = {

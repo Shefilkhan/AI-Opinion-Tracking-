@@ -55,3 +55,22 @@ def test_parse_renews_at_prefers_top_level_when_present():
 
 def test_parse_renews_at_none_when_absent():
     assert stripe_service._parse_renews_at({"items": {"data": []}}) is None
+
+
+def test_checkout_tax_options_enabled_by_default(monkeypatch):
+    class _Settings:
+        stripe_automatic_tax = True
+
+    monkeypatch.setattr(stripe_service, "get_settings", lambda: _Settings())
+    opts = stripe_service._checkout_tax_options()
+    assert opts["automatic_tax"] == {"enabled": True}
+    assert opts["customer_update"]["address"] == "auto"
+    assert opts["tax_id_collection"] == {"enabled": True}
+
+
+def test_checkout_tax_options_disabled(monkeypatch):
+    class _Settings:
+        stripe_automatic_tax = False
+
+    monkeypatch.setattr(stripe_service, "get_settings", lambda: _Settings())
+    assert stripe_service._checkout_tax_options() == {}

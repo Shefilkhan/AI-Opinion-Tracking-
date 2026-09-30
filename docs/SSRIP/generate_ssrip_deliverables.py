@@ -7,10 +7,6 @@ from pathlib import Path
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt
-from pptx import Presentation
-from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN
-from pptx.util import Inches, Pt as PptPt
 
 OUT_DIR = Path(__file__).resolve().parent
 
@@ -21,7 +17,7 @@ PROJECT = {
     "faculty": "Prof. Kiran Kamlesh Panchal",
     "institute": "Conestoga College, Kitchener, Ontario, Canada",
     "start_date": "19th May 2026",
-    "review_period": "19th July 2026",
+    "review_period": "25th June 2026 - 20th August 2026",
 }
 
 # Eight-week narrative reports (GUNI-SSRIP format — paragraph style per week)
@@ -29,153 +25,160 @@ WEEKS = [
     {
         "label": "Week 1 Report",
         "report": (
-            "In the first week, the main goal was to understand the project scope and define what "
-            "OpinionPulse needs to deliver. We studied how public opinion appears across social media "
-            "(Reddit, YouTube, Mastodon, Bluesky), news platforms (NewsAPI, Guardian, GNews), and "
-            "developer communities (Hacker News, GitHub, Stack Overflow). We reviewed existing sentiment "
-            "tracking tools and identified gaps — most tools cover only one platform or lack real-time "
-            "AI summaries. We listed core requirements: multi-source keyword search, sentiment scoring, "
-            "a unified dashboard, user authentication, and an AI assistant. We drew use-case and data-flow "
-            "diagrams showing how a user query travels from the React frontend through FastAPI to external "
-            "APIs and back. By the end of this week, we had a clear project plan, technology choices "
-            "(React, FastAPI, MySQL), and a shared Git repository structure for the team."
+            "In the first week of this review period, we focused on polishing the dashboard experience "
+            "and preparing academic deliverables for the SSRIP submission. We improved chart tooltips, "
+            "axis labels, and text contrast across sentiment and activity visualizations so supervisors "
+            "and evaluators could read results clearly during live demos. We also built SSRIP "
+            "documentation generators and screenshot capture scripts to automate the review report and "
+            "presentation workflow. By this point the core OpinionPulse stack was already operational — "
+            "React frontend, FastAPI backend, MySQL database, JWT authentication, and multi-source "
+            "search — which allowed the team to concentrate on presentation quality and documentation "
+            "rather than greenfield setup. We verified that the Dev branch builds cleanly and that "
+            "dashboard widgets load without hanging when live feeds are slow."
         ),
     },
     {
         "label": "Week 2 Report",
         "report": (
-            "The second week focused on setting up the full development environment. We installed and "
-            "configured the frontend using React 18, TypeScript, and Vite with Tailwind CSS for styling. "
-            "On the backend, we set up Python FastAPI with SQLAlchemy ORM and connected it to a MySQL "
-            "database running on XAMPP. We created the initial folder structure — app/api/routes, "
-            "app/services, app/schemas, and app/db/models — so frontend and backend code stay organized. "
-            "We registered accounts for Reddit, NewsAPI, Guardian, YouTube Data API, and other free "
-            "data sources, storing all API keys securely in a .env file (never committed to Git). We "
-            "built a health-check endpoint and verified that the frontend proxy correctly forwards "
-            "requests to the backend on port 8000. By the end of this week, both servers were running "
-            "locally and the team could push code to the Dev branch without conflicts."
+            "The second week extended OpinionPulse beyond basic sentiment tracking into risk intelligence "
+            "and conversion-focused marketing surfaces. We implemented a social media risk analysis module "
+            "that produces structured AI outputs for narrative risk scoring and assessment. We fixed a "
+            "search regression where posted_at validation failures caused active platform and time-range "
+            "filters to reset unexpectedly. On the frontend, we added a dedicated plan checkout page with "
+            "a platform logo marquee to build user trust during signup. We also integrated newsletter "
+            "signup with welcome emails for new subscribers and admin notification emails for lead "
+            "tracking. These changes moved OpinionPulse closer to a credible SaaS product with both "
+            "intelligence features and a clear path from landing page to paid plan."
         ),
     },
     {
         "label": "Week 3 Report",
         "report": (
-            "This week we built the user authentication and account management system. We implemented "
-            "user registration with email and password, bcrypt password hashing, and JWT access tokens "
-            "for session management. Email OTP verification was added using Gmail SMTP — a 6-digit code "
-            "is sent on signup and login to confirm the user's identity. We also built password reset "
-            "with secure token links, account lockout after repeated failed login attempts, and a My "
-            "Account page where users can update their profile and avatar. On the backend, we created "
-            "MySQL tables for users, plans, and search history with SQLAlchemy models and migration "
-            "scripts. The frontend received dedicated auth pages: Sign Up, Sign In, Verify OTP, Forgot "
-            "Password, and Reset Password. By the end of this week, users could create accounts, verify "
-            "their email, and log in securely to access protected dashboard routes."
+            "This week we launched Crisis Radar — the flagship differentiator of OpinionPulse. On the "
+            "backend, we integrated Quiver Quantitative API for alternative market intelligence "
+            "(congressional trades, insider activity, 13F filings, and lobbying data) and added live "
+            "stock and crypto price endpoints for brand watches. On the frontend, we built the Crisis "
+            "Radar page with a volume-and-velocity matrix, narrative cluster cards, spread timeline, "
+            "market price charts, and a Quiver intelligence panel. We also refreshed the public landing "
+            "page with a redesigned mobile navigation drawer and updated README branding assets including "
+            "hero imagery and feature badges. By the end of this week, Crisis Radar became the primary "
+            "demo narrative: detecting narrative risk and public attention spikes before they affect "
+            "markets or brand reputation."
         ),
     },
     {
         "label": "Week 4 Report",
         "report": (
-            "In the fourth week, we built the data collection pipeline that fetches posts and articles "
-            "from multiple platforms. We connected the app to the Reddit API, YouTube Data API, and "
-            "GDELT news feed so it can retrieve content using any keyword the user enters. Since each "
-            "platform returns data in a different format, we wrote a platform_common module to normalize "
-            "all results into one structure: title, content, author, platform name, posted date, URL, "
-            "and engagement metrics (likes, comments, upvotes). We added deduplication by URL and "
-            "headline-focused filtering so only relevant results are shown. Text cleaning removes "
-            "excess whitespace and normalizes timestamps to UTC. We stored collected mentions in MySQL "
-            "and exposed REST endpoints for projects, keywords, sources, and mentions. By the end of "
-            "this week, the backend could fetch and normalize data from the first set of live sources."
+            "In the fourth week we made the platform subscription-ready and production-auditable. We "
+            "integrated Stripe embedded checkout and built subscription management in account settings. "
+            "Google OAuth login was stabilized with fixes for session switching and invalid client "
+            "configuration edge cases. We refactored the profile menu, notifications panel, and account "
+            "settings into a cleaner structure. The dashboard gained daily trending snapshots sourced "
+            "from live news feeds. Search accuracy was improved with stricter relevance and recency "
+            "scoring. Pulse AI responses were enhanced with structured message rendering for richer "
+            "chat output. We conducted a full codebase audit, merged the fix/full-audit-and-repair "
+            "branch, and expanded automated testing to 45 pytest cases covering logic, services, and "
+            "API endpoints. This week established regression safety for the rapid feature work planned "
+            "in the following weeks."
         ),
     },
     {
         "label": "Week 5 Report",
         "report": (
-            "The fifth week was dedicated to building the sentiment analysis engine and analytics layer. "
-            "We integrated VADER (Valence Aware Dictionary and sEntiment Reasoner) to classify each "
-            "post as positive, negative, or neutral based on its text content. We added keyword-based "
-            "scoring rules for domain-specific terms that VADER might miss. The analytics service "
-            "calculates aggregate sentiment percentages, platform breakdowns, and a 24-hour sentiment "
-            "trend chart. We built sentiment forecast logic to predict whether opinion is likely to "
-            "shift positive or negative over the next seven days. Search history is saved per user so "
-            "past queries can be reopened quickly. API endpoints for /api/search and /api/analytics "
-            "return structured JSON that the frontend charts with Recharts. All models were tested "
-            "with sample queries (e.g. climate change, artificial intelligence) and results were "
-            "verified manually for accuracy."
+            "The fifth week was dedicated to search pipeline hardening and proactive brand monitoring. "
+            "We improved query disambiguation, relevance scoring, and Wikipedia summary fetching so every "
+            "search response could include factual topic context alongside live mentions. Pulse AI was "
+            "upgraded with cited answers, research briefs, and source cards so chat responses reference "
+            "real retrieved data. We built the Brand Monitor module with watchlists, spike alerts, and "
+            "weekly reputation reports. Dashboard performance was tuned by tightening live feed fetch "
+            "intervals and topic table refresh logic. The search pipeline received a major overhaul: "
+            "per-platform time filtering, brand disambiguation, marketplace spam filters, YouTube video "
+            "comments in results, improved multi-source fetch diversity, language filter support in the "
+            "API and UI, and source status indicators with filter statistics. All 13 integrated platforms "
+            "remained active: Reddit, YouTube, Hacker News, Dev.to, NewsAPI, Guardian, Bluesky, "
+            "Mastodon, GitHub, Stack Overflow, Wikipedia, GNews, and Currents."
         ),
     },
     {
         "label": "Week 6 Report",
         "report": (
-            "This week we built the main frontend that users interact with daily. We created a "
-            "BankDash-style dashboard with sidebar navigation, overview cards showing sentiment balance "
-            "and trending topic counts, and a weekly activity bar chart. The Search page lets users "
-            "enter a keyword, choose platform filters (all, news, tech, Reddit, YouTube), and select "
-            "a time range (24 hours, 7 days, 30 days). Results appear as cards with platform badges, "
-            "sentiment tags, and direct links to the original source. We added a Wikipedia summary "
-            "panel for background context on any topic. The landing page was redesigned with an "
-            "editorial style — hero section, feature blocks, tech stack overview, pricing table, and "
-            "a public Explore sandbox where visitors can try sample topics without signing up. Settings "
-            "and My Account pages were connected to the backend. All pages were tested for responsive "
-            "layout and correct data loading without errors."
+            "This week we elevated the Pulse AI chat experience and added contextual summaries across "
+            "Search and Compare. We completed a full Pulse AI UI redesign with a high-contrast design "
+            "system, fixed layout bugs, and resolved light/dark theme text contrast issues in discussion "
+            "theme cards and snapshot tables. Search reliability was a major focus: we prevented infinite "
+            "loading when backends or individual sources hang, added stale request abortion and health "
+            "checks, fixed Windows event loop mismatches for async fetchers, and capped per-source fetch "
+            "budgets to eliminate 504 gateway timeouts. We introduced Topic Summary on the Search page "
+            "combining Wikipedia context with OpinionPulse analytics via topic_summary_service. The Compare "
+            "page gained topic summaries, a deterministic comparison conclusion, and Wikipedia source "
+            "links. Crisis Radar received live share prices for brand watches. We also added local dev "
+            "start scripts and a START guide to help teammates run search and chat modules consistently."
         ),
     },
     {
         "label": "Week 7 Report",
         "report": (
-            "The seventh week focused on advanced features and AI integration. We expanded live search "
-            "from a handful of sources to 13 platforms — adding NewsAPI, Guardian, GNews, Currents, "
-            "MediaStack, Hacker News, Dev.to, GitHub, Stack Overflow, Mastodon, and Bluesky — all "
-            "queried in parallel with a 3-minute cache to respect API rate limits. We built the Compare "
-            "Topics module where users enter two keywords (e.g. Tesla vs BYD) and see side-by-side "
-            "sentiment charts and word clouds. Pulse AI chat was integrated using Groq (Llama 3.3 70B) — "
-            "before answering, the chatbot fetches live search results and uses them as context so "
-            "responses are grounded in real data, not generic text. Google OAuth sign-in was added for "
-            "one-click authentication. Pro-tier features include Claude-powered risk scoring, debate "
-            "analysis, trend prediction, CSV/PDF report export, and personal alert rules. Subscription "
-            "plans (Starter and Pro) with server-side usage limits were implemented along with an admin "
-            "script to grant Pro access for demo accounts."
+            "The seventh week focused on operational reliability under real API constraints. We added a "
+            "live source health API exposing which platforms are configured versus currently reachable, "
+            "and fixed a dashboard hang that occurred when live data was unavailable in empty states. "
+            "An API token audit endpoint was added so developers can verify which third-party keys are "
+            "properly configured without exposing secret values. We mitigated Reddit and GNews 429 rate "
+            "limit errors and improved search timeout handling so partial results return gracefully "
+            "instead of failing entirely. Live search was repaired to ensure all configured platforms "
+            "participate in parallel queries. Some features introduced earlier in the week were selectively "
+            "reverted after integration testing exposed edge cases, following a disciplined rollback "
+            "approach that preserved demo stability while keeping core Crisis Radar, Compare, and Search "
+            "functionality intact."
         ),
     },
     {
         "label": "Week 8 Report",
         "report": (
-            "The last week was used to test, polish, and prepare everything for submission. We ran "
-            "end-to-end tests on every feature — registration, login, OAuth, live search across all "
-            "13 sources, Compare mode, Pulse AI chat, dashboard widgets, and report export. We fixed "
-            "bugs found during testing: Google OAuth invalid_client errors from placeholder env values, "
-            "Python 3.9 compatibility issues in Pydantic type hints, news API date-format errors, and "
-            "Pulse AI misclassifying sports score queries as opinion comparisons. Team members merged "
-            "parallel branches on the Dev branch and resolved conflicts in chat_service.py through "
-            "structured code review. We added Terms of Service and Privacy Policy pages, tuned news "
-            "APIs for newest-first results, and wrote backend README documentation with setup "
-            "instructions. The project code was pushed to GitHub, a professional SSRIP presentation "
-            "with UI screenshots was prepared, and this eight-week review report was completed. "
-            "Everything was reviewed one final time to ensure all requirements are met before submission."
+            "The final week focused on intelligence UI redesign and advancing Pulse AI toward agentic "
+            "orchestration. Crisis Radar was rebuilt as a premium monitoring console with new components "
+            "including attention summary, brand watch list, selected watch panel, signal history chart, "
+            "recommended actions, and Ask Pulse AI deep links via URL prompts. The Compare page was "
+            "redesigned with a comparison scoreboard, verdict panel, tabbed analytics (Overview, "
+            "Sentiment, Platforms, Themes, Trends, Sources), and compact topic identity cards. Factual "
+            "topic context and Wikipedia links were restored in collapsible About panels without "
+            "returning to the previous oversized summary layout. Dashboard intelligence received a new "
+            "backend service and frontend layout. Pulse AI architecture was extended with router, tools, "
+            "evidence bundle, orchestrator, and verifier services, with optional xAI integration and "
+            "Deep/Live mode wiring. YouTube analytics and search intelligence views were added. The test "
+            "suite was expanded with crisis display mapping, compare analytics, pulse router, and evidence "
+            "service tests. Frontend production build passes and the platform is ready for final demo "
+            "and evaluation."
         ),
     },
 ]
 
 FUTURE_WORK = (
     "In the future, we plan to deploy OpinionPulse to cloud hosting (AWS or Azure) with production "
-    "MySQL, HTTPS, and a CI/CD pipeline. We will add Stripe payment integration for automated Pro and "
-    "Enterprise billing. Sentiment accuracy will be improved by replacing keyword-only scoring with "
-    "LLM-based analysis for nuanced topics. We plan to build a mobile-responsive PWA and email alert "
-    "notifications when sentiment crosses user-defined thresholds. Multi-language support (Hindi, "
-    "French, Spanish) will allow analysis of non-English posts. A public REST API with documentation "
-    "will enable third-party research teams to integrate OpinionPulse data into their own tools."
+    "MySQL, HTTPS, and a CI/CD pipeline. Stripe billing is already integrated; we will extend automated "
+    "Enterprise tier provisioning and usage analytics. Pulse AI will be completed as a fully agentic "
+    "system with dynamic tool selection and verified citations. Sentiment accuracy will be improved "
+    "with LLM-based analysis for nuanced topics. We plan email and push alert notifications when "
+    "Crisis Radar or Brand Monitor thresholds are crossed, a mobile-responsive PWA, multi-language "
+    "support, and a public REST API for third-party research integrations."
 )
 
 CHALLENGES = (
-    "Managing rate limits across many free news and social APIs required 3-minute caching and parallel "
-    "fetch with timeouts. Google OAuth and Gmail SMTP setup needed careful .env configuration for each "
-    "teammate's local environment. Merging parallel team branches caused merge conflicts in "
-    "chat_service.py — resolved with structured code review. Support needed: stable cloud hosting "
-    "credits and Groq/Anthropic API budget for demo presentations and production deployment."
+    "Managing rate limits across many free news and social APIs required per-source fetch budgets, "
+    "429 handling, and a live source health dashboard. Windows async event loop mismatches caused "
+    "intermittent source fetch failures that required platform-specific fixes. Google OAuth and Gmail "
+    "SMTP setup needed careful .env configuration for each teammate's local environment. Feature "
+    "velocity occasionally required selective reverts to maintain demo stability. Support needed: "
+    "stable cloud hosting credits and Groq/Anthropic API budget for demo presentations and production "
+    "deployment."
 )
 
 COMMENTS = (
-    "Students demonstrated strong full-stack progress — from project planning to a working multi-source "
-    "AI platform in eight weeks. Recommend demonstrating live search, Compare Topics, and Pulse AI "
-    "during the final evaluation. Continue adding automated tests before production deployment."
+    "Students demonstrated strong full-stack progress — from a working multi-source search platform "
+    "to a full intelligence suite with Crisis Radar, Compare analytics, Brand Monitor, and Pulse AI "
+    "in eight weeks. Recommend demonstrating live search, Crisis Radar brand watches, Compare Topics "
+    "with topic context panels, and Pulse AI cited answers during the final evaluation. Continue "
+    "consolidating uncommitted Week 8 redesign work into tagged releases and expanding automated tests "
+    "before production deployment."
 )
 
 SIGNATURES = [
@@ -265,6 +268,16 @@ def build_docx() -> Path:
     return path
 
 
+def build_docx_copy(dest: Path | None = None) -> Path:
+    """Build report and optionally copy to another location."""
+    path = build_docx()
+    if dest is not None:
+        import shutil
+
+        shutil.copy2(path, dest)
+    return path
+
+
 SCREENSHOTS_DIR = OUT_DIR / "screenshots"
 
 
@@ -275,6 +288,10 @@ def _screenshot(name: str) -> Path | None:
 
 def build_pptx() -> Path:
     """Build a project-focused SSRIP presentation with detailed explanations."""
+    from pptx import Presentation
+    from pptx.dml.color import RGBColor
+    from pptx.enum.text import PP_ALIGN
+    from pptx.util import Inches, Pt as PptPt
 
     class C:
         FOREST = RGBColor(0x1B, 0x4D, 0x3E)

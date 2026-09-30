@@ -79,6 +79,132 @@ export type SearchResultItem = {
   image_url?: string | null
   posted_at: string
   is_demo?: boolean
+  metadata?: {
+    video_id?: string
+    channel_id?: string
+    channel_name?: string
+    video_title?: string
+    parent_comment_id?: string
+    audience_role?: "creator" | "audience"
+    type?: string
+  }
+}
+
+export type SearchInsight = {
+  type: string
+  severity: "info" | "positive" | "warning" | "critical"
+  title: string
+  description: string
+  metric?: number
+}
+
+export type ContentBreakdown = {
+  primary: number
+  comments: number
+  replies: number
+  total: number
+}
+
+export type CoverageConfidence = {
+  level: "high" | "medium" | "low"
+  label: string
+  explanation: string
+  total_items: number
+  active_sources: number
+  platform_types: number
+}
+
+export type PlatformStatItem = {
+  platform: string
+  content_count: number
+  share_pct: number
+  primary: number
+  comments: number
+  replies: number
+  sentiment: { positive: number; neutral: number; negative: number }
+  engagement_level: string
+}
+
+export type ThemeItem = {
+  name: string
+  label: string
+  count: number
+  mentions: number
+  sentiment: { positive: number; neutral: number; negative: number }
+  dominant_sentiment: string
+}
+
+export type PeriodComparison = {
+  current_volume: number
+  previous_volume: number
+  volume_change_pct: number
+  momentum: "rising" | "stable" | "declining"
+  negative_change_pp: number
+}
+
+export type SearchIntelligence = {
+  content_breakdown: ContentBreakdown
+  analyzed_total: number
+  displayed_count: number
+  confidence: CoverageConfidence
+  platform_stats: PlatformStatItem[]
+  themes: ThemeItem[]
+  most_negative_theme?: ThemeItem | null
+  most_positive_theme?: ThemeItem | null
+  insights: SearchInsight[]
+  period_comparison?: PeriodComparison | null
+  emerging_topics: {
+    label: string
+    growth_pct: number
+    recent_count: number
+    direction: string
+  }[]
+  influential_content: SearchResultItem[]
+  why_sentiment_changed?: {
+    negative_change_pp: number
+    previous_negative_pct: number
+    current_negative_pct: number
+    negative_contributors: { label: string; mentions: number; negative_pct: number }[]
+    positive_offset: { label: string; mentions: number; positive_pct: number }[]
+  } | null
+  leading_platform?: PlatformStatItem | null
+}
+
+export type SearchTab = "overview" | "platforms" | "youtube" | "trends" | "results"
+
+export type YouTubeSentimentBreakdown = {
+  positive: number
+  negative: number
+  neutral: number
+}
+
+export type YouTubeThemeItem = {
+  label: string
+  count: number
+}
+
+export type YouTubeThemeSentiment = {
+  label: string
+  mentions: number
+  positive: number
+  neutral: number
+  negative: number
+}
+
+export type YouTubeSummary = {
+  platform: string
+  videos_analyzed: number
+  comments_analyzed: number
+  replies_analyzed: number
+  total_views: number
+  total_likes: number
+  total_comments: number
+  creator_sentiment: YouTubeSentimentBreakdown
+  audience_sentiment: YouTubeSentimentBreakdown
+  engagement_weighted_audience_sentiment: YouTubeSentimentBreakdown
+  top_themes: YouTubeThemeItem[]
+  theme_sentiment: YouTubeThemeSentiment[]
+  engagement_weight_formula: string
 }
 
 export type WikiSummary = {
@@ -155,5 +281,9 @@ export type SearchResponse = {
     non_english_filtered: number
     brand_noise_filtered: number
     youtube_comments_included: number
+    youtube_replies_included?: number
+    youtube_videos_with_comments?: number
   }
+  youtube_summary?: YouTubeSummary | null
+  search_intelligence?: SearchIntelligence | null
 }

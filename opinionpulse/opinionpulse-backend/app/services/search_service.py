@@ -14,8 +14,8 @@ from app.db.database import SessionLocal
 from app.db.models import SearchHistory, Mention
 from app.services.brand_disambiguator import BrandDisambiguator
 from app.services.keywords_utils import extract_keywords_from_results
+from app.services.platforms.wikipedia import get_wikipedia_summary, ensure_wikipedia_link
 from app.services.platforms import (
-    get_wikipedia_summary,
     search_currents,
     search_devto,
     search_gnews,
@@ -37,8 +37,7 @@ from app.services.platforms.query_helpers import (
     sort_results_by_posted_at,
     time_range_cutoff,
 )
-from app.services.platforms.youtube_platform import fetch_youtube_comments
-from app.services.search_constants import SENTIMENT_TREND_24H
+from app.services.platforms.youtube_platform import fetch_youtube_audience_content
 from app.services.source_quality import (
     engagement_total,
     filter_by_relevance,
@@ -49,6 +48,8 @@ from app.services.source_quality import (
 )
 from app.services.age_classifier import classify_age_groups, get_all_usage_context
 from app.services.content_classifier import classify_content_type
+from app.services.youtube_analytics_service import build_youtube_summary
+from app.services.search_analytics_service import build_search_intelligence
 from app.services.query_processor import QueryProcessor
 from app.services.relevance_scorer import filter_and_rank_results
 from app.services.risk_assessor import assess_risk_level
@@ -69,13 +70,30 @@ _brand_disambiguator = BrandDisambiguator()
 # Thread semaphore (not asyncio.Semaphore) — module-level asyncio primitives bind to
 # the event loop that existed at import time, which breaks on Windows + uvicorn
 # --reload ("Future attached to a different loop").
-_FETCH_CONCURRENCY = 8
+_FETCH_CONCURRENCY = 10
 _PER_CALL_TIMEOUT = 15.0
-_SOURCE_BUDGET_SEC = 25.0
+# Per-source budget applies after acquiring a fetch slot (not while waiting).
+_SOURCE_BUDGET_SEC = 22.0
 _fetch_semaphore = threading.Semaphore(_FETCH_CONCURRENCY)
 
 NEWS_SOURCES = ("newsapi", "guardian", "mediastack", "currents", "gnews")
 TECH_SOURCES = ("devto", "hackernews", "github", "stackoverflow")
+# Thirteen searchable social/news platforms (Wikipedia is enrichment, not counted here).
+SEARCH_PLATFORM_NAMES = (
+    "reddit",
+    "newsapi",
+    "youtube",
+    "guardian",
+    "mediastack",
+    "currents",
+    "gnews",
+    "devto",
+    "hackernews",
+    "mastodon",
+    "github",
+    "stackoverflow",
+    "bluesky",
+)
 
 
 def apis_configured() -> dict[str, bool]:
@@ -83,7 +101,7 @@ def apis_configured() -> dict[str, bool]:
     return {
         "reddit": True,
         "newsapi": is_valid_api_key(s.news_api_key),
-        "youtube": is_valid_api_key(s.youtube_api_key),
+        "youtube": is_valid_api_key(s.youtube_api_key) and s.youtube_enabled,
         "guardian": is_valid_api_key(s.guardian_api_key),
         "mediastack": is_valid_api_key(s.mediastack_api_key),
         "currents": is_valid_api_key(s.currents_api_key),
@@ -169,15 +187,19 @@ async def _fetch_source(
     *,
     fallback_query: str | None = None,
     raw_query: str | None = None,
+    crisis_mode: bool = False,
 ) -> tuple[str, list[dict[str, Any]], str | None]:
     fn = _fetcher_for(name)
     if not fn:
         return name, [], "unknown source"
 
+    if name == "youtube" and crisis_mode:
+        fn = lambda q, tr: search_youtube(q, tr, crisis_mode=True)  # noqa: E731
+
     if name in ("reddit", "gnews") and is_rate_limited(name):
         return name, [], f"{name} temporarily rate-limited — retry in a few minutes"
 
-    async def _call(q: str, tr: str) -> list[dict[str, Any]]:
+    async def _call_locked(q: str, tr: str) -> list[dict[str, Any]]:
         await asyncio.to_thread(_fetch_semaphore.acquire)
         try:
             return await asyncio.wait_for(
@@ -187,8 +209,11 @@ async def _fetch_source(
         finally:
             _fetch_semaphore.release()
 
-    async def _run() -> tuple[str, list[dict[str, Any]], str | None]:
-        results = await _call(query, time_range)
+    try:
+        results = await asyncio.wait_for(
+            _call_locked(query, time_range),
+            timeout=_SOURCE_BUDGET_SEC + 45.0,
+        )
         if results:
             return name, results, None
 
@@ -200,17 +225,20 @@ async def _fetch_source(
         if not alt_query and raw_query and raw_query not in (query, fallback_query):
             alt_query = raw_query
         if alt_query:
-            results = await _call(alt_query, time_range)
+            results = await asyncio.wait_for(
+                _call_locked(alt_query, time_range),
+                timeout=_SOURCE_BUDGET_SEC + 45.0,
+            )
             if results:
                 return name, results, None
 
         if not results and name in NEWS_SOURCES and time_range == "24h":
-            results = await _call(query, "7d")
+            results = await asyncio.wait_for(
+                _call_locked(query, "7d"),
+                timeout=_SOURCE_BUDGET_SEC + 45.0,
+            )
 
         return name, results, None
-
-    try:
-        return await asyncio.wait_for(_run(), timeout=_SOURCE_BUDGET_SEC)
     except ValueError as exc:
         return name, [], str(exc)
     except asyncio.TimeoutError:
@@ -312,7 +340,7 @@ def _empty_response(
         "results": [],
         "trending_keywords": [],
         "related_topics": [],
-        "sentiment_trend": SENTIMENT_TREND_24H,
+        "sentiment_trend": [],
         "last_updated": datetime.now(timezone.utc).isoformat(),
         "wiki_summary": wiki_summary,
         "errors": errors or None,
@@ -321,6 +349,8 @@ def _empty_response(
             "non_english_filtered": 0,
             "brand_noise_filtered": 0,
             "youtube_comments_included": 0,
+            "youtube_replies_included": 0,
+            "youtube_videos_with_comments": 0,
         },
     }
 
@@ -435,6 +465,7 @@ async def run_search(
     sort_by: str,
     source_allowlist: list[str] | None = None,
     language: str = "all",
+    crisis_mode: bool = False,
 ) -> dict[str, Any]:
     configured = apis_configured()
     sources = _resolve_sources(platform, configured)
@@ -462,6 +493,10 @@ async def run_search(
         sources,
     )
 
+    wiki_task = asyncio.create_task(
+        asyncio.to_thread(get_wikipedia_summary, search_query)
+    )
+
     tasks = [
         _fetch_source(
             name,
@@ -469,6 +504,7 @@ async def run_search(
             time_range,
             fallback_query=brand_precise if name in NEWS_SOURCES else None,
             raw_query=raw_query,
+            crisis_mode=crisis_mode,
         )
         for name in sources
     ]
@@ -484,6 +520,8 @@ async def run_search(
         "non_english_filtered": 0,
         "brand_noise_filtered": 0,
         "youtube_comments_included": 0,
+        "youtube_replies_included": 0,
+        "youtube_videos_with_comments": 0,
     }
 
     for name, results, err in settled:
@@ -501,26 +539,39 @@ async def run_search(
 
 
     if "youtube" in platforms_searched and configured.get("youtube"):
-        video_ids = [
-            (r.get("metadata") or {}).get("video_id")
-            or (r.get("source_url") or "").split("v=")[-1].split("&")[0]
-            for r in combined
-            if r.get("platform") == "youtube" and not r.get("is_comment")
+        yt_videos = [
+            r for r in combined
+            if r.get("platform") == "youtube"
+            and (r.get("content_type") or "") == "video"
+            and not r.get("is_comment")
         ]
-        video_ids = [vid for vid in video_ids if vid and len(vid) >= 8][:5]
-        if video_ids:
+        if yt_videos:
             try:
-                comments = await asyncio.wait_for(
+                comments, yt_fetch_stats = await asyncio.wait_for(
                     asyncio.to_thread(
-                        fetch_youtube_comments, video_ids, search_query
+                        fetch_youtube_audience_content,
+                        yt_videos,
+                        search_query,
+                        crisis_mode=crisis_mode,
                     ),
-                    timeout=12.0,
+                    timeout=45.0 if not crisis_mode else 25.0,
                 )
                 for comment in comments:
                     normalized = normalize_result(comment, search_query)
                     if normalized:
                         combined.append(normalized)
-                search_metadata["youtube_comments_included"] = len(comments)
+                search_metadata["youtube_comments_included"] = sum(
+                    1 for c in comments if (c.get("content_type") or "") != "reply"
+                )
+                search_metadata["youtube_replies_included"] = sum(
+                    1 for c in comments if c.get("content_type") == "reply"
+                )
+                search_metadata["youtube_videos_with_comments"] = yt_fetch_stats.get(
+                    "videos_processed", 0
+                )
+                if yt_fetch_stats.get("quota_exceeded"):
+                    source_health.setdefault("youtube", {})["status"] = "quota_exceeded"
+                    source_health["youtube"]["message"] = "YouTube quota exceeded (partial results)"
             except Exception as exc:
                 logger.warning("YouTube comments fetch failed: %s", exc)
 
@@ -583,16 +634,16 @@ async def run_search(
         combined = deduplicate_results(combined)
 
     try:
-        wiki_summary = await asyncio.wait_for(
-            asyncio.to_thread(get_wikipedia_summary, search_query),
-            timeout=15.0,
-        )
+        wiki_summary = await asyncio.wait_for(wiki_task, timeout=6.0)
     except asyncio.TimeoutError:
         logger.warning("Wikipedia summary timed out for %r", search_query)
         wiki_summary = None
+        wiki_task.cancel()
     except Exception as exc:
         logger.warning("Wikipedia summary failed for %r: %s", search_query, exc)
         wiki_summary = None
+
+    wiki_summary = ensure_wikipedia_link(search_query, wiki_summary)
 
     if not combined:
         topic_summary = build_topic_summary(
@@ -648,8 +699,6 @@ async def run_search(
     usage_context = get_all_usage_context()
     forecast = calculate_sentiment_forecast(combined)
     sentiment_trend = calculate_sentiment_trend_from_results(combined)
-    if not sentiment_trend:
-        sentiment_trend = SENTIMENT_TREND_24H
     keywords = extract_keywords_from_results(combined)
     _junk_topics = {"https", "http", "www", "com", "link", "live", "signal", "chart"}
     related = [f"#{w.title()}" for w in search_query.split()[:4] if len(w) > 2]
@@ -708,6 +757,18 @@ async def run_search(
         total_results=len(combined),
     )
 
+    display_limit = 40
+    displayed = combined[:display_limit]
+    youtube_rows = [r for r in combined if r.get("platform") == "youtube"]
+    youtube_summary = build_youtube_summary(youtube_rows) if youtube_rows else None
+    search_intelligence = build_search_intelligence(
+        query=query,
+        results=combined,
+        displayed_count=len(displayed),
+        sentiment_summary=summary,
+        platforms_searched=platforms_searched,
+        youtube_summary=youtube_summary,
+    )
     live_status = platforms_live_status()
     return {
         "query": query,
@@ -723,7 +784,7 @@ async def run_search(
             key=lambda p: sum(1 for r in combined if r.get("platform") == p),
             default="reddit",
         ),
-        "results": combined[:40],
+        "results": displayed,
         "age_analysis": age_analysis,
         "usage_context": usage_context,
         "risk_assessment": risk_assessment,
@@ -751,6 +812,8 @@ async def run_search(
             "intent": processed["intent"],
             "expansions": processed["expansions"],
         },
+        "youtube_summary": youtube_summary,
+        "search_intelligence": search_intelligence,
     }
 
 

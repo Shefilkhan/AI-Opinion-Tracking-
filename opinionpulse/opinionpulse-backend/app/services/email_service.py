@@ -101,20 +101,25 @@ def send_email(to_email: str, subject: str, html_body: str, plain_body: str) -> 
 
 def deliver_otp_email(to_email: str, otp_code: str, purpose: str) -> None:
     """
-    Send OTP email when SMTP is configured; otherwise log for local dev only.
-    Raises EmailSendError when configured but send fails.
+    Send OTP email via SMTP. Raises EmailSendError if SMTP is configured but send fails,
+    or if SMTP is not configured and dev OTP fallback is disabled.
     """
     settings = get_settings()
     subject, html_body, plain_body = _build_otp_email(otp_code, purpose)
 
     if not settings.email_configured:
-        logger.info(
-            "[OpinionPulse DEV OTP] email=%s purpose=%s code=%s (configure EMAIL_USER + EMAIL_APP_PASSWORD in .env)",
-            to_email,
-            purpose,
-            otp_code,
+        if settings.expose_dev_otp_in_api:
+            logger.info(
+                "[OpinionPulse DEV OTP] email=%s purpose=%s code=%s (OTP_ALLOW_DEV_EXPOSE=true)",
+                to_email,
+                purpose,
+                otp_code,
+            )
+            return
+        raise EmailSendError(
+            "Email is not configured on the server. "
+            "Set EMAIL_USER and EMAIL_APP_PASSWORD in .env.local, then restart the backend."
         )
-        return
 
     send_email(to_email, subject, html_body, plain_body)
 

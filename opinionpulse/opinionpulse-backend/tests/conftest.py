@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 BACKEND = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BACKEND))
 os.environ.setdefault("APP_ENV", "development")
+os.environ.setdefault("OTP_ALLOW_DEV_EXPOSE", "true")
 
 import pytest
 from sqlalchemy import create_engine

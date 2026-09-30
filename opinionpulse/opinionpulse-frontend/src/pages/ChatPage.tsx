@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
+import { useSearchParams } from "react-router-dom"
 import {
   deleteChatConversation,
   getChatConversation,
@@ -10,7 +11,9 @@ import { ChatMain, generateConversationId } from "@/components/chat/ChatMain"
 import { ChatSidebar } from "@/components/chat/ChatSidebar"
 import type { ChatMessageItem } from "@/components/chat/types"
 import { useAuth } from "@/contexts/AuthContext"
+import { useResolvedTheme } from "@/hooks/useResolvedTheme"
 import { getUserInitials } from "@/lib/chat-message-utils"
+import { cn } from "@/lib/utils"
 
 function storedToChatMessages(rows: PulseStoredMessage[]): ChatMessageItem[] {
   return rows.map((row, i) => ({
@@ -33,6 +36,8 @@ function storedToChatMessages(rows: PulseStoredMessage[]): ChatMessageItem[] {
 
 export function ChatPage() {
   const { user } = useAuth()
+  const [searchParams] = useSearchParams()
+  const initialPrompt = searchParams.get("prompt")
   const [conversations, setConversations] = useState<PulseConversation[]>([])
   const [activeConvId, setActiveConvId] = useState(generateConversationId)
   const [chatSessionKey, setChatSessionKey] = useState(0)
@@ -105,8 +110,15 @@ export function ChatPage() {
     onDeleteConversation: (id: string) => void handleDelete(id),
   }
 
+  const resolvedTheme = useResolvedTheme()
+
   return (
-    <div className="chat-page grid h-screen overflow-hidden bg-[var(--chat-bg)] [grid-template-columns:260px_1fr] max-md:[grid-template-columns:1fr]">
+    <div
+      className={cn(
+        "chat-page grid h-screen overflow-hidden bg-[var(--chat-bg)] [grid-template-columns:260px_1fr] max-md:[grid-template-columns:1fr]",
+        resolvedTheme === "light" && "chat-light"
+      )}
+    >
       {/* Desktop sidebar */}
       <div className="hidden h-full min-h-0 border-r border-[var(--chat-border)] md:block">
         <ChatSidebar {...sidebarProps} />
@@ -131,6 +143,7 @@ export function ChatPage() {
         key={chatSessionKey}
         conversationId={activeConvId}
         initialMessages={loadedMessages}
+        initialPrompt={initialPrompt}
         onConversationChange={(id) => {
           setActiveConvId(id)
           void refreshConversations()

@@ -60,6 +60,7 @@ class SearchResultItem(BaseModel):
     sentiment_detail: Optional[SentimentDetail] = None
     relevance_score: Optional[float] = None
     engagement_available: bool = True
+    metadata: Optional[dict] = None
 
     @model_validator(mode="after")
     def sync_url_fields(self):
@@ -141,11 +142,135 @@ class TopicSummary(BaseModel):
     sources_count: int = 0
 
 
+class YouTubeSentimentBreakdown(BaseModel):
+    positive: float = 0.0
+    negative: float = 0.0
+    neutral: float = 0.0
+
+
+class YouTubeThemeItem(BaseModel):
+    label: str
+    count: int = 0
+
+
+class YouTubeThemeSentiment(BaseModel):
+    label: str
+    mentions: int = 0
+    positive: float = 0.0
+    neutral: float = 0.0
+    negative: float = 0.0
+
+
+class YouTubeSummary(BaseModel):
+    platform: str = "youtube"
+    videos_analyzed: int = 0
+    comments_analyzed: int = 0
+    replies_analyzed: int = 0
+    total_views: int = 0
+    total_likes: int = 0
+    total_comments: int = 0
+    creator_sentiment: YouTubeSentimentBreakdown = Field(
+        default_factory=YouTubeSentimentBreakdown
+    )
+    audience_sentiment: YouTubeSentimentBreakdown = Field(
+        default_factory=YouTubeSentimentBreakdown
+    )
+    engagement_weighted_audience_sentiment: YouTubeSentimentBreakdown = Field(
+        default_factory=YouTubeSentimentBreakdown
+    )
+    top_themes: list[YouTubeThemeItem] = Field(default_factory=list)
+    theme_sentiment: list[YouTubeThemeSentiment] = Field(default_factory=list)
+    engagement_weight_formula: str = "1 + log1p(like_count)"
+
+
 class SearchMetadata(BaseModel):
     spam_filtered: int = 0
     non_english_filtered: int = 0
     brand_noise_filtered: int = 0
     youtube_comments_included: int = 0
+    youtube_replies_included: int = 0
+    youtube_videos_with_comments: int = 0
+
+
+class ContentBreakdown(BaseModel):
+    primary: int = 0
+    comments: int = 0
+    replies: int = 0
+    total: int = 0
+
+
+class CoverageConfidence(BaseModel):
+    level: str = "low"
+    label: str = "LOW"
+    explanation: str = ""
+    total_items: int = 0
+    active_sources: int = 0
+    platform_types: int = 0
+
+
+class PlatformStatItem(BaseModel):
+    platform: str
+    content_count: int = 0
+    share_pct: float = 0.0
+    primary: int = 0
+    comments: int = 0
+    replies: int = 0
+    sentiment: SentimentSummary = Field(default_factory=lambda: SentimentSummary(positive=0, neutral=0, negative=0))
+    engagement_level: str = "none"
+
+
+class ThemeItem(BaseModel):
+    name: str
+    label: str
+    count: int = 0
+    mentions: int = 0
+    sentiment: SentimentSummary = Field(default_factory=lambda: SentimentSummary(positive=0, neutral=0, negative=0))
+    dominant_sentiment: str = "neutral"
+
+
+class SearchInsight(BaseModel):
+    type: str
+    severity: str = "info"
+    title: str
+    description: str
+    metric: Optional[float] = None
+
+
+class PeriodComparison(BaseModel):
+    current_volume: int = 0
+    previous_volume: int = 0
+    volume_change_pct: float = 0.0
+    momentum: str = "stable"
+    current_sentiment: SentimentSummary = Field(default_factory=lambda: SentimentSummary(positive=0, neutral=0, negative=0))
+    previous_sentiment: SentimentSummary = Field(default_factory=lambda: SentimentSummary(positive=0, neutral=0, negative=0))
+    negative_change_pp: float = 0.0
+    overall_sentiment: SentimentSummary = Field(default_factory=lambda: SentimentSummary(positive=0, neutral=0, negative=0))
+
+
+class EmergingTopic(BaseModel):
+    label: str
+    growth_pct: float = 0.0
+    recent_count: int = 0
+    previous_count: int = 0
+    direction: str = "up"
+    sentiment: Optional[dict[str, float]] = None
+
+
+class SearchIntelligence(BaseModel):
+    content_breakdown: ContentBreakdown = Field(default_factory=ContentBreakdown)
+    analyzed_total: int = 0
+    displayed_count: int = 0
+    confidence: CoverageConfidence = Field(default_factory=CoverageConfidence)
+    platform_stats: list[PlatformStatItem] = Field(default_factory=list)
+    themes: list[ThemeItem] = Field(default_factory=list)
+    most_negative_theme: Optional[ThemeItem] = None
+    most_positive_theme: Optional[ThemeItem] = None
+    insights: list[SearchInsight] = Field(default_factory=list)
+    period_comparison: Optional[PeriodComparison] = None
+    emerging_topics: list[EmergingTopic] = Field(default_factory=list)
+    influential_content: list[dict] = Field(default_factory=list)
+    why_sentiment_changed: Optional[dict] = None
+    leading_platform: Optional[PlatformStatItem] = None
 
 
 class SearchResponse(BaseModel):
@@ -177,6 +302,8 @@ class SearchResponse(BaseModel):
     relevance_mode: Optional[str] = None
     query_meta: Optional[QueryMeta] = None
     search_metadata: Optional[SearchMetadata] = None
+    youtube_summary: Optional[YouTubeSummary] = None
+    search_intelligence: Optional[SearchIntelligence] = None
 
 
 class SearchHistoryItem(BaseModel):

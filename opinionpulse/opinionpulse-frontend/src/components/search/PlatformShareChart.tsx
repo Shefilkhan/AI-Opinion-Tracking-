@@ -15,50 +15,48 @@ type PlatformShareChartProps = {
   data: SearchResponse
 }
 
-// Colors for the donut chart
-const COLORS = [
-  "#3B82F6", // blue
-  "#10B981", // emerald
-  "#F59E0B", // amber
-  "#8B5CF6", // violet
-  "#EC4899", // pink
-  "#64748B", // slate
-]
+const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#64748B"]
 
 export function PlatformShareChart({ data }: PlatformShareChartProps) {
-  const counts: Record<string, number> = {}
+  const stats = data.search_intelligence?.platform_stats
 
-  data.results.forEach((r) => {
-    counts[r.platform] = (counts[r.platform] || 0) + 1
-  })
-
-  const chartData = Object.keys(counts)
-    .map((platform) => ({
-      name: platformDisplayName(platform),
-      value: counts[platform],
-    }))
-    .sort((a, b) => b.value - a.value)
-    .map((item, idx) => ({
-      ...item,
-      color: COLORS[idx % COLORS.length]
-    }))
+  const chartData = stats?.length
+    ? stats.map((p, idx) => ({
+        name: platformDisplayName(p.platform),
+        value: p.content_count,
+        share: p.share_pct,
+        color: COLORS[idx % COLORS.length],
+      }))
+    : (() => {
+        const counts: Record<string, number> = {}
+        data.results.forEach((r) => {
+          counts[r.platform] = (counts[r.platform] || 0) + 1
+        })
+        return Object.keys(counts)
+          .map((platform, idx) => ({
+            name: platformDisplayName(platform),
+            value: counts[platform],
+            share: 0,
+            color: COLORS[idx % COLORS.length],
+          }))
+          .sort((a, b) => b.value - a.value)
+      })()
 
   if (chartData.length === 0) {
     return (
       <div className={cn(proCard, "p-5 flex flex-col")}>
-        <h3 className={cn(cardTitle, "mb-4")}>Share of Voice</h3>
-        <p className="text-sm text-muted-foreground">
-          Not enough platform data to chart yet.
-        </p>
+        <h3 className={cn(cardTitle, "mb-4")}>Share of Analyzed Content</h3>
+        <p className="text-sm text-muted-foreground">Not enough platform data to calculate share of voice.</p>
       </div>
     )
   }
 
   return (
     <div className={cn(proCard, "p-5 flex flex-col")}>
-      <h3 className={cn(cardTitle, "mb-4")}>
-        Share of Voice
-      </h3>
+      <h3 className={cn(cardTitle, "mb-1")}>Share of Analyzed Content</h3>
+      <p className="mb-4 text-xs text-muted-foreground">
+        Percentage of all analyzed content by platform (includes comments and replies where sampled).
+      </p>
       <div className="h-[220px] w-full flex-1">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -79,14 +77,16 @@ export function PlatformShareChart({ data }: PlatformShareChartProps) {
             <Tooltip
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null
-                const data = payload[0].payload
+                const row = payload[0].payload as (typeof chartData)[number]
                 return (
                   <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-md">
                     <div className="flex items-center gap-2">
-                      <div className="h-3 w-3 rounded-full" style={{ backgroundColor: data.color }} />
-                      <span className="font-medium text-foreground">{data.name}</span>
+                      <div className="h-3 w-3 rounded-full" style={{ backgroundColor: row.color }} />
+                      <span className="font-medium text-foreground">{row.name}</span>
                     </div>
-                    <p className="mt-1 text-muted-foreground">{data.value} mentions</p>
+                    <p className="mt-1 text-muted-foreground">
+                      {row.value} items{row.share > 0 ? ` · ${row.share}%` : ""}
+                    </p>
                   </div>
                 )
               }}

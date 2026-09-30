@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { getDashboardOverview, getLiveDebates } from "@/api/dashboard"
+import { fetchSearchHistory } from "@/lib/api/search"
 
 const REFRESH_MS = 5 * 60 * 1000
 const STALE_MS = 60 * 1000
@@ -23,6 +24,20 @@ export function useLiveDebates(enabled = true) {
     queryFn: () => getLiveDebates({ timeoutMs: 45_000 }),
     enabled,
     staleTime: STALE_MS,
+    refetchInterval: REFRESH_MS,
+    retry: 1,
+  })
+}
+
+export function useSearchHistory(enabled = true) {
+  return useQuery({
+    queryKey: ["search-history"],
+    queryFn: async () => {
+      const data = await fetchSearchHistory()
+      return data.items
+    },
+    enabled,
+    staleTime: 30_000,
     refetchInterval: REFRESH_MS,
     retry: 1,
   })

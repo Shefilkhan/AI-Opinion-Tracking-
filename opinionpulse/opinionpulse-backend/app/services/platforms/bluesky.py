@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 import time
 
 import requests
 
 from app.core.config import get_settings
 from app.services.cache_utils import cached
+from app.services.platform_rate_limit import is_rate_limited, mark_rate_limited
 from app.services.platforms.platform_common import (
     build_result,
     log_platform_error,
@@ -21,11 +23,27 @@ from app.services.platforms.query_helpers import (
     sort_results_by_posted_at,
 )
 
+logger = logging.getLogger(__name__)
+
 BLUESKY_API_BASE = "https://bsky.social/xrpc"
 BLUESKY_PUBLIC_BASE = "https://public.api.bsky.app/xrpc"
 TIMEOUT = 12
+REQUEST_HEADERS = {
+    "User-Agent": "OpinionPulse/1.0 (sentiment research)",
+    "Accept": "application/json",
+}
 
 _session_cache: dict[str, object] = {"access_jwt": None, "expires_at": 0.0}
+
+
+def _short_http_error(resp: requests.Response, max_len: int = 160) -> str:
+    text = (resp.text or "").strip()
+    if text.startswith("<"):
+        return f"HTTP {resp.status_code} (blocked or HTML error page)"
+    one_line = " ".join(text.split())
+    if len(one_line) > max_len:
+        return f"HTTP {resp.status_code}: {one_line[:max_len]}…"
+    return f"HTTP {resp.status_code}: {one_line or 'empty response'}"
 
 
 def _get_session() -> str | None:
@@ -52,7 +70,7 @@ def _get_session() -> str | None:
             timeout=TIMEOUT,
         )
         if resp.status_code != 200:
-            print(f"⚠️ Bluesky auth failed: {resp.text}")
+            logger.warning("Bluesky auth failed: %s", _short_http_error(resp))
             return None
 
         data = resp.json()
@@ -60,7 +78,7 @@ def _get_session() -> str | None:
         _session_cache["expires_at"] = time.time() + 7200
         return data["accessJwt"]
     except Exception as exc:
-        print(f"⚠️ Bluesky session error: {exc}")
+        logger.warning("Bluesky session error: %s", exc)
         return None
 
 
@@ -78,12 +96,14 @@ def search_bluesky(query: str, time_range: str = "24h", limit: int = 15) -> list
     cache_key = make_search_cache_key("bluesky", query, time_range, str(limit))
 
     def fetch() -> list[dict]:
+        if is_rate_limited("bluesky"):
+            return []
         try:
             access_token = _get_session()
             base_url = BLUESKY_API_BASE if access_token else BLUESKY_PUBLIC_BASE
-            headers = (
-                {"Authorization": f"Bearer {access_token}"} if access_token else {}
-            )
+            headers = {**REQUEST_HEADERS}
+            if access_token:
+                headers["Authorization"] = f"Bearer {access_token}"
 
             resp = requests.get(
                 f"{base_url}/app.bsky.feed.searchPosts",
@@ -92,9 +112,18 @@ def search_bluesky(query: str, time_range: str = "24h", limit: int = 15) -> list
                 timeout=TIMEOUT,
             )
             if resp.status_code != 200:
-                print(
-                    f"⚠️ Bluesky search failed: {resp.status_code} {resp.text}"
+                if resp.status_code in (403, 429):
+                    mark_rate_limited("bluesky")
+                logger.warning(
+                    "Bluesky search failed for %r: %s",
+                    query,
+                    _short_http_error(resp),
                 )
+                if not access_token and resp.status_code == 403:
+                    logger.info(
+                        "Bluesky tip: add BLUESKY_HANDLE and BLUESKY_APP_PASSWORD to .env.local "
+                        "for authenticated search if the public API is blocked."
+                    )
                 return []
 
             posts = resp.json().get("posts") or []

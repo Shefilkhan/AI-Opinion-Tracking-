@@ -6,6 +6,50 @@ import { cn } from "@/lib/utils"
 type QuiverIntelligencePanelProps = {
   data: QuiverIntelligenceResponse | undefined
   loading?: boolean
+  priceChangePct?: number | null
+}
+
+const SECTION_GROUPS: Record<
+  string,
+  { title: string; ids: string[] }
+> = {
+  market: {
+    title: "Market signals",
+    ids: ["etf_holdings", "hedge_funds", "alt_data"],
+  },
+  corporate: {
+    title: "Corporate signals",
+    ids: ["insiders", "gov_contracts", "lobbying"],
+  },
+  government: {
+    title: "Government / policy",
+    ids: ["congress"],
+  },
+}
+
+const CRYPTO_SECTIONS = new Set(["etf_holdings", "hedge_funds", "alt_data"])
+const STOCK_SECTIONS = new Set([
+  "congress",
+  "insiders",
+  "gov_contracts",
+  "lobbying",
+  "etf_holdings",
+  "hedge_funds",
+  "alt_data",
+])
+
+function relevantSectionIds(assetType: QuiverIntelligenceResponse["asset_type"]): Set<string> | null {
+  if (assetType === "crypto") return CRYPTO_SECTIONS
+  if (assetType === "stock") return STOCK_SECTIONS
+  return null
+}
+
+function sectionSummary(section: QuiverSection): string {
+  if (section.records.length > 0) {
+    return `${section.records.length} recent signal${section.records.length === 1 ? "" : "s"}`
+  }
+  if (section.message) return section.message
+  return "No recent activity"
 }
 
 function SectionBlock({ section }: { section: QuiverSection }) {
@@ -21,22 +65,21 @@ function SectionBlock({ section }: { section: QuiverSection }) {
       >
         <span className="quiver-section-title">
           <span aria-hidden>{section.emoji}</span>
-          {section.label}
-          {section.records.length > 0 && (
-            <span className="quiver-section-count">{section.records.length}</span>
-          )}
+          <span className="min-w-0">
+            <span className="block">{section.label}</span>
+            <span className="block text-[11px] font-normal text-[var(--dash-text-faint)]">
+              {sectionSummary(section)}
+            </span>
+          </span>
         </span>
-        <ChevronDown className={cn("size-4 shrink-0 transition-transform", open && "rotate-180")} />
+        <ChevronDown className={cn("size-4 shrink-0 transition-transform duration-200", open && "rotate-180")} />
       </button>
 
       {open && (
         <div className="quiver-section-body">
           <p className="quiver-section-desc">{section.description}</p>
-          {section.message && section.records.length === 0 && (
-            <p className="quiver-section-empty">{section.message}</p>
-          )}
-          {section.records.length === 0 && !section.message && (
-            <p className="quiver-section-empty">No recent records for this ticker.</p>
+          {section.records.length === 0 && (
+            <p className="quiver-section-empty">{sectionSummary(section)}</p>
           )}
           <ul className="quiver-records">
             {section.records.map((record, idx) => (
@@ -63,11 +106,61 @@ function SectionBlock({ section }: { section: QuiverSection }) {
   )
 }
 
-export function QuiverIntelligencePanel({ data, loading }: QuiverIntelligencePanelProps) {
-  const populatedCount = useMemo(
-    () => data?.sections.filter((s) => s.records.length > 0).length ?? 0,
-    [data?.sections]
+function ExternalSignalSummary({
+  data,
+  priceChangePct,
+}: {
+  data: QuiverIntelligenceResponse
+  priceChangePct?: number | null
+}) {
+  const activeSections = data.sections.filter((s) => s.records.length > 0)
+  const overall =
+    activeSections.length === 0
+      ? "No obvious external catalyst detected"
+      : `${activeSections.length} external dataset${activeSections.length === 1 ? "" : "s"} with recent activity`
+
+  return (
+    <div className="crisis-external-summary mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="crisis-external-summary-item">
+        <p className="crisis-mini-label">Price</p>
+        <p className="text-sm font-semibold text-[var(--dash-text)]">
+          {priceChangePct != null ? `${priceChangePct > 0 ? "+" : ""}${priceChangePct}%` : "No recent data"}
+        </p>
+      </div>
+      {["etf_holdings", "hedge_funds", "congress"].map((id) => {
+        const section = data.sections.find((s) => s.id === id)
+        if (!section) return null
+        return (
+          <div key={id} className="crisis-external-summary-item">
+            <p className="crisis-mini-label">{section.label}</p>
+            <p className="text-sm font-semibold text-[var(--dash-text)]">{sectionSummary(section)}</p>
+          </div>
+        )
+      })}
+      <div className="crisis-external-summary-item sm:col-span-2 lg:col-span-4">
+        <p className="crisis-mini-label">Overall</p>
+        <p className="text-sm text-[var(--dash-text-mid)]">{overall}</p>
+      </div>
+    </div>
   )
+}
+
+function isSetupNotice(message: string): boolean {
+  const lower = message.toLowerCase()
+  return (
+    lower.includes("quiver_api_key") ||
+    lower.includes(".env.local") ||
+    lower.includes("api key not configured")
+  )
+}
+
+export function QuiverIntelligencePanel({ data, loading, priceChangePct }: QuiverIntelligencePanelProps) {
+  const filteredSections = useMemo(() => {
+    if (!data) return []
+    const allowed = relevantSectionIds(data.asset_type)
+    if (!allowed) return []
+    return data.sections.filter((s) => allowed.has(s.id))
+  }, [data])
 
   if (loading) {
     return (
@@ -79,22 +172,36 @@ export function QuiverIntelligencePanel({ data, loading }: QuiverIntelligencePan
 
   if (!data) return null
 
+  if (data.asset_type === "unknown") {
+    return (
+      <div className="rounded-xl border border-dashed border-[var(--dash-border)] bg-[var(--dash-bg)] px-4 py-6 text-sm text-[var(--dash-text-mid)]">
+        External market signals are not available for this topic type.
+      </div>
+    )
+  }
+
+  const grouped = Object.entries(SECTION_GROUPS)
+    .map(([key, group]) => ({
+      key,
+      title: group.title,
+      sections: filteredSections.filter((s) => group.ids.includes(s.id)),
+    }))
+    .filter((g) => g.sections.length > 0)
+
   return (
     <div className="quiver-panel">
       <div className="quiver-panel-header">
         <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h4 className="font-semibold text-[var(--dash-text)]">Alternative market intelligence</h4>
-            {data.ticker && (
-              <span className="rounded-full border border-[var(--dash-border)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--dash-text-faint)]">
-                {data.ticker}
-              </span>
-            )}
-          </div>
+          <h4 className="font-semibold text-[var(--dash-text)]">Market & external signals</h4>
           <p className="mt-1 text-xs text-[var(--dash-text-faint)]">
-            Congressional trades, insiders, lobbying, contracts, 13F moves, and Quiver news — via{" "}
-            {data.source}
+            External financial, policy, and institutional signals that may help explain unusual
+            conversation.
           </p>
+          {data.ticker && (
+            <span className="mt-2 inline-flex rounded-full border border-[var(--dash-border)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--dash-text-faint)]">
+              {data.ticker}
+            </span>
+          )}
         </div>
         <a
           href="https://www.quiverquant.com/"
@@ -107,28 +214,32 @@ export function QuiverIntelligencePanel({ data, loading }: QuiverIntelligencePan
         </a>
       </div>
 
-      {data.message && (
+      {data.message && !isSetupNotice(data.message) && (
         <p className="quiver-panel-notice">{data.message}</p>
       )}
 
-      {!data.configured && (
-        <p className="quiver-panel-notice quiver-panel-notice-warn">
-          Set <code className="text-[11px]">QUIVER_API_KEY</code> in backend{" "}
-          <code className="text-[11px]">.env.local</code> to load live datasets.
-        </p>
+      {data.configured && filteredSections.length > 0 && (
+        <ExternalSignalSummary data={{ ...data, sections: filteredSections }} priceChangePct={priceChangePct} />
       )}
 
-      {data.configured && populatedCount > 0 && (
-        <p className="text-xs text-[var(--dash-text-faint)]">
-          {populatedCount} dataset{populatedCount === 1 ? "" : "s"} with recent activity
-        </p>
-      )}
-
-      <div className="quiver-sections">
-        {data.sections.map((section) => (
-          <SectionBlock key={section.id} section={section} />
+      <div className="quiver-sections space-y-4">
+        {grouped.map((group) => (
+          <div key={group.key}>
+            <p className="crisis-mini-label mb-2">{group.title}</p>
+            <div className="space-y-2">
+              {group.sections.map((section) => (
+                <SectionBlock key={section.id} section={section} />
+              ))}
+            </div>
+          </div>
         ))}
       </div>
+
+      {filteredSections.length === 0 && (
+        <p className="text-sm text-[var(--dash-text-faint)]">
+          No relevant external datasets for this topic.
+        </p>
+      )}
     </div>
   )
 }

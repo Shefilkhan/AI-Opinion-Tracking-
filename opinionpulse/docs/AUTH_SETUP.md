@@ -56,7 +56,7 @@ Optional tuning: `OTP_EXPIRE_MINUTES=2`, `OTP_MAX_ATTEMPTS=3`, `LOGIN_MAX_FAILED
 4. Create an app → Mail → Other → name it `OpinionPulse`.
 5. Copy the 16-character password into `EMAIL_APP_PASSWORD` in `.env.local` (spaces optional).
 
-If email is not configured and `APP_ENV=development`, the API may return `dev_otp_code` and the UI shows `DevOtpBanner` **only in Vite dev builds** (`import.meta.env.DEV`). Production builds never show the on-screen OTP. When SMTP is configured but send fails, the API returns `503` with: `Failed to send verification email. Please try again.` (check the backend terminal for `EMAIL ERROR:` logs).
+If email is not configured, signup/login OTP returns **503** until `EMAIL_USER` and `EMAIL_APP_PASSWORD` are set. For local automated tests only, set `OTP_ALLOW_DEV_EXPOSE=true` in backend env (never in production).
 
 ## Run locally
 

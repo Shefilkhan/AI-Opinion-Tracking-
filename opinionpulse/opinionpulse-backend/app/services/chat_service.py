@@ -29,11 +29,11 @@ from app.services.search_service import search_all_platforms
 
 logger = logging.getLogger(__name__)
 
-GROQ_MODEL = "llama-3.3-70b-versatile"
+_settings = get_settings()
+GROQ_MODEL = os.getenv("GROQ_MODEL", _settings.groq_model or "openai/gpt-oss-20b")
 ANTHROPIC_MODEL = "claude-sonnet-4-20250514"
 AI_TIMEOUT_SECONDS = 25.0
 
-_settings = get_settings()
 AI_PROVIDER = os.getenv("AI_PROVIDER", _settings.ai_provider or "groq").lower()
 
 _groq_client: Any = None
@@ -689,8 +689,23 @@ async def process_chat_message(
     message: str,
     conversation_history: list[dict[str, str]],
     user_id: int | None = None,
+    *,
+    live_sources: bool = True,
+    deep_mode: bool = False,
 ) -> dict[str, Any]:
     del user_id
+
+    from app.services.pulse_orchestrator_service import generate_pulse_answer
+
+    try:
+        return await generate_pulse_answer(
+            message,
+            conversation_history,
+            live_sources=live_sources,
+            deep_mode=deep_mode,
+        )
+    except Exception as pipeline_error:
+        logger.error("Pulse orchestrator error, falling back: %s", pipeline_error)
 
     context_data = ""
     fetched_results: list[dict[str, Any]] = []

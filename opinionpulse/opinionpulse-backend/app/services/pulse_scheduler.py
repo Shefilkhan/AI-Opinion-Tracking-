@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+from datetime import datetime
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -60,6 +61,7 @@ def start_pulse_scheduler() -> None:
         minutes=max(interval, 5),
         id="pulse_brand_watch_scan",
         replace_existing=True,
+        next_run_time=datetime.now(),
     )
     _scheduler.add_job(
         _run_trending_snapshot_job,

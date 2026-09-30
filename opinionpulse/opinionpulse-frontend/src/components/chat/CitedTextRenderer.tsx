@@ -28,7 +28,7 @@ export function CitedTextRenderer({ content, citedSources = [] }: CitedTextRende
             target="_blank"
             rel="noopener noreferrer"
             title={source.title}
-            className="mx-0.5 inline-flex min-w-[1.25rem] items-center justify-center rounded-md bg-[var(--chat-purple-dim)] px-1.5 py-0.5 align-baseline text-[10px] font-bold text-[var(--chat-purple)] no-underline hover:bg-[rgba(139,92,246,0.25)]"
+            className="mx-0.5 inline-flex min-w-[1.25rem] items-center justify-center rounded-md bg-[var(--chat-primary-dim)] px-1.5 py-0.5 align-baseline text-[10px] font-bold text-[var(--chat-primary)] no-underline hover:opacity-80"
           >
             {num}
           </a>

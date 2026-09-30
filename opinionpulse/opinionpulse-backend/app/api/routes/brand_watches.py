@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse
@@ -16,6 +17,7 @@ from app.schemas.brand_watch import (
     AlertPreferencesUpdate,
     BrandWatchCreate,
     BrandWatchOut,
+    BrandWatchSuggestResponse,
     BrandWatchUpdate,
     ResponseBriefOut,
 )
@@ -25,11 +27,16 @@ from app.services.brand_watch_service import (
     build_search_terms,
     fetch_bundle_results,
     parse_watch_meta,
+    preview_watch_query,
     row_to_watch_out,
+    suggest_watch_options,
     watch_display_name,
 )
 from app.services.notification_service import create_user_notification
 from app.services.plan_limits import check_keyword_alert_limit
+from app.services.pulse_monitor_service import scan_brand_watch
+
+logger = logging.getLogger(__name__)
 from app.services.response_brief_service import generate_response_brief
 
 router = APIRouter(prefix="/api/brand-watches", tags=["brand-watches"])
@@ -97,6 +104,16 @@ def update_alert_preferences(
     return AlertPreferencesOut(**prefs_to_dict(prefs))
 
 
+@router.get("/suggest", response_model=BrandWatchSuggestResponse)
+async def suggest_brand_watch(
+    q: str,
+    current_user: User = Depends(get_current_user),
+):
+    del current_user
+    data = await suggest_watch_options(q)
+    return BrandWatchSuggestResponse(**data)
+
+
 @router.get("", response_model=list[BrandWatchOut])
 def list_brand_watches(
     current_user: User = Depends(get_current_user),
@@ -106,12 +123,19 @@ def list_brand_watches(
 
 
 @router.post("", response_model=BrandWatchOut, status_code=status.HTTP_201_CREATED)
-def create_brand_watch(
+async def create_brand_watch(
     body: BrandWatchCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     check_keyword_alert_limit(current_user.id, db)
+
+    preview = await preview_watch_query(body.brand.strip())
+    if not preview.get("has_live_data"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No live mentions found for this brand. Search live sources and pick a match first.",
+        )
 
     aliases = [a.strip() for a in body.aliases if a.strip()][:10]
     terms = build_search_terms(
@@ -151,6 +175,10 @@ def create_brand_watch(
     )
     db.commit()
     db.refresh(row)
+    try:
+        await scan_brand_watch(db, row, user=current_user, store_event=True)
+    except Exception as exc:
+        logger.warning("Initial pulse scan failed for watch %s: %s", row.id, exc)
     return BrandWatchOut(**row_to_watch_out(row))
 
 

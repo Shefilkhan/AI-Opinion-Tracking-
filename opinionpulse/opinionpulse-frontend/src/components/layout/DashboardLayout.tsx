@@ -16,7 +16,7 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { DashboardTopBar } from "@/components/dashboard/DashboardTopBar"
-import { ThemeToggle } from "@/components/ui/ThemeToggle"
+import { ThemeModeToggle } from "@/components/ui/ThemeModeToggle"
 import { Skeleton } from "@/components/ui/Skeleton"
 import { cn } from "@/lib/utils"
 import { pageShell } from "@/lib/ui-classes"
@@ -294,7 +294,7 @@ export function DashboardLayout({
           </div>
         )}
         <div className="mt-3 flex justify-center sm:hidden">
-          <ThemeToggle />
+          <ThemeModeToggle />
         </div>
       </div>
     </>

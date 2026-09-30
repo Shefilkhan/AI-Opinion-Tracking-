@@ -37,8 +37,17 @@ class Settings(BaseSettings):
     google_oauth_prompt: str = "select_account"
 
     youtube_api_key: str = ""
+    youtube_enabled: bool = True
     youtube_max_videos_per_keyword: int = 3
     youtube_max_comments_per_video: int = 20
+    youtube_max_videos_per_search: int = 10
+    youtube_comments_per_video: int = 50
+    youtube_max_replies_per_comment: int = 20
+    youtube_include_replies: bool = True
+    youtube_cache_ttl_seconds: int = 900
+    youtube_max_concurrent_requests: int = 5
+    youtube_region_code: str = "US"
+    youtube_relevance_language: str = "en"
 
     reddit_client_id: str = ""
     reddit_client_secret: str = ""
@@ -61,7 +70,9 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     ai_provider: str = "groq"
     groq_api_key: str = ""
+    groq_model: str = "openai/gpt-oss-20b"
     anthropic_api_key: str = ""
+    xai_api_key: str = ""
     quiver_api_key: str = ""
     cache_duration_seconds: int = 300
     ai_cache_duration_seconds: int = 600
@@ -87,6 +98,8 @@ class Settings(BaseSettings):
     stripe_price_pro_annual: str = ""
     stripe_price_enterprise_monthly: str = ""
     stripe_price_enterprise_annual: str = ""
+    # Requires Stripe Tax enabled in Dashboard → Settings → Tax
+    stripe_automatic_tax: bool = True
 
     @model_validator(mode="after")
     def apply_email_env_aliases(self):
@@ -119,6 +132,8 @@ class Settings(BaseSettings):
     otp_resend_window_minutes: int = 10
     login_max_failed_attempts: int = 5
     login_lockout_minutes: int = 15
+    # Never expose OTP in API/UI unless explicitly enabled (tests only).
+    otp_allow_dev_expose: bool = False
 
     @property
     def email_configured(self) -> bool:
@@ -126,8 +141,12 @@ class Settings(BaseSettings):
 
     @property
     def expose_dev_otp_in_api(self) -> bool:
-        """Expose OTP in API responses when email is not configured (local dev only)."""
-        return self.app_env == "development" and not self.email_configured
+        """Expose OTP in API only when dev fallback is explicitly allowed and SMTP is off."""
+        return (
+            self.otp_allow_dev_expose
+            and self.app_env == "development"
+            and not self.email_configured
+        )
 
     @property
     def stripe_configured(self) -> bool:

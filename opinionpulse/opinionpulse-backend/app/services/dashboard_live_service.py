@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import threading
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from typing import Any
 
@@ -27,6 +27,11 @@ from app.services.sentiment_analysis import calculate_sentiment_summary
 from app.services.trending_snapshot_service import (
     get_todays_trending,
     get_yesterday_comparison,
+)
+from app.services.source_health_service import (
+    CACHE_KEY as SOURCE_HEALTH_CACHE_KEY,
+    get_source_health,
+    get_sources_summary_for_dashboard,
 )
 
 logger = logging.getLogger(__name__)
@@ -118,55 +123,66 @@ def _schedule_trending_snapshot_refresh() -> None:
 def _platform_pulse_from_snapshots(
     snapshots: list[dict[str, Any]], live: dict[str, bool]
 ) -> list[dict[str, Any]]:
-    counts = Counter((s.get("platform") or "news").lower() for s in snapshots)
-    news_count = sum(
-        counts.get(k, 0)
-        for k in ("newsapi", "guardian", "gnews", "currents", "mediastack", "news")
-    )
-    news_live = any(
-        live.get(k) for k in ("newsapi", "guardian", "mediastack", "currents", "gnews")
-    )
-    return [
-        {
-            "platform": "reddit",
-            "label": "Reddit",
-            "mentions": f"{counts.get('reddit', 0)} trending posts",
-            "positive_pct": 61,
-            "live": True,
-        },
-        {
-            "platform": "devto",
-            "label": "Dev.to",
-            "mentions": "Tech articles",
-            "positive_pct": 65,
-            "live": True,
-        },
-        {
-            "platform": "hackernews",
-            "label": "Hacker News",
-            "mentions": "Tech discussions",
-            "positive_pct": 58,
-            "live": True,
-        },
-        {
-            "platform": "youtube",
-            "label": "YouTube",
-            "mentions": f"{counts.get('youtube', 0)} videos" if counts.get("youtube") else (
-                "Add YOUTUBE_API_KEY" if not live.get("youtube") else "Live"
-            ),
-            "positive_pct": 70,
-            "live": live.get("youtube", False),
-        },
-        {
-            "platform": "news",
-            "label": "Global News",
-            "mentions": f"{news_count} headlines" if news_count else (
-                "Add news API keys" if not news_live else "Live"
-            ),
-            "positive_pct": 52,
-            "live": news_live,
-        },
+    by_platform: dict[str, list[dict]] = defaultdict(list)
+    for s in snapshots:
+        plat = (s.get("platform") or "news").lower()
+        if plat in ("newsapi", "guardian", "gnews", "currents", "mediastack"):
+            plat = "news"
+        by_platform[plat].append(
+            {
+                "title": s.get("title", ""),
+                "content": s.get("title", ""),
+                "sentiment": s.get("sentiment", "neutral"),
+                "engagement_score": s.get("engagement_score", 0),
+            }
+        )
+
+    defs = [
+        ("reddit", "Reddit", True),
+        ("youtube", "YouTube", live.get("youtube", False)),
+        ("news", "News", any(live.get(k) for k in ("newsapi", "guardian", "mediastack", "currents", "gnews"))),
+        ("hackernews", "Hacker News", True),
+        ("bluesky", "Bluesky", live.get("bluesky", False)),
     ]
+    pulse: list[dict[str, Any]] = []
+    for platform, label, default_live in defs:
+        items = by_platform.get(platform, [])
+        count = len(items)
+        if items:
+            summary = calculate_sentiment_summary(items)
+            pos = int(summary["positive"])
+            mention_label = f"{count} items" if count else "Live"
+            sentiment_net = pos - int(summary["negative"])
+        else:
+            pos = 50
+            mention_label = "Add API key" if platform == "youtube" and not default_live else "No recent data"
+            sentiment_net = 0
+        pulse.append(
+            {
+                "platform": platform,
+                "label": label,
+                "mentions": mention_label,
+                "positive_pct": pos,
+                "live": default_live and (count > 0 or platform in ("reddit", "hackernews")),
+                "mention_count": count,
+                "activity_change_pct": None,
+                "sentiment_net": sentiment_net,
+            }
+        )
+    pulse.sort(key=lambda p: p["mention_count"], reverse=True)
+    return pulse
+
+
+def _schedule_source_health_refresh() -> None:
+    """Refresh source probe cache in the background."""
+
+    def _run() -> None:
+        try:
+            get_source_health(force_refresh=True)
+        except Exception as exc:
+            logger.warning("Background source health refresh failed: %s", exc)
+
+    threading.Thread(target=_run, daemon=True).start()
 
 
 def _refresh_overview_cache_async() -> None:
@@ -293,40 +309,36 @@ def _build_dashboard_overview(db: Session | None = None) -> dict[str, Any]:
                 "platform": "reddit",
                 "label": "Reddit",
                 "mentions": f"{len(reddit_data)} hot posts" if reddit_data else "Live (no key)",
-                "positive_pct": reddit_summary.get("positive", 61),
+                "positive_pct": int(reddit_summary.get("positive", 61)),
                 "live": True,
-            },
-            {
-                "platform": "devto",
-                "label": "Dev.to",
-                "mentions": "Tech articles",
-                "positive_pct": 65,
-                "live": True,
-            },
-            {
-                "platform": "hackernews",
-                "label": "Hacker News",
-                "mentions": "Tech discussions",
-                "positive_pct": 58,
-                "live": True,
+                "mention_count": len(reddit_data),
+                "sentiment_net": int(reddit_summary.get("positive", 61)) - int(reddit_summary.get("negative", 30)),
             },
             {
                 "platform": "youtube",
                 "label": "YouTube",
                 "mentions": f"{yt_views:,} views" if yt_views else ("Add YOUTUBE_API_KEY" if not live.get("youtube") else "Live"),
-                "positive_pct": yt_summary.get("positive", 70),
+                "positive_pct": int(yt_summary.get("positive", 70)),
                 "live": live.get("youtube", False),
+                "mention_count": len(youtube_data),
+                "sentiment_net": int(yt_summary.get("positive", 70)) - int(yt_summary.get("negative", 20)),
             },
             {
                 "platform": "news",
                 "label": "Global News",
                 "mentions": f"{len(news_data)} headlines" if news_data else ("Add news API keys" if not news_live else "Live"),
-                "positive_pct": news_summary.get("positive", 52),
+                "positive_pct": int(news_summary.get("positive", 52)),
                 "live": news_live,
+                "mention_count": len(news_data),
+                "sentiment_net": int(news_summary.get("positive", 52)) - int(news_summary.get("negative", 25)),
             },
         ]
 
     live_debates, most_discussed = get_dashboard_extras_fast()
+
+    sources_summary = get_sources_summary_for_dashboard()
+    if cache_get(SOURCE_HEALTH_CACHE_KEY) is None:
+        _schedule_source_health_refresh()
 
     has_data = bool(snapshots or reddit_data or news_data or youtube_data)
     return {
@@ -367,6 +379,7 @@ def _build_dashboard_overview(db: Session | None = None) -> dict[str, Any]:
         "platform_pulse": platform_pulse,
         "demo_mode": not has_data,
         "is_live": live,
+        "sources_summary": sources_summary,
         "last_updated": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -375,7 +388,10 @@ def get_dashboard_overview(db: Session | None = None) -> dict[str, Any]:
     """Fast dashboard payload: DB snapshots + cache; live APIs only on cold start."""
     hit = cache_get(OVERVIEW_CACHE_KEY)
     if hit is not None:
+        hit["sources_summary"] = get_sources_summary_for_dashboard()
         _refresh_overview_cache_async()
+        if cache_get(SOURCE_HEALTH_CACHE_KEY) is None:
+            _schedule_source_health_refresh()
         return hit
 
     payload = _build_dashboard_overview(db=db)

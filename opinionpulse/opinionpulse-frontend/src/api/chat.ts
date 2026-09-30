@@ -53,6 +53,14 @@ export type PulseChatDataUsed = {
   platforms: string[]
 }
 
+export type PulseAnalysisConfidence = {
+  level: string
+  label: string
+  total_items: number
+  sources_referenced: number
+  explanation: string
+}
+
 export type PulseChatResponse = {
   conversation_id: string
   message: string
@@ -65,6 +73,10 @@ export type PulseChatResponse = {
   references?: PulseChatReference[]
   cited_sources?: PulseChatCitedSource[]
   sources_fetched?: number
+  intent?: string | null
+  analysis_confidence?: PulseAnalysisConfidence | null
+  deep_mode?: boolean
+  live_sources?: boolean
 }
 
 export type PulseConversation = {
@@ -90,13 +102,24 @@ export type PulseStoredMessage = {
   created_at: string
 }
 
+export type PulseChatOptions = {
+  liveSources?: boolean
+  deepMode?: boolean
+}
+
 export async function sendChatMessage(
   message: string,
-  conversationId?: string
+  conversationId?: string,
+  options?: PulseChatOptions
 ): Promise<PulseChatResponse> {
   return apiRequest<PulseChatResponse>("/api/chat/message", {
     method: "POST",
-    body: { message, conversation_id: conversationId },
+    body: {
+      message,
+      conversation_id: conversationId,
+      live_sources: options?.liveSources ?? true,
+      deep_mode: options?.deepMode ?? false,
+    },
     auth: true,
   })
 }

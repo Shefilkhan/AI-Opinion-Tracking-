@@ -155,6 +155,7 @@ async def scan_brand_watch(
             time_range="24h",
             sentiment="all",
             sort_by="recent",
+            crisis_mode=True,
         )
         results = search_payload.get("results") or []
     window_results = filter_results_in_window(results, start=window_start, end=now)

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useSearchParams } from "react-router-dom"
-import { AlertTriangle, Bot, Download, FileText, Loader2, Search, Sparkles, WifiOff } from "lucide-react"
+import { Download, FileText, Loader2, Search, Sparkles, WifiOff } from "lucide-react"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { InlineNotice } from "@/components/layout/InlineNotice"
@@ -11,26 +11,19 @@ import {
   inputSurface,
 } from "@/lib/ui-classes"
 import { Button } from "@/components/ui/button"
-import { KeywordsSidebar } from "@/components/search/KeywordsSidebar"
-import { AiInsightsSection } from "@/components/search/AiInsightsSection"
-import { RiskAnalysisPanel } from "@/components/analysis/RiskAnalysisPanel"
-import { OpinionSummaryCard } from "@/components/search/OpinionSummaryCard"
-import { ResultsFeed } from "@/components/search/ResultsFeed"
+import { SearchIntelligenceView } from "@/components/search/intelligence/SearchIntelligenceView"
 import { SearchFiltersBar } from "@/components/search/SearchFiltersBar"
-import { SourcesStatusBar } from "@/components/search/SourcesStatusBar"
-import { TopicSummaryCard } from "@/components/search/TopicSummaryCard"
-import { WikipediaSummaryCard } from "@/components/search/WikipediaSummaryCard"
-import { SearchSentimentChart } from "@/components/search/SearchSentimentChart"
-import { PlatformSentimentChart } from "@/components/search/PlatformSentimentChart"
-import { PlatformShareChart } from "@/components/search/PlatformShareChart"
-import { WordCloudChart } from "@/components/search/WordCloudChart"
-import { SentimentForecastChart } from "@/components/search/SentimentForecastChart"
 import { AiCrisisResponseModal } from "@/components/search/AiCrisisResponseModal"
 import { ApiError } from "@/api/client"
 import { searchOpinions } from "@/lib/api/search"
 import { applyClientFilters, needsServerRefetch } from "@/lib/api/searchFilters"
-import type { SearchFilters, SearchResponse } from "@/lib/api/types"
+import type { SearchFilters, SearchResponse, SearchTab } from "@/lib/api/types"
 import { addRecentSearch } from "@/lib/recentSearchStorage"
+import {
+  buildDetailedSearchCsv,
+  detailedSearchFilename,
+  downloadCsv,
+} from "@/lib/csv-export"
 import { useAuth } from "@/contexts/AuthContext"
 import { useUsage } from "@/hooks/useUsage"
 import { cn } from "@/lib/utils"
@@ -49,6 +42,8 @@ const QUICK_SEARCHES = [
   { label: "Crypto & Bitcoin", query: "Bitcoin" },
   { label: "Politics", query: "Elections" },
 ]
+
+const VALID_TABS: SearchTab[] = ["overview", "platforms", "youtube", "trends", "results"]
 
 const TIME_LABELS: Record<string, string> = {
   "24h": "Last 24 hours",
@@ -75,6 +70,22 @@ export function SearchPage() {
   const abortRef = useRef<AbortController | null>(null)
   const prevFiltersRef = useRef<SearchFilters>(DEFAULT_FILTERS)
   const lastAutoSearchRef = useRef<string | null>(null)
+  const tabParam = searchParams.get("tab") as SearchTab | null
+  const activeTab: SearchTab =
+    tabParam && VALID_TABS.includes(tabParam) ? tabParam : "overview"
+
+  function setActiveTab(tab: SearchTab) {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.set("tab", tab)
+      return next
+    })
+  }
+
+  function handlePlatformFilter(platform: string) {
+    setFilters((f) => ({ ...f, platform }))
+    setActiveTab(platform === "youtube" ? "youtube" : "results")
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -116,7 +127,11 @@ export function SearchPage() {
       setLoading(true)
       setError(null)
       setHasSearched(true)
-      setSearchParams({ q: trimmed })
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev)
+        next.set("q", trimmed)
+        return next
+      })
       try {
         const res = await searchOpinions(trimmed, f, controller.signal)
         if (controller.signal.aborted) return
@@ -191,44 +206,8 @@ export function SearchPage() {
     if (!data?.results?.length) return
 
     const maxRows = usage?.usage.csv_exports.limit
-    const exportRows =
-      maxRows != null && maxRows !== -1
-        ? data.results.slice(0, maxRows)
-        : data.results
-
-    const headers = ["ID", "Platform", "Author", "Sentiment", "Sentiment Score", "Date", "Content", "URL"]
-    // Escape EVERY field (commas/quotes/newlines) so a comma in an author name
-    // or URL can't shift columns and corrupt the row.
-    const csvCell = (v: unknown) => {
-      const s = v == null ? "" : String(v)
-      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
-    }
-    const rows = exportRows.map(r => [
-      csvCell(r.id),
-      csvCell(r.platform),
-      csvCell(r.author),
-      csvCell(r.sentiment),
-      csvCell(r.sentiment_score?.toFixed(2) || ""),
-      csvCell(r.posted_at),
-      csvCell(r.content || ""),
-      csvCell(r.source_url),
-    ])
-    
-    const csvContent = [
-      headers.join(","),
-      ...rows.map(r => r.join(","))
-    ].join("\n")
-    
-    // Download file
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.setAttribute("href", url)
-    link.setAttribute("download", `opinionpulse_export_${query}_${new Date().toISOString().split('T')[0]}.csv`)
-    link.style.visibility = "hidden"
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    const csvContent = buildDetailedSearchCsv(data, { maxRows })
+    downloadCsv(csvContent, detailedSearchFilename(query))
   }
 
   function handleExportPDF() {
@@ -385,7 +364,7 @@ export function SearchPage() {
             )}
 
             {hasSearched && (
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+              <div className="no-print flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                 <div className="flex-1 min-w-0">
                   <SearchFiltersBar filters={filters} onChange={setFilters} />
                 </div>
@@ -432,93 +411,15 @@ export function SearchPage() {
               </div>
             )}
 
-            {!loading && !error && data && (
-              <div className="grid w-full grid-cols-1 gap-6 xl:grid-cols-12 xl:gap-8">
-                <div className="flex flex-col gap-6 xl:col-span-8 xl:gap-8">
-                  <SourcesStatusBar data={data} />
-
-                  <TopicSummaryCard data={data} />
-
-                  {data.search_metadata &&
-                    (data.search_metadata.spam_filtered > 0 ||
-                      data.search_metadata.non_english_filtered > 0 ||
-                      data.search_metadata.brand_noise_filtered > 0 ||
-                      data.search_metadata.youtube_comments_included > 0) && (
-                      <InlineNotice variant="info">
-                        Filter stats:{" "}
-                        {data.search_metadata.spam_filtered > 0 &&
-                          `${data.search_metadata.spam_filtered} spam removed`}
-                        {data.search_metadata.brand_noise_filtered > 0 &&
-                          `${data.search_metadata.spam_filtered > 0 ? " · " : ""}${data.search_metadata.brand_noise_filtered} brand noise removed`}
-                        {data.search_metadata.non_english_filtered > 0 &&
-                          `${(data.search_metadata.spam_filtered > 0 || data.search_metadata.brand_noise_filtered > 0) ? " · " : ""}${data.search_metadata.non_english_filtered} non-English removed`}
-                        {data.search_metadata.youtube_comments_included > 0 &&
-                          `${(data.search_metadata.spam_filtered > 0 || data.search_metadata.brand_noise_filtered > 0 || data.search_metadata.non_english_filtered > 0) ? " · " : ""}${data.search_metadata.youtube_comments_included} YouTube comments included`}
-                      </InlineNotice>
-                    )}
-                  
-                  {data.sentiment_summary && data.sentiment_summary.negative > 30 && (
-                    <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-5 flex items-center justify-between shadow-sm">
-                      <div>
-                        <h4 className="font-semibold text-red-500 flex items-center gap-2">
-                          <AlertTriangle className="size-4" /> High Negative Sentiment Detected
-                        </h4>
-                        <p className="text-sm text-red-400 mt-1">
-                          {data.sentiment_summary.negative}% of recent mentions are negative.
-                        </p>
-                      </div>
-                      <Button 
-                        variant="destructive" 
-                        className="gap-2 shadow-sm"
-                        onClick={() => setCrisisModalOpen(true)}
-                      >
-                        <Bot className="size-4" />
-                        Generate PR Strategy
-                      </Button>
-                    </div>
-                  )}
-
-                  {data.wiki_summary && !data.topic_summary && (
-                    <WikipediaSummaryCard
-                      wiki={{
-                        title: data.wiki_summary.title,
-                        summary:
-                          data.wiki_summary.summary ??
-                          data.wiki_summary.extract ??
-                          "",
-                        url: data.wiki_summary.url,
-                        thumbnail: data.wiki_summary.thumbnail,
-                      }}
-                    />
-                  )}
-                  <OpinionSummaryCard
-                    data={data}
-                    timeLabel={TIME_LABELS[filters.timeRange] ?? "Last 24 hours"}
-                  />
-                  {data.risk_assessment && data.age_analysis && (
-                    <RiskAnalysisPanel
-                      riskData={data.risk_assessment}
-                      ageData={data.age_analysis}
-                      results={data.results}
-                      query={data.query}
-                    />
-                  )}
-                  <AiInsightsSection data={data} timeRange={filters.timeRange} />
-                  <SearchSentimentChart data={data} />
-                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    <PlatformShareChart data={data} />
-                    <PlatformSentimentChart data={data} />
-                  </div>
-                  <SentimentForecastChart data={data} />
-                  <WordCloudChart data={data} />
-                  <ResultsFeed results={data.results} />
-                </div>
-                <div className="xl:col-span-4">
-                  <div className="sticky top-[76px] flex flex-col gap-6">
-                    <KeywordsSidebar data={data} />
-                  </div>
-                </div>
-              </div>
+            {!loading && !error && data && data.total_results > 0 && (
+              <SearchIntelligenceView
+                data={data}
+                filters={filters}
+                tab={activeTab}
+                onTabChange={setActiveTab}
+                onPlatformFilter={handlePlatformFilter}
+                timeLabel={TIME_LABELS[filters.timeRange] ?? "Last 24 hours"}
+              />
             )}
 
             {!loading && !error && !data && !hasSearched && (
@@ -530,17 +431,14 @@ export function SearchPage() {
               />
             )}
 
-            {!loading && !error && data && data.results.length === 0 && (
+            {!loading && !error && data && hasSearched && data.total_results === 0 && (
               <EmptyState
                 icon={Search}
-                title="No results found"
-                description="Try a different keyword or adjust your filters"
+                title="No strong matches found"
+                description={`Try broader wording, a longer time range, or all platforms for "${data.query}".`}
                 action={
-                  <Button
-                    variant="outline"
-                    onClick={() => setFilters(DEFAULT_FILTERS)}
-                  >
-                    Clear filters
+                  <Button variant="outline" onClick={() => setFilters(DEFAULT_FILTERS)}>
+                    Reset filters
                   </Button>
                 }
               />

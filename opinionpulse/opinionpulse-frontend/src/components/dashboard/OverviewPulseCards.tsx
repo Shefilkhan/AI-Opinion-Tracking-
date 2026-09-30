@@ -6,9 +6,14 @@ import { cn } from "@/lib/utils"
 type OverviewPulseCardsProps = {
   stats: DashboardOverview["stats"]
   sourcesLive: number
+  sourcesConfigured: number
 }
 
-export function OverviewPulseCards({ stats, sourcesLive }: OverviewPulseCardsProps) {
+export function OverviewPulseCards({
+  stats,
+  sourcesLive,
+  sourcesConfigured,
+}: OverviewPulseCardsProps) {
   const positiveVal = stats.positive_sentiment.value
   const searchesVal = stats.searches_today.value
 
@@ -42,7 +47,9 @@ export function OverviewPulseCards({ stats, sourcesLive }: OverviewPulseCardsPro
             </div>
             <div className="text-right">
               <p className="text-[10px] uppercase tracking-wide text-white/60">Sources</p>
-              <p className="text-sm font-medium">{sourcesLive} live</p>
+              <p className="text-sm font-medium">
+                {sourcesLive}/{sourcesConfigured} live
+              </p>
             </div>
             <div className="flex gap-0.5 opacity-90" aria-hidden>
               <span className="size-6 rounded bg-white/20" />

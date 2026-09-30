@@ -10,7 +10,14 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-GROQ_MODEL = "llama-3.3-70b-versatile"
+
+def _groq_model() -> str:
+    import os
+
+    from app.core.config import get_settings
+
+    settings = get_settings()
+    return os.getenv("GROQ_MODEL", settings.groq_model or "openai/gpt-oss-20b")
 
 
 def build_cited_system_prompt(live_results: list[dict[str, Any]], query: str) -> str:
@@ -173,7 +180,7 @@ Rules:
 
     try:
         resp = client.chat.completions.create(
-            model=GROQ_MODEL,
+            model=_groq_model(),
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
             max_tokens=100,

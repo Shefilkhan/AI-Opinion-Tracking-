@@ -18,10 +18,16 @@ import {
   fetchResponseBrief,
   downloadWeeklyReport,
   listBrandWatches,
+  suggestBrandWatches,
   updateBrandWatch,
   type BrandWatch,
+  type BrandWatchSuggestOption,
   type ResponseBrief,
 } from "@/api/brandWatches"
+import {
+  BrandWatchSearchField,
+  BrandWatchSuggestPicker,
+} from "@/components/alerts/BrandWatchSuggestPicker"
 import { useCrisisRadar } from "@/hooks/useCrisisRadar"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { EmptyState } from "@/components/layout/EmptyState"
@@ -41,7 +47,11 @@ export function AlertsPage() {
   const [error, setError] = useState<string | null>(null)
 
   const [name, setName] = useState("")
+  const [searchQuery, setSearchQuery] = useState("")
   const [brand, setBrand] = useState("")
+  const [selectedOption, setSelectedOption] = useState<BrandWatchSuggestOption | null>(null)
+  const [suggestLoading, setSuggestLoading] = useState(false)
+  const [suggestOptions, setSuggestOptions] = useState<BrandWatchSuggestOption[]>([])
   const [product, setProduct] = useState("")
   const [ceo, setCeo] = useState("")
   const [aliases, setAliases] = useState("")
@@ -69,12 +79,62 @@ export function AlertsPage() {
     void loadWatches()
   }, [])
 
+  useEffect(() => {
+    const q = searchQuery.trim()
+    if (q.length < 2) {
+      setSuggestOptions([])
+      setSelectedOption(null)
+      setBrand("")
+      return
+    }
+
+    const controller = new AbortController()
+    const timer = window.setTimeout(() => {
+      setSuggestLoading(true)
+      void suggestBrandWatches(q, controller.signal)
+        .then((res) => {
+          setSuggestOptions(res.options)
+          setSelectedOption((prev) => {
+            if (prev && res.options.some((o) => o.id === prev.id)) return prev
+            return null
+          })
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) {
+            setSuggestOptions([])
+          }
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setSuggestLoading(false)
+        })
+    }, 450)
+
+    return () => {
+      controller.abort()
+      window.clearTimeout(timer)
+    }
+  }, [searchQuery])
+
+  function handleSelectOption(option: BrandWatchSuggestOption) {
+    setSelectedOption(option)
+    setBrand(option.query)
+    if (!name.trim()) {
+      setName(option.label.length > 60 ? option.label.slice(0, 57) + "…" : option.label)
+    }
+  }
+
+  function handleSearchQueryChange(value: string) {
+    setSearchQuery(value)
+    setSelectedOption(null)
+    setBrand(value.trim())
+  }
+
   const spikeByWatch = new Map(
     (radar?.points ?? []).map((p) => [p.watch_id, p])
   )
 
   async function addWatch() {
-    if (!name.trim() || !brand.trim()) return
+    if (!name.trim() || !brand.trim() || !selectedOption?.has_live_data) return
     setSaving(true)
     setError(null)
     try {
@@ -92,7 +152,10 @@ export function AlertsPage() {
       })
       setWatches((prev) => [created, ...prev])
       setName("")
+      setSearchQuery("")
       setBrand("")
+      setSelectedOption(null)
+      setSuggestOptions([])
       setProduct("")
       setCeo("")
       setAliases("")
@@ -166,7 +229,7 @@ export function AlertsPage() {
         <PageSection title="New watchlist" className="mb-0">
           <div className={cn(proCard, "p-5")}>
             <p className="mb-4 text-xs text-muted-foreground">
-              Bundle brand, product, CEO, and misspellings into one monitor.
+              Search live sources, pick the right match, then create your monitor.
             </p>
             {error && (
               <InlineNotice variant="warning" className="mb-4">
@@ -174,6 +237,14 @@ export function AlertsPage() {
               </InlineNotice>
             )}
             <div className="space-y-3">
+              <BrandWatchSearchField value={searchQuery} onChange={handleSearchQueryChange} />
+              <BrandWatchSuggestPicker
+                query={searchQuery}
+                options={suggestOptions}
+                loading={suggestLoading}
+                selectedId={selectedOption?.id ?? null}
+                onSelect={handleSelectOption}
+              />
               <input
                 type="text"
                 value={name}
@@ -181,13 +252,14 @@ export function AlertsPage() {
                 placeholder="Watch name e.g. Acme Corp"
                 className={cn(inputSurface, "h-11 w-full")}
               />
-              <input
-                type="text"
-                value={brand}
-                onChange={(e) => setBrand(e.target.value)}
-                placeholder="Brand name *"
-                className={cn(inputSurface, "h-11 w-full")}
-              />
+              {selectedOption && (
+                <p className="text-[11px] text-muted-foreground">
+                  Monitoring <strong>{selectedOption.query}</strong> across{" "}
+                  {selectedOption.platforms.length} live source
+                  {selectedOption.platforms.length === 1 ? "" : "s"} (
+                  {selectedOption.total_mentions.toLocaleString()} mentions in last 7 days).
+                </p>
+              )}
               <input
                 type="text"
                 value={product}
@@ -237,7 +309,12 @@ export function AlertsPage() {
                 type="button"
                 className={btnPrimary}
                 onClick={() => void addWatch()}
-                disabled={saving || !name.trim() || !brand.trim()}
+                disabled={
+                  saving ||
+                  !name.trim() ||
+                  !brand.trim() ||
+                  !selectedOption?.has_live_data
+                }
               >
                 {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
                 {saving ? "Creating…" : "Create watchlist"}

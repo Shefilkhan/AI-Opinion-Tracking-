@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react"
 import { ArrowUp, Filter, Globe, Layers } from "lucide-react"
 
 type ChatInputBarProps = {
-  onSend: (text: string) => void
+  onSend: (text: string, options?: { liveSources: boolean; deepMode: boolean }) => void
   isLoading: boolean
   placeholder?: string
 }
@@ -19,7 +19,7 @@ export function ChatInputBar({
   function handleSend() {
     const trimmed = value.trim()
     if (!trimmed || isLoading) return
-    onSend(trimmed)
+    onSend(trimmed, { liveSources: liveSourcesOn, deepMode })
     setValue("")
   }
 
@@ -119,7 +119,7 @@ function ToolbarButton({
       onClick={onClick}
       className={`chat-toolbar-btn flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition-all ${
         active
-          ? "border-[rgba(139,92,246,0.30)] bg-[var(--chat-purple-dim)] text-[var(--chat-purple)]"
+          ? "border-[var(--chat-primary-border)] bg-[var(--chat-primary-dim)] text-[var(--chat-primary)]"
           : "border-[var(--chat-border)] bg-transparent text-[var(--chat-text-mid)]"
       }`}
     >

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom"
 import { PlanTopBarBadge } from "@/components/billing/PlanTopBarBadge"
 import { ProfileMenu } from "@/components/layout/ProfileMenu"
 import { NotificationPanel } from "@/components/notifications/NotificationPanel"
-import { ThemeToggle } from "@/components/ui/ThemeToggle"
+import { ThemeModeToggle } from "@/components/ui/ThemeModeToggle"
 import { formatUpdatedLabel } from "@/lib/formatTimeAgo"
 import { cn } from "@/lib/utils"
 
@@ -92,7 +92,7 @@ export function DashboardTopBar({
             Live
           </span>
 
-          <ThemeToggle className="hidden sm:inline-flex" />
+          <ThemeModeToggle className="hidden sm:inline-flex" />
 
           <NotificationPanel />
 

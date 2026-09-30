@@ -24,6 +24,7 @@ def log_env_check() -> None:
             "EMAIL_APP_PASSWORD": bool(s.email_app_password or s.smtp_password),
             "SMTP_HOST": s.smtp_host,
             "EMAIL_CONFIGURED": s.email_configured,
+            "OTP_EMAIL_REQUIRED": not s.expose_dev_otp_in_api,
             "NEWS_API_KEY": bool(s.news_api_key.strip()),
             "YOUTUBE_API_KEY": bool(s.youtube_api_key.strip()),
             "GUARDIAN_API_KEY": bool(s.guardian_api_key.strip()),
@@ -63,6 +64,12 @@ def verify_production_secrets() -> None:
         problems.append("AUTH_COOKIE_SECURE should be true in production")
 
     if not problems:
+        if not s.email_configured and not s.expose_dev_otp_in_api:
+            logger.warning(
+                "OTP email delivery is required but SMTP is not configured. "
+                "Set EMAIL_USER and EMAIL_APP_PASSWORD in .env.local — "
+                "signup/login OTP will return 503 until then."
+            )
         return
 
     message = "Insecure configuration: " + "; ".join(problems)
